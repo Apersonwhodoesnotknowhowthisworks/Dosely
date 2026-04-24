@@ -4,6 +4,7 @@ struct TodayView: View {
     @StateObject private var viewModel: TodayViewModel
     private let repository: MedicationRepository
     @State private var showingAdd = false
+    @State private var showingSettings = false
 
     init(repository: MedicationRepository = MedicationRepository()) {
         self.repository = repository
@@ -42,6 +43,15 @@ struct TodayView: View {
             .background(Color.dsBackground.ignoresSafeArea())
             .navigationTitle("Today")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action: { showingSettings = true }) {
+                        Image(systemName: "person.crop.circle")
+                            .font(.title2.weight(.semibold))
+                            .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
+                    }
+                    .accessibilityLabel("Account and settings")
+                    .accessibilityHint("Opens account settings")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
                         print("[UI-DEBUG] + tapped")
@@ -74,6 +84,9 @@ struct TodayView: View {
             AddMedicationFlow(repository: repository) {
                 Task { await viewModel.load() }
             }
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsSheet()
         }
         // Reload when the app returns from background so that doses logged from a
         // notification action (TOOK_IT) surface without waiting for the 5-min poll.

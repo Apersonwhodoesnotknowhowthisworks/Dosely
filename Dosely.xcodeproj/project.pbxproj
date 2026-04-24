@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		13D32A5A2F9B2303005253C1 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 13D32A592F9B2303005253C1 /* FirebaseAuth */; };
+		13D32A5C2F9B2303005253C1 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 13D32A5B2F9B2303005253C1 /* FirebaseCore */; };
+		13D32A5E2F9B2444005253C1 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 13D32A5D2F9B2444005253C1 /* GoogleService-Info.plist */; };
 		BFD0000000000000000000001 /* DoselyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000001 /* DoselyApp.swift */; };
 		BFD0000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000002 /* ContentView.swift */; };
 		BFD0000000000000000000003 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000003 /* Persistence.swift */; };
@@ -46,6 +49,14 @@
 		BFD0000000000000000000063 /* WeekGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000063 /* WeekGridView.swift */; };
 		BFD0000000000000000000064 /* DoseCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000064 /* DoseCell.swift */; };
 		BFD0000000000000000000065 /* WeekCellDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000065 /* WeekCellDetailView.swift */; };
+		BFD0000000000000000000070 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000070 /* Keychain.swift */; };
+		BFD0000000000000000000071 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000071 /* AuthService.swift */; };
+		BFD0000000000000000000072 /* AuthGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000072 /* AuthGate.swift */; };
+		BFD0000000000000000000073 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000073 /* LoginView.swift */; };
+		BFD0000000000000000000074 /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000074 /* SignUpView.swift */; };
+		BFD0000000000000000000075 /* PasswordResetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000075 /* PasswordResetView.swift */; };
+		BFD0000000000000000000076 /* MedicalDisclaimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000076 /* MedicalDisclaimerView.swift */; };
+		BFD0000000000000000000077 /* SettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000077 /* SettingsSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,6 +70,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		13D32A5D2F9B2444005253C1 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FRD0000000000000000000001 /* DoselyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoselyApp.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000003 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
@@ -100,6 +112,14 @@
 		FRD0000000000000000000063 /* WeekGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekGridView.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000064 /* DoseCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseCell.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000065 /* WeekCellDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekCellDetailView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000070 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000071 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000072 /* AuthGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthGate.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000073 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000074 /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000075 /* PasswordResetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordResetView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000076 /* MedicalDisclaimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalDisclaimerView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000077 /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,6 +127,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				13D32A5C2F9B2303005253C1 /* FirebaseCore in Frameworks */,
+				13D32A5A2F9B2303005253C1 /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -142,6 +164,7 @@
 			isa = PBXGroup;
 			children = (
 				FRD0000000000000000000001 /* DoselyApp.swift */,
+				13D32A5D2F9B2444005253C1 /* GoogleService-Info.plist */,
 				FRD0000000000000000000002 /* ContentView.swift */,
 				FRD0000000000000000000003 /* Persistence.swift */,
 				FRD0000000000000000000004 /* Dosely.xcdatamodeld */,
@@ -152,103 +175,6 @@
 				GRP0000000000000000000004 /* Preview Content */,
 			);
 			path = Dosely;
-			sourceTree = "<group>";
-		};
-		GRP0000000000000000000008 /* Features */ = {
-			isa = PBXGroup;
-			children = (
-				GRP0000000000000000000009 /* Today */,
-				GRP000000000000000000000B /* AddMedication */,
-				GRP000000000000000000000E /* Notifications */,
-				GRP000000000000000000000F /* History */,
-			);
-			path = Features;
-			sourceTree = "<group>";
-		};
-		GRP000000000000000000000F /* History */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000060 /* HistoryView.swift */,
-				FRD0000000000000000000061 /* HistoryViewModel.swift */,
-				GRP0000000000000000000010 /* Components */,
-			);
-			path = History;
-			sourceTree = "<group>";
-		};
-		GRP0000000000000000000010 /* Components */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000062 /* WeekPicker.swift */,
-				FRD0000000000000000000063 /* WeekGridView.swift */,
-				FRD0000000000000000000064 /* DoseCell.swift */,
-				FRD0000000000000000000065 /* WeekCellDetailView.swift */,
-			);
-			path = Components;
-			sourceTree = "<group>";
-		};
-		GRP000000000000000000000B /* AddMedication */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000040 /* AddMedicationFlow.swift */,
-				GRP000000000000000000000C /* Components */,
-				GRP000000000000000000000D /* Steps */,
-			);
-			path = AddMedication;
-			sourceTree = "<group>";
-		};
-		GRP000000000000000000000E /* Notifications */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000041 /* ReminderScheduler.swift */,
-				FRD0000000000000000000050 /* NotificationsAppDelegate.swift */,
-				FRD0000000000000000000051 /* MissedDoseChecker.swift */,
-				FRD0000000000000000000052 /* PermissionBanner.swift */,
-				FRD0000000000000000000053 /* DebugToolbar.swift */,
-			);
-			path = Notifications;
-			sourceTree = "<group>";
-		};
-		GRP000000000000000000000C /* Components */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000042 /* StepShell.swift */,
-			);
-			path = Components;
-			sourceTree = "<group>";
-		};
-		GRP000000000000000000000D /* Steps */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000043 /* Step1NameView.swift */,
-				FRD0000000000000000000044 /* Step2DoseView.swift */,
-				FRD0000000000000000000045 /* Step3FrequencyView.swift */,
-				FRD0000000000000000000046 /* Step4TimesView.swift */,
-				FRD0000000000000000000047 /* Step5FoodRuleView.swift */,
-				FRD0000000000000000000048 /* Step6SupplyView.swift */,
-				FRD0000000000000000000049 /* Step7NotesView.swift */,
-				FRD000000000000000000004A /* Step8ReviewView.swift */,
-			);
-			path = Steps;
-			sourceTree = "<group>";
-		};
-		GRP0000000000000000000009 /* Today */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000030 /* TodayView.swift */,
-				FRD0000000000000000000031 /* TodayViewModel.swift */,
-				FRD0000000000000000000032 /* SeedData.swift */,
-				GRP000000000000000000000A /* Components */,
-			);
-			path = Today;
-			sourceTree = "<group>";
-		};
-		GRP000000000000000000000A /* Components */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000033 /* DoseCardView.swift */,
-				FRD0000000000000000000034 /* EmptyTodayView.swift */,
-			);
-			path = Components;
 			sourceTree = "<group>";
 		};
 		GRP0000000000000000000004 /* Preview Content */ = {
@@ -285,6 +211,119 @@
 				FRD0000000000000000000021 /* MedicationRepositoryTests.swift */,
 			);
 			path = DoselyTests;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000008 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				GRP0000000000000000000009 /* Today */,
+				GRP000000000000000000000B /* AddMedication */,
+				GRP000000000000000000000E /* Notifications */,
+				GRP000000000000000000000F /* History */,
+				GRP0000000000000000000011 /* Auth */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000011 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000070 /* Keychain.swift */,
+				FRD0000000000000000000071 /* AuthService.swift */,
+				FRD0000000000000000000072 /* AuthGate.swift */,
+				FRD0000000000000000000073 /* LoginView.swift */,
+				FRD0000000000000000000074 /* SignUpView.swift */,
+				FRD0000000000000000000075 /* PasswordResetView.swift */,
+				FRD0000000000000000000076 /* MedicalDisclaimerView.swift */,
+				FRD0000000000000000000077 /* SettingsSheet.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000009 /* Today */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000030 /* TodayView.swift */,
+				FRD0000000000000000000031 /* TodayViewModel.swift */,
+				FRD0000000000000000000032 /* SeedData.swift */,
+				GRP000000000000000000000A /* Components */,
+			);
+			path = Today;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000A /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000033 /* DoseCardView.swift */,
+				FRD0000000000000000000034 /* EmptyTodayView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000B /* AddMedication */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000040 /* AddMedicationFlow.swift */,
+				GRP000000000000000000000C /* Components */,
+				GRP000000000000000000000D /* Steps */,
+			);
+			path = AddMedication;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000C /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000042 /* StepShell.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000D /* Steps */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000043 /* Step1NameView.swift */,
+				FRD0000000000000000000044 /* Step2DoseView.swift */,
+				FRD0000000000000000000045 /* Step3FrequencyView.swift */,
+				FRD0000000000000000000046 /* Step4TimesView.swift */,
+				FRD0000000000000000000047 /* Step5FoodRuleView.swift */,
+				FRD0000000000000000000048 /* Step6SupplyView.swift */,
+				FRD0000000000000000000049 /* Step7NotesView.swift */,
+				FRD000000000000000000004A /* Step8ReviewView.swift */,
+			);
+			path = Steps;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000E /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000041 /* ReminderScheduler.swift */,
+				FRD0000000000000000000050 /* NotificationsAppDelegate.swift */,
+				FRD0000000000000000000051 /* MissedDoseChecker.swift */,
+				FRD0000000000000000000052 /* PermissionBanner.swift */,
+				FRD0000000000000000000053 /* DebugToolbar.swift */,
+			);
+			path = Notifications;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000F /* History */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000060 /* HistoryView.swift */,
+				FRD0000000000000000000061 /* HistoryViewModel.swift */,
+				GRP0000000000000000000010 /* Components */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000010 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000062 /* WeekPicker.swift */,
+				FRD0000000000000000000063 /* WeekGridView.swift */,
+				FRD0000000000000000000064 /* DoseCell.swift */,
+				FRD0000000000000000000065 /* WeekCellDetailView.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -353,6 +392,9 @@
 				Base,
 			);
 			mainGroup = GRP0000000000000000000001;
+			packageReferences = (
+				13D32A582F9B2303005253C1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			productRefGroup = GRP0000000000000000000002 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -370,6 +412,7 @@
 			files = (
 				BFD0000000000000000000006 /* Preview Assets.xcassets in Resources */,
 				BFD0000000000000000000005 /* Assets.xcassets in Resources */,
+				13D32A5E2F9B2444005253C1 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -423,6 +466,14 @@
 				BFD0000000000000000000063 /* WeekGridView.swift in Sources */,
 				BFD0000000000000000000064 /* DoseCell.swift in Sources */,
 				BFD0000000000000000000065 /* WeekCellDetailView.swift in Sources */,
+				BFD0000000000000000000070 /* Keychain.swift in Sources */,
+				BFD0000000000000000000071 /* AuthService.swift in Sources */,
+				BFD0000000000000000000072 /* AuthGate.swift in Sources */,
+				BFD0000000000000000000073 /* LoginView.swift in Sources */,
+				BFD0000000000000000000074 /* SignUpView.swift in Sources */,
+				BFD0000000000000000000075 /* PasswordResetView.swift in Sources */,
+				BFD0000000000000000000076 /* MedicalDisclaimerView.swift in Sources */,
+				BFD0000000000000000000077 /* SettingsSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -689,6 +740,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		13D32A582F9B2303005253C1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.12.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		13D32A592F9B2303005253C1 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 13D32A582F9B2303005253C1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		13D32A5B2F9B2303005253C1 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 13D32A582F9B2303005253C1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCVersionGroup section */
 		FRD0000000000000000000004 /* Dosely.xcdatamodeld */ = {
