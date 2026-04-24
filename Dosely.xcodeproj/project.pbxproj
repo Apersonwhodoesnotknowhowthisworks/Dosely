@@ -20,6 +20,11 @@
 		BFD0000000000000000000014 /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000014 /* CoreDataStack.swift */; };
 		BFD0000000000000000000015 /* MedicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000015 /* MedicationRepository.swift */; };
 		BFD0000000000000000000021 /* MedicationRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000021 /* MedicationRepositoryTests.swift */; };
+		BFD0000000000000000000030 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000030 /* TodayView.swift */; };
+		BFD0000000000000000000031 /* TodayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000031 /* TodayViewModel.swift */; };
+		BFD0000000000000000000032 /* SeedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000032 /* SeedData.swift */; };
+		BFD0000000000000000000033 /* DoseCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000033 /* DoseCardView.swift */; };
+		BFD0000000000000000000034 /* EmptyTodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000034 /* EmptyTodayView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +53,11 @@
 		FRD0000000000000000000015 /* MedicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationRepository.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000020 /* DoselyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DoselyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FRD0000000000000000000021 /* MedicationRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationRepositoryTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000030 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000031 /* TodayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewModel.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000032 /* SeedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedData.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000033 /* DoseCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseCardView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000034 /* EmptyTodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyTodayView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,10 +105,39 @@
 				FRD0000000000000000000004 /* Dosely.xcdatamodeld */,
 				GRP0000000000000000000005 /* DesignSystem */,
 				GRP0000000000000000000006 /* Data */,
+				GRP0000000000000000000008 /* Features */,
 				FRD0000000000000000000005 /* Assets.xcassets */,
 				GRP0000000000000000000004 /* Preview Content */,
 			);
 			path = Dosely;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000008 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				GRP0000000000000000000009 /* Today */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000009 /* Today */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000030 /* TodayView.swift */,
+				FRD0000000000000000000031 /* TodayViewModel.swift */,
+				FRD0000000000000000000032 /* SeedData.swift */,
+				GRP000000000000000000000A /* Components */,
+			);
+			path = Today;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000A /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000033 /* DoseCardView.swift */,
+				FRD0000000000000000000034 /* EmptyTodayView.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		GRP0000000000000000000004 /* Preview Content */ = {
@@ -247,6 +286,11 @@
 				BFD0000000000000000000013 /* DesignSystemPreview.swift in Sources */,
 				BFD0000000000000000000014 /* CoreDataStack.swift in Sources */,
 				BFD0000000000000000000015 /* MedicationRepository.swift in Sources */,
+				BFD0000000000000000000030 /* TodayView.swift in Sources */,
+				BFD0000000000000000000031 /* TodayViewModel.swift in Sources */,
+				BFD0000000000000000000032 /* SeedData.swift in Sources */,
+				BFD0000000000000000000033 /* DoseCardView.swift in Sources */,
+				BFD0000000000000000000034 /* EmptyTodayView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
