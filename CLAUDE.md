@@ -16,7 +16,21 @@ Dosely is a native iOS medication tracker aimed at elderly users. The primary cl
 
 ## Design system
 
-Placeholder — to be filled in during Prompt 1 (typography scale, color tokens, spacing, tap-target sizes, component library).
+Located in `Dosely/DesignSystem/`. Use these tokens everywhere — do not hardcode colors, fonts, or spacing values elsewhere in the app.
+
+- **`DSColors.swift`** — semantic color tokens on `Color` (sRGB hex literals).
+  - `Color.dsPrimary` `#2B6CB0`, `Color.dsSuccess` `#2F855A`, `Color.dsWarning` `#D69E2E`, `Color.dsDanger` `#C53030`
+  - `Color.dsBackground` `#F7FAFC`, `Color.dsSurface` white
+  - `Color.dsTextPrimary` `#1A202C`, `Color.dsTextSecondary` `#4A5568`
+- **`DSTypography.swift`** — semantic font tokens + `View` modifiers, all scaling with Dynamic Type (`.large ... .accessibility5`).
+  - `.dsTitleLarge()` (`.largeTitle`, bold), `.dsTitleMedium()` (`.title2`, semibold)
+  - `.dsBodyLarge()` — 18pt floor for elderly users (B.1 U1); use for any body copy the grandparents read
+  - `.dsBodyRegular()` (`.body`), `.dsCaption()` (`.caption`)
+- **`DSSpacing.swift`** — layout constants on `DSSpacing`.
+  - Spacing: `xs 4`, `sm 8`, `md 16`, `lg 24`, `xl 32`, `xxl 48`
+  - Corner radius: `rSm 8`, `rMd 12`, `rLg 16`
+  - `DSSpacing.minTapTarget = 48` — WCAG 2.5.5 floor (B.1 U2); every tappable control must meet this
+- **`DesignSystemPreview.swift`** — visual reference view with `#Preview` blocks; run in Xcode to eyeball tokens at default and accessibility type sizes.
 
 ## Must-have features (MVP)
 
