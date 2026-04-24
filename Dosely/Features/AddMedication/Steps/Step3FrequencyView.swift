@@ -1,0 +1,90 @@
+import SwiftUI
+
+struct Step3FrequencyView: View {
+    @EnvironmentObject var state: AddMedicationState
+    @State private var showingCustom = false
+    @State private var customText: String = ""
+
+    var body: some View {
+        StepShell(
+            stepNumber: 3,
+            question: "How many times per day?",
+            primaryTitle: showingCustom ? "Next" : nil,
+            primaryEnabled: customValid,
+            primaryAction: showingCustom ? { commitCustom() } : nil
+        ) {
+            VStack(spacing: DSSpacing.md) {
+                frequencyButton(label: "Once",    count: 1)
+                frequencyButton(label: "Twice",   count: 2)
+                frequencyButton(label: "3 times", count: 3)
+                frequencyButton(label: "4 times", count: 4)
+
+                if showingCustom {
+                    HStack {
+                        Text("Times per day")
+                            .dsBodyLarge()
+                            .foregroundColor(.dsTextPrimary)
+                        Spacer()
+                        TextField("5-10", text: $customText)
+                            .dsBodyLarge()
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                            .accessibilityLabel("Custom times per day")
+                    }
+                    .padding(DSSpacing.md)
+                    .frame(minHeight: DSSpacing.minTapTarget)
+                    .background(Color.dsSurface)
+                    .cornerRadius(DSSpacing.rMd)
+                } else {
+                    Button(action: { showingCustom = true }) {
+                        Text("Custom")
+                            .dsBodyLarge()
+                            .foregroundColor(.dsPrimary)
+                            .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
+                            .background(Color.dsSurface)
+                            .cornerRadius(DSSpacing.rMd)
+                    }
+                    .accessibilityLabel("Custom number of times per day")
+                }
+            }
+        }
+    }
+
+    private func frequencyButton(label: String, count: Int) -> some View {
+        Button(action: { choose(count: count) }) {
+            Text(label)
+                .dsBodyLarge()
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .background(Color.dsPrimary)
+                .cornerRadius(DSSpacing.rMd)
+        }
+        .accessibilityLabel("\(label) per day")
+    }
+
+    private func choose(count: Int) {
+        state.timesPerDay = count
+        state.prepopulateTimes()
+        state.path.append(.times)
+    }
+
+    private var customValid: Bool {
+        if let n = Int(customText.trimmingCharacters(in: .whitespaces)), (1...10).contains(n) {
+            return true
+        }
+        return false
+    }
+
+    private func commitCustom() {
+        guard let n = Int(customText.trimmingCharacters(in: .whitespaces)), (1...10).contains(n) else { return }
+        choose(count: n)
+    }
+}
+
+#if DEBUG
+#Preview {
+    NavigationStack { Step3FrequencyView() }
+        .environmentObject(AddMedicationState())
+}
+#endif

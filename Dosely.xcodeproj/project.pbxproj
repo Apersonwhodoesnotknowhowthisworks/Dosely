@@ -25,6 +25,17 @@
 		BFD0000000000000000000032 /* SeedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000032 /* SeedData.swift */; };
 		BFD0000000000000000000033 /* DoseCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000033 /* DoseCardView.swift */; };
 		BFD0000000000000000000034 /* EmptyTodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000034 /* EmptyTodayView.swift */; };
+		BFD0000000000000000000040 /* AddMedicationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000040 /* AddMedicationFlow.swift */; };
+		BFD0000000000000000000041 /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000041 /* ReminderScheduler.swift */; };
+		BFD0000000000000000000042 /* StepShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000042 /* StepShell.swift */; };
+		BFD0000000000000000000043 /* Step1NameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000043 /* Step1NameView.swift */; };
+		BFD0000000000000000000044 /* Step2DoseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000044 /* Step2DoseView.swift */; };
+		BFD0000000000000000000045 /* Step3FrequencyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000045 /* Step3FrequencyView.swift */; };
+		BFD0000000000000000000046 /* Step4TimesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000046 /* Step4TimesView.swift */; };
+		BFD0000000000000000000047 /* Step5FoodRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000047 /* Step5FoodRuleView.swift */; };
+		BFD0000000000000000000048 /* Step6SupplyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000048 /* Step6SupplyView.swift */; };
+		BFD0000000000000000000049 /* Step7NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000049 /* Step7NotesView.swift */; };
+		BFD000000000000000000004A /* Step8ReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000004A /* Step8ReviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +69,17 @@
 		FRD0000000000000000000032 /* SeedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedData.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000033 /* DoseCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseCardView.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000034 /* EmptyTodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyTodayView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000040 /* AddMedicationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMedicationFlow.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000041 /* ReminderScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000042 /* StepShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepShell.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000043 /* Step1NameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step1NameView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000044 /* Step2DoseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step2DoseView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000045 /* Step3FrequencyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step3FrequencyView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000046 /* Step4TimesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step4TimesView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000047 /* Step5FoodRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step5FoodRuleView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000048 /* Step6SupplyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step6SupplyView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000049 /* Step7NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step7NotesView.swift; sourceTree = "<group>"; };
+		FRD000000000000000000004A /* Step8ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step8ReviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,8 +138,43 @@
 			isa = PBXGroup;
 			children = (
 				GRP0000000000000000000009 /* Today */,
+				GRP000000000000000000000B /* AddMedication */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000B /* AddMedication */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000040 /* AddMedicationFlow.swift */,
+				FRD0000000000000000000041 /* ReminderScheduler.swift */,
+				GRP000000000000000000000C /* Components */,
+				GRP000000000000000000000D /* Steps */,
+			);
+			path = AddMedication;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000C /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000042 /* StepShell.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000D /* Steps */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000043 /* Step1NameView.swift */,
+				FRD0000000000000000000044 /* Step2DoseView.swift */,
+				FRD0000000000000000000045 /* Step3FrequencyView.swift */,
+				FRD0000000000000000000046 /* Step4TimesView.swift */,
+				FRD0000000000000000000047 /* Step5FoodRuleView.swift */,
+				FRD0000000000000000000048 /* Step6SupplyView.swift */,
+				FRD0000000000000000000049 /* Step7NotesView.swift */,
+				FRD000000000000000000004A /* Step8ReviewView.swift */,
+			);
+			path = Steps;
 			sourceTree = "<group>";
 		};
 		GRP0000000000000000000009 /* Today */ = {
@@ -291,6 +348,17 @@
 				BFD0000000000000000000032 /* SeedData.swift in Sources */,
 				BFD0000000000000000000033 /* DoseCardView.swift in Sources */,
 				BFD0000000000000000000034 /* EmptyTodayView.swift in Sources */,
+				BFD0000000000000000000040 /* AddMedicationFlow.swift in Sources */,
+				BFD0000000000000000000041 /* ReminderScheduler.swift in Sources */,
+				BFD0000000000000000000042 /* StepShell.swift in Sources */,
+				BFD0000000000000000000043 /* Step1NameView.swift in Sources */,
+				BFD0000000000000000000044 /* Step2DoseView.swift in Sources */,
+				BFD0000000000000000000045 /* Step3FrequencyView.swift in Sources */,
+				BFD0000000000000000000046 /* Step4TimesView.swift in Sources */,
+				BFD0000000000000000000047 /* Step5FoodRuleView.swift in Sources */,
+				BFD0000000000000000000048 /* Step6SupplyView.swift in Sources */,
+				BFD0000000000000000000049 /* Step7NotesView.swift in Sources */,
+				BFD000000000000000000004A /* Step8ReviewView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -3,6 +3,7 @@ import SwiftUI
 struct TodayView: View {
     @StateObject private var viewModel: TodayViewModel
     private let repository: MedicationRepository
+    @State private var showingAdd = false
 
     init(repository: MedicationRepository = MedicationRepository()) {
         self.repository = repository
@@ -42,7 +43,7 @@ struct TodayView: View {
             .navigationTitle("Today")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { print("TODO add med") }) {
+                    Button(action: { showingAdd = true }) {
                         Image(systemName: "plus")
                             .font(.title2.weight(.semibold))
                             .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
@@ -57,6 +58,11 @@ struct TodayView: View {
             await SeedData.seedIfEmpty(using: repository)
             #endif
             await viewModel.load()
+        }
+        .sheet(isPresented: $showingAdd) {
+            AddMedicationFlow(repository: repository) {
+                Task { await viewModel.load() }
+            }
         }
     }
 
