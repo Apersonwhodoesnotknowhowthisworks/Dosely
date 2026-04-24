@@ -40,6 +40,12 @@
 		BFD0000000000000000000051 /* MissedDoseChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000051 /* MissedDoseChecker.swift */; };
 		BFD0000000000000000000052 /* PermissionBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000052 /* PermissionBanner.swift */; };
 		BFD0000000000000000000053 /* DebugToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000053 /* DebugToolbar.swift */; };
+		BFD0000000000000000000060 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000060 /* HistoryView.swift */; };
+		BFD0000000000000000000061 /* HistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000061 /* HistoryViewModel.swift */; };
+		BFD0000000000000000000062 /* WeekPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000062 /* WeekPicker.swift */; };
+		BFD0000000000000000000063 /* WeekGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000063 /* WeekGridView.swift */; };
+		BFD0000000000000000000064 /* DoseCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000064 /* DoseCell.swift */; };
+		BFD0000000000000000000065 /* WeekCellDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000065 /* WeekCellDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -88,6 +94,12 @@
 		FRD0000000000000000000051 /* MissedDoseChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissedDoseChecker.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000052 /* PermissionBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionBanner.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000053 /* DebugToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugToolbar.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000060 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000061 /* HistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewModel.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000062 /* WeekPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekPicker.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000063 /* WeekGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekGridView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000064 /* DoseCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseCell.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000065 /* WeekCellDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekCellDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -148,8 +160,30 @@
 				GRP0000000000000000000009 /* Today */,
 				GRP000000000000000000000B /* AddMedication */,
 				GRP000000000000000000000E /* Notifications */,
+				GRP000000000000000000000F /* History */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000F /* History */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000060 /* HistoryView.swift */,
+				FRD0000000000000000000061 /* HistoryViewModel.swift */,
+				GRP0000000000000000000010 /* Components */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000010 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000062 /* WeekPicker.swift */,
+				FRD0000000000000000000063 /* WeekGridView.swift */,
+				FRD0000000000000000000064 /* DoseCell.swift */,
+				FRD0000000000000000000065 /* WeekCellDetailView.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		GRP000000000000000000000B /* AddMedication */ = {
@@ -383,6 +417,12 @@
 				BFD0000000000000000000051 /* MissedDoseChecker.swift in Sources */,
 				BFD0000000000000000000052 /* PermissionBanner.swift in Sources */,
 				BFD0000000000000000000053 /* DebugToolbar.swift in Sources */,
+				BFD0000000000000000000060 /* HistoryView.swift in Sources */,
+				BFD0000000000000000000061 /* HistoryViewModel.swift in Sources */,
+				BFD0000000000000000000062 /* WeekPicker.swift in Sources */,
+				BFD0000000000000000000063 /* WeekGridView.swift in Sources */,
+				BFD0000000000000000000064 /* DoseCell.swift in Sources */,
+				BFD0000000000000000000065 /* WeekCellDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

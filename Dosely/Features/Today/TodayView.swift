@@ -100,18 +100,7 @@ struct TodayView: View {
     // MARK: - History tab
 
     private var historyTab: some View {
-        NavigationStack {
-            VStack {
-                Text("History tab coming in Prompt 6")
-                    .dsBodyLarge()
-                    .foregroundColor(.dsTextSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(DSSpacing.lg)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.dsBackground.ignoresSafeArea())
-            .navigationTitle("History")
-        }
+        HistoryView(repository: repository)
     }
 
     private static let subtitleFormatter: DateFormatter = {
