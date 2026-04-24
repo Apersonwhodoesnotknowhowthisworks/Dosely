@@ -70,6 +70,14 @@ struct TodayView: View {
                 Task { await viewModel.load() }
             }
         }
+        // Reload when the app returns from background so that doses logged from a
+        // notification action (TOOK_IT) surface without waiting for the 5-min poll.
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            Task {
+                await MissedDoseChecker(repository: repository).run()
+                await viewModel.load()
+            }
+        }
         .debugToolbar()
     }
 

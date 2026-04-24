@@ -32,15 +32,20 @@ final class NotificationsAppDelegate: NSObject, UIApplicationDelegate, UNUserNot
         case ReminderScheduler.tookItActionID:
             guard let medIDString = info["medID"] as? String,
                   let medID = UUID(uuidString: medIDString) else {
+                print("[NOTIF-DEBUG] TOOK_IT: missing or invalid medID in userInfo")
                 completionHandler(); return
             }
             let scheduledToday = Self.scheduledDate(from: info)
+            let actualTime = Date()
+            #if DEBUG
+            print("[NOTIF-DEBUG] TOOK_IT handled: medID=\(medIDString) at \(ISO8601DateFormatter().string(from: actualTime))")
+            #endif
             Task {
                 let repo = MedicationRepository()
                 _ = await repo.logDose(
                     medicationID: medID,
                     scheduledTime: scheduledToday,
-                    actualTime: Date(),
+                    actualTime: actualTime,
                     status: "taken"
                 )
                 await MainActor.run { completionHandler() }
