@@ -13,7 +13,24 @@
 		BFD0000000000000000000004 /* Dosely.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000004 /* Dosely.xcdatamodeld */; };
 		BFD0000000000000000000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000005 /* Assets.xcassets */; };
 		BFD0000000000000000000006 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000006 /* Preview Assets.xcassets */; };
+		BFD0000000000000000000010 /* DSColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000010 /* DSColors.swift */; };
+		BFD0000000000000000000011 /* DSTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000011 /* DSTypography.swift */; };
+		BFD0000000000000000000012 /* DSSpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000012 /* DSSpacing.swift */; };
+		BFD0000000000000000000013 /* DesignSystemPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000013 /* DesignSystemPreview.swift */; };
+		BFD0000000000000000000014 /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000014 /* CoreDataStack.swift */; };
+		BFD0000000000000000000015 /* MedicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000015 /* MedicationRepository.swift */; };
+		BFD0000000000000000000021 /* MedicationRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000021 /* MedicationRepositoryTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CIP0000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = PRJ0000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = TRG0000000000000000000001;
+			remoteInfo = Dosely;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		FRD0000000000000000000001 /* DoselyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoselyApp.swift; sourceTree = "<group>"; };
@@ -23,10 +40,25 @@
 		FRD0000000000000000000006 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		FRD0000000000000000000007 /* Dosely.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Dosely.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FRD0000000000000000000008 /* Dosely.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Dosely.xcdatamodel; sourceTree = "<group>"; };
+		FRD0000000000000000000010 /* DSColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSColors.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000011 /* DSTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSTypography.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000012 /* DSSpacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSSpacing.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000013 /* DesignSystemPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystemPreview.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000014 /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000015 /* MedicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationRepository.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000020 /* DoselyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DoselyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FRD0000000000000000000021 /* MedicationRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationRepositoryTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		FRM0000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FRM0000000000000000000002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -40,6 +72,7 @@
 			isa = PBXGroup;
 			children = (
 				GRP0000000000000000000003 /* Dosely */,
+				GRP0000000000000000000007 /* DoselyTests */,
 				GRP0000000000000000000002 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -48,6 +81,7 @@
 			isa = PBXGroup;
 			children = (
 				FRD0000000000000000000007 /* Dosely.app */,
+				FRD0000000000000000000020 /* DoselyTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -59,6 +93,8 @@
 				FRD0000000000000000000002 /* ContentView.swift */,
 				FRD0000000000000000000003 /* Persistence.swift */,
 				FRD0000000000000000000004 /* Dosely.xcdatamodeld */,
+				GRP0000000000000000000005 /* DesignSystem */,
+				GRP0000000000000000000006 /* Data */,
 				FRD0000000000000000000005 /* Assets.xcassets */,
 				GRP0000000000000000000004 /* Preview Content */,
 			);
@@ -71,6 +107,34 @@
 				FRD0000000000000000000006 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000005 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000010 /* DSColors.swift */,
+				FRD0000000000000000000011 /* DSTypography.swift */,
+				FRD0000000000000000000012 /* DSSpacing.swift */,
+				FRD0000000000000000000013 /* DesignSystemPreview.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000006 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000014 /* CoreDataStack.swift */,
+				FRD0000000000000000000015 /* MedicationRepository.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000007 /* DoselyTests */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000021 /* MedicationRepositoryTests.swift */,
+			);
+			path = DoselyTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -93,6 +157,24 @@
 			productReference = FRD0000000000000000000007 /* Dosely.app */;
 			productType = "com.apple.product-type.application";
 		};
+		TRG0000000000000000000002 /* DoselyTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CLT0000000000000000000002 /* Build configuration list for PBXNativeTarget "DoselyTests" */;
+			buildPhases = (
+				SRC0000000000000000000002 /* Sources */,
+				FRM0000000000000000000002 /* Frameworks */,
+				RES0000000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DEP0000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = DoselyTests;
+			productName = DoselyTests;
+			productReference = FRD0000000000000000000020 /* DoselyTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -105,6 +187,10 @@
 				TargetAttributes = {
 					TRG0000000000000000000001 = {
 						CreatedOnToolsVersion = 15.4;
+					};
+					TRG0000000000000000000002 = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = TRG0000000000000000000001;
 					};
 				};
 			};
@@ -122,6 +208,7 @@
 			projectRoot = "";
 			targets = (
 				TRG0000000000000000000001 /* Dosely */,
+				TRG0000000000000000000002 /* DoselyTests */,
 			);
 		};
 /* End PBXProject section */
@@ -136,6 +223,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		RES0000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -147,10 +241,32 @@
 				BFD0000000000000000000004 /* Dosely.xcdatamodeld in Sources */,
 				BFD0000000000000000000001 /* DoselyApp.swift in Sources */,
 				BFD0000000000000000000003 /* Persistence.swift in Sources */,
+				BFD0000000000000000000010 /* DSColors.swift in Sources */,
+				BFD0000000000000000000011 /* DSTypography.swift in Sources */,
+				BFD0000000000000000000012 /* DSSpacing.swift in Sources */,
+				BFD0000000000000000000013 /* DesignSystemPreview.swift in Sources */,
+				BFD0000000000000000000014 /* CoreDataStack.swift in Sources */,
+				BFD0000000000000000000015 /* MedicationRepository.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		SRC0000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BFD0000000000000000000021 /* MedicationRepositoryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DEP0000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = TRG0000000000000000000001 /* Dosely */;
+			targetProxy = CIP0000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		BCP0000000000000000000001 /* Debug */ = {
@@ -328,6 +444,44 @@
 			};
 			name = Release;
 		};
+		BCT0000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.placeholder.DoselyTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Dosely.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Dosely";
+			};
+			name = Debug;
+		};
+		BCT0000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.placeholder.DoselyTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Dosely.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Dosely";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -345,6 +499,15 @@
 			buildConfigurations = (
 				BCT0000000000000000000001 /* Debug */,
 				BCT0000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CLT0000000000000000000002 /* Build configuration list for PBXNativeTarget "DoselyTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BCT0000000000000000000003 /* Debug */,
+				BCT0000000000000000000004 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
