@@ -150,18 +150,45 @@ enum ReminderScheduler {
             content: content,
             trigger: trigger
         )
-        UNUserNotificationCenter.current().add(request)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error {
+                print("[NOTIF-DEBUG] add(request) error: \(error.localizedDescription)")
+            }
+        }
     }
 
     static func dumpPendingRequests() {
         UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
-            print("[Dosely] pending notifications: \(requests.count)")
+            print("[NOTIF-DEBUG] pending notifications: \(requests.count)")
             for r in requests {
-                print("  - \(r.identifier) trigger=\(String(describing: r.trigger))")
+                print("[NOTIF-DEBUG]   id=\(r.identifier) fires=\(fireDateString(for: r.trigger))")
             }
         }
     }
+
+    private static let debugISOFormatter: ISO8601DateFormatter = ISO8601DateFormatter()
+
+    private static func fireDateString(for trigger: UNNotificationTrigger?) -> String {
+        if let cal = trigger as? UNCalendarNotificationTrigger, let d = cal.nextTriggerDate() {
+            return debugISOFormatter.string(from: d)
+        }
+        if let ti = trigger as? UNTimeIntervalNotificationTrigger, let d = ti.nextTriggerDate() {
+            return debugISOFormatter.string(from: d)
+        }
+        return "unknown"
+    }
     #endif
+
+    static func describe(_ status: UNAuthorizationStatus) -> String {
+        switch status {
+        case .notDetermined: return "notDetermined"
+        case .denied:        return "denied"
+        case .authorized:    return "authorized"
+        case .provisional:   return "provisional"
+        case .ephemeral:     return "ephemeral"
+        @unknown default:    return "unknown(\(status.rawValue))"
+        }
+    }
 
     // MARK: - Helpers
 

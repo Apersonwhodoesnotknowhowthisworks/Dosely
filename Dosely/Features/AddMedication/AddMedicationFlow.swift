@@ -108,6 +108,8 @@ struct AddMedicationFlow: View {
         Task {
             // Ask on first save only. Subsequent saves skip the prompt.
             _ = await ReminderScheduler.requestPermissionIfNeeded()
+            let status = await ReminderScheduler.currentStatus()
+            print("[NOTIF-DEBUG] post-save authorization status: \(ReminderScheduler.describe(status))")
 
             let med = await repository.saveMedication(
                 name: state.name.trimmingCharacters(in: .whitespaces),
