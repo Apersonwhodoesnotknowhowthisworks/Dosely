@@ -35,8 +35,10 @@ struct DoseCardView: View {
         HStack(alignment: .top, spacing: DSSpacing.md) {
             timeColumn
             medColumn
-            Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(1)
             trailingColumn
+                .fixedSize(horizontal: true, vertical: false)
         }
     }
 
@@ -53,9 +55,15 @@ struct DoseCardView: View {
             Text(dose.medication.name ?? "Medication")
                 .dsTitleMedium()
                 .foregroundColor(.dsTextPrimary)
+                .lineLimit(2)
+                .truncationMode(.tail)
+                .allowsTightening(false)
+                .minimumScaleFactor(1.0)
+                .fixedSize(horizontal: false, vertical: true)
             Text(subtitleText)
                 .dsBodyRegular()
                 .foregroundColor(.dsTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
