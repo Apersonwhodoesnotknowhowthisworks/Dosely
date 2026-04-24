@@ -43,7 +43,10 @@ struct TodayView: View {
             .navigationTitle("Today")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { showingAdd = true }) {
+                    Button(action: {
+                        print("[UI-DEBUG] + tapped")
+                        showingAdd = true
+                    }) {
                         Image(systemName: "plus")
                             .font(.title2.weight(.semibold))
                             .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
@@ -52,6 +55,8 @@ struct TodayView: View {
                     .accessibilityHint("Opens the new medication form")
                 }
             }
+            // Inset debug pills inside the NavigationStack so they don't overlap the nav bar.
+            .debugToolbar()
         }
         .task {
             #if DEBUG
@@ -78,7 +83,6 @@ struct TodayView: View {
                 await viewModel.load()
             }
         }
-        .debugToolbar()
     }
 
     @ViewBuilder
