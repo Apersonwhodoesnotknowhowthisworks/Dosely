@@ -59,6 +59,7 @@ final class AddMedicationState: ObservableObject {
 struct AddMedicationFlow: View {
     @StateObject private var state = AddMedicationState()
     @Environment(\.dismiss) private var dismiss
+    @State private var showPermissionBanner = false
 
     let repository: MedicationRepository
     var onSaved: () -> Void
@@ -69,31 +70,34 @@ struct AddMedicationFlow: View {
     }
 
     var body: some View {
-        NavigationStack(path: Binding(
-            get: { state.path },
-            set: { state.path = $0 }
-        )) {
-            Step1NameView()
-                .navigationDestination(for: AddStep.self) { step in
-                    switch step {
-                    case .dose:      Step2DoseView()
-                    case .frequency: Step3FrequencyView()
-                    case .times:     Step4TimesView()
-                    case .foodRule:  Step5FoodRuleView()
-                    case .supply:    Step6SupplyView()
-                    case .notes:     Step7NotesView()
-                    case .review:    Step8ReviewView(onSave: save)
+        VStack(spacing: 0) {
+            if showPermissionBanner {
+                PermissionBanner()
+            }
+            NavigationStack(path: Binding(
+                get: { state.path },
+                set: { state.path = $0 }
+            )) {
+                Step1NameView()
+                    .navigationDestination(for: AddStep.self) { step in
+                        switch step {
+                        case .dose:      Step2DoseView()
+                        case .frequency: Step3FrequencyView()
+                        case .times:     Step4TimesView()
+                        case .foodRule:  Step5FoodRuleView()
+                        case .supply:    Step6SupplyView()
+                        case .notes:     Step7NotesView()
+                        case .review:    Step8ReviewView(onSave: save)
+                        }
                     }
-                }
+            }
+            .tint(.dsPrimary)
         }
         .environmentObject(state)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("Cancel") { dismiss() }
-                    .accessibilityLabel("Cancel adding medication")
-            }
+        .task {
+            let status = await ReminderScheduler.currentStatus()
+            showPermissionBanner = (status == .denied)
         }
-        .tint(.dsPrimary)
     }
 
     private func save() {
@@ -102,6 +106,9 @@ struct AddMedicationFlow: View {
             ScheduleInput(timeOfDay: AddMedicationState.formatHHmm($0), daysOfWeek: 127)
         }
         Task {
+            // Ask on first save only. Subsequent saves skip the prompt.
+            _ = await ReminderScheduler.requestPermissionIfNeeded()
+
             let med = await repository.saveMedication(
                 name: state.name.trimmingCharacters(in: .whitespaces),
                 dose: state.dose.trimmingCharacters(in: .whitespaces),

@@ -36,6 +36,10 @@
 		BFD0000000000000000000048 /* Step6SupplyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000048 /* Step6SupplyView.swift */; };
 		BFD0000000000000000000049 /* Step7NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000049 /* Step7NotesView.swift */; };
 		BFD000000000000000000004A /* Step8ReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000004A /* Step8ReviewView.swift */; };
+		BFD0000000000000000000050 /* NotificationsAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000050 /* NotificationsAppDelegate.swift */; };
+		BFD0000000000000000000051 /* MissedDoseChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000051 /* MissedDoseChecker.swift */; };
+		BFD0000000000000000000052 /* PermissionBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000052 /* PermissionBanner.swift */; };
+		BFD0000000000000000000053 /* DebugToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000053 /* DebugToolbar.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -80,6 +84,10 @@
 		FRD0000000000000000000048 /* Step6SupplyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step6SupplyView.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000049 /* Step7NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step7NotesView.swift; sourceTree = "<group>"; };
 		FRD000000000000000000004A /* Step8ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Step8ReviewView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000050 /* NotificationsAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsAppDelegate.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000051 /* MissedDoseChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissedDoseChecker.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000052 /* PermissionBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionBanner.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000053 /* DebugToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugToolbar.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -139,6 +147,7 @@
 			children = (
 				GRP0000000000000000000009 /* Today */,
 				GRP000000000000000000000B /* AddMedication */,
+				GRP000000000000000000000E /* Notifications */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -147,11 +156,22 @@
 			isa = PBXGroup;
 			children = (
 				FRD0000000000000000000040 /* AddMedicationFlow.swift */,
-				FRD0000000000000000000041 /* ReminderScheduler.swift */,
 				GRP000000000000000000000C /* Components */,
 				GRP000000000000000000000D /* Steps */,
 			);
 			path = AddMedication;
+			sourceTree = "<group>";
+		};
+		GRP000000000000000000000E /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000041 /* ReminderScheduler.swift */,
+				FRD0000000000000000000050 /* NotificationsAppDelegate.swift */,
+				FRD0000000000000000000051 /* MissedDoseChecker.swift */,
+				FRD0000000000000000000052 /* PermissionBanner.swift */,
+				FRD0000000000000000000053 /* DebugToolbar.swift */,
+			);
+			path = Notifications;
 			sourceTree = "<group>";
 		};
 		GRP000000000000000000000C /* Components */ = {
@@ -359,6 +379,10 @@
 				BFD0000000000000000000048 /* Step6SupplyView.swift in Sources */,
 				BFD0000000000000000000049 /* Step7NotesView.swift in Sources */,
 				BFD000000000000000000004A /* Step8ReviewView.swift in Sources */,
+				BFD0000000000000000000050 /* NotificationsAppDelegate.swift in Sources */,
+				BFD0000000000000000000051 /* MissedDoseChecker.swift in Sources */,
+				BFD0000000000000000000052 /* PermissionBanner.swift in Sources */,
+				BFD0000000000000000000053 /* DebugToolbar.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

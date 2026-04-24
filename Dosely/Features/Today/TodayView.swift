@@ -57,13 +57,20 @@ struct TodayView: View {
             #if DEBUG
             await SeedData.seedIfEmpty(using: repository)
             #endif
+            await MissedDoseChecker(repository: repository).run()
             await viewModel.load()
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 5 * 60 * 1_000_000_000)
+                await MissedDoseChecker(repository: repository).run()
+                await viewModel.load()
+            }
         }
         .sheet(isPresented: $showingAdd) {
             AddMedicationFlow(repository: repository) {
                 Task { await viewModel.load() }
             }
         }
+        .debugToolbar()
     }
 
     @ViewBuilder
