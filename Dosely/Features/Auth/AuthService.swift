@@ -114,11 +114,38 @@ final class AuthService: ObservableObject {
     func biometricLogin() async throws {
         let context = LAContext()
         var evalError: NSError?
-        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &evalError) else {
+        let canEvaluate = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &evalError)
+
+        #if DEBUG
+        let typeName = Self.describe(context.biometryType)
+        if let evalError {
+            print("[AUTH-DEBUG] biometric: type=\(typeName), canEvaluate=\(canEvaluate), error.domain=\(evalError.domain), error.code=\(evalError.code), desc=\(evalError.localizedDescription)")
+        } else {
+            print("[AUTH-DEBUG] biometric: type=\(typeName), canEvaluate=\(canEvaluate)")
+        }
+        #endif
+
+        guard canEvaluate else {
+            errorMessage = AuthError.biometricUnavailable.localizedDescription
             throw AuthError.biometricUnavailable
         }
-        let ok = try await evaluate(context: context, reason: "Sign in to Dosely")
-        guard ok else { throw AuthError.biometricFailed }
+
+        do {
+            let ok = try await evaluate(context: context, reason: "Sign in to Dosely")
+            guard ok else {
+                errorMessage = AuthError.biometricFailed.localizedDescription
+                throw AuthError.biometricFailed
+            }
+        } catch let error as AuthError {
+            throw error
+        } catch {
+            #if DEBUG
+            let ns = error as NSError
+            print("[AUTH-DEBUG] evaluatePolicy threw: domain=\(ns.domain), code=\(ns.code), desc=\(ns.localizedDescription)")
+            #endif
+            errorMessage = AuthError.biometricFailed.localizedDescription
+            throw AuthError.biometricFailed
+        }
 
         // Firebase persists its own session across app launches. If it's still
         // here, biometric is effectively a local gate — refresh the token and go.
@@ -128,6 +155,7 @@ final class AuthService: ObservableObject {
             return
         }
         // If the user explicitly signed out, we can't recover without a password.
+        errorMessage = AuthError.sessionExpired.localizedDescription
         throw AuthError.sessionExpired
     }
 
@@ -137,6 +165,15 @@ final class AuthService: ObservableObject {
                 if let error { cont.resume(throwing: error) }
                 else         { cont.resume(returning: success) }
             }
+        }
+    }
+
+    private static func describe(_ type: LABiometryType) -> String {
+        switch type {
+        case .none:    return "none"
+        case .touchID: return "touchID"
+        case .faceID:  return "faceID"
+        @unknown default: return "unknown(\(type.rawValue))"
         }
     }
 
