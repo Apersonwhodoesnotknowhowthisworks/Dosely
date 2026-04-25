@@ -79,6 +79,7 @@
 		BFD00000000000000000000B4 /* drug_info_pa.json in Resources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000B4 /* drug_info_pa.json */; };
 		BFD00000000000000000000C0 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = GRP0000000000000000000017 /* Localizable.strings */; };
 		BFD00000000000000000000C1 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = GRP0000000000000000000018 /* Localizable.stringsdict */; };
+		BFD00000000000000000000D0 /* DSColorsContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000D0 /* DSColorsContrastTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -166,6 +167,7 @@
 		FRD00000000000000000000C1 /* pa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pa; path = pa.lproj/Localizable.strings; sourceTree = "<group>"; };
 		FRD00000000000000000000C2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		FRD00000000000000000000C3 /* pa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = pa; path = pa.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
+		FRD00000000000000000000D0 /* DSColorsContrastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSColorsContrastTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -265,6 +267,7 @@
 				FRD0000000000000000000092 /* DrugInfoCacheTests.swift */,
 				FRD0000000000000000000094 /* OpenFDAContentParserTests.swift */,
 				FRD00000000000000000000A5 /* PrescriptionParserTests.swift */,
+				FRD00000000000000000000D0 /* DSColorsContrastTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -605,6 +608,7 @@
 				BFD0000000000000000000092 /* DrugInfoCacheTests.swift in Sources */,
 				BFD0000000000000000000094 /* OpenFDAContentParserTests.swift in Sources */,
 				BFD00000000000000000000A5 /* PrescriptionParserTests.swift in Sources */,
+				BFD00000000000000000000D0 /* DSColorsContrastTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

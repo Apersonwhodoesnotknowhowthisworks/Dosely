@@ -150,6 +150,8 @@
 "settings.language.row" = "Language / ਭਾਸ਼ਾ";
 "settings.language.title" = "Language";
 "settings.close" = "Close settings";
+"settings.lightmode.title" = "Always use light mode";
+"settings.lightmode.subtitle" = "Some people find light mode easier to read, even at night.";
 
 // MARK: - Disclaimer
 "disclaimer.title" = "Before you continue";

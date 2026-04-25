@@ -187,6 +187,11 @@ private struct PreviewDoseSpec {
     TodayView(repository: TodayPreviewFactory.emptyRepo())
 }
 
+#Preview("Today · empty · dark") {
+    TodayView(repository: TodayPreviewFactory.emptyRepo())
+        .preferredColorScheme(.dark)
+}
+
 #Preview("Today · 1 upcoming") {
     // Use a far-future time so it stays "upcoming" all day.
     TodayView(repository: MedicationRepository(stack: CoreDataStack(inMemory: true)))

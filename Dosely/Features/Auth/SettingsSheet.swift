@@ -4,6 +4,7 @@ struct SettingsSheet: View {
     @EnvironmentObject var authService: AuthService
     @Environment(\.dismiss) private var dismiss
     @AppStorage("app_language") private var language: String = ""
+    @AppStorage("force_light_mode") private var forceLightMode: Bool = false
     @State private var biometricOn: Bool = false
     @State private var showingLanguagePicker = false
 
@@ -15,6 +16,7 @@ struct SettingsSheet: View {
                 VStack(alignment: .leading, spacing: DSSpacing.lg) {
                     accountSection
                     languageSection
+                    lightModeSection
                     if authService.biometricAvailable { biometricSection }
                     Spacer()
                     Button(action: signOut) {
@@ -98,6 +100,26 @@ struct SettingsSheet: View {
         case "pa": return L("languagepicker.punjabi")
         default:   return L("languagepicker.english")
         }
+    }
+
+    private var lightModeSection: some View {
+        Toggle(isOn: $forceLightMode) {
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                Text("settings.lightmode.title")
+                    .dsBodyLarge()
+                    .foregroundColor(.dsTextPrimary)
+                Text("settings.lightmode.subtitle")
+                    .dsBodyRegular()
+                    .foregroundColor(.dsTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(.dsPrimary)
+        .padding(DSSpacing.md)
+        .frame(minHeight: DSSpacing.minTapTarget)
+        .background(Color.dsSurface)
+        .cornerRadius(DSSpacing.rMd)
+        .accessibilityLabel(Text("settings.lightmode.title"))
     }
 
     private var biometricSection: some View {

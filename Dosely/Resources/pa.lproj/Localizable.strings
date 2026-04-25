@@ -153,6 +153,8 @@
 "settings.language.row" = "ਭਾਸ਼ਾ / Language";
 "settings.language.title" = "ਭਾਸ਼ਾ";
 "settings.close" = "ਸੈਟਿੰਗਾਂ ਬੰਦ ਕਰੋ";
+"settings.lightmode.title" = "ਹਮੇਸ਼ਾ ਚਿੱਟਾ ਥੀਮ ਵਰਤੋ";
+"settings.lightmode.subtitle" = "ਕੁਝ ਲੋਕਾਂ ਨੂੰ ਰਾਤ ਨੂੰ ਵੀ ਚਿੱਟਾ ਥੀਮ ਪੜ੍ਹਨ ਵਿੱਚ ਸੌਖਾ ਲੱਗਦਾ ਹੈ।";
 
 // MARK: - Disclaimer
 "disclaimer.title" = "ਅੱਗੇ ਵਧਣ ਤੋਂ ਪਹਿਲਾਂ";

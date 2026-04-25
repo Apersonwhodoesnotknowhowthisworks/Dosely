@@ -626,4 +626,16 @@ private extension OpenFDADrug {
     MedicationDetailView(name: "Anything", dose: "10mg",
                          phase: .error(message: "You appear to be offline. Check your connection and try again."))
 }
+
+#Preview("Metformin · curated · dark") {
+    MedicationDetailView(name: "Metformin", dose: "500mg",
+                         phase: .loaded(.curated(.metforminPreview)))
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Eliquis · dynamic · dark") {
+    MedicationDetailView(name: "Eliquis", dose: "5mg",
+                         phase: .loaded(.dynamic(.realisticDynamicPreview, sourceLabel: "openFDA · DailyMed")))
+        .preferredColorScheme(.dark)
+}
 #endif

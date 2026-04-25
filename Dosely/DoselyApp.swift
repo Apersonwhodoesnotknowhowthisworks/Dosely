@@ -7,6 +7,7 @@ struct DoselyApp: App {
 
     @AppStorage("app_language") private var language: String = ""
     @AppStorage("language_picked") private var languagePicked: Bool = false
+    @AppStorage("force_light_mode") private var forceLightMode: Bool = false
 
     init() {
         FirebaseApp.configure()
@@ -27,6 +28,7 @@ struct DoselyApp: App {
             }
             .environment(\.locale, Locale(identifier: language.isEmpty ? "en" : language))
             .id(language)   // forces a full SwiftUI rebuild when the user switches languages
+            .preferredColorScheme(forceLightMode ? .light : nil)
         }
     }
 }
