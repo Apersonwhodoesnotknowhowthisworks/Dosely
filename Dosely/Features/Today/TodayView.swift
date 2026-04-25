@@ -5,6 +5,7 @@ struct TodayView: View {
     private let repository: MedicationRepository
     @State private var showingAdd = false
     @State private var showingSettings = false
+    @State private var detailDose: TodayDose?
 
     init(repository: MedicationRepository = MedicationRepository()) {
         self.repository = repository
@@ -88,6 +89,13 @@ struct TodayView: View {
         .sheet(isPresented: $showingSettings) {
             SettingsSheet()
         }
+        .sheet(item: $detailDose) { dose in
+            MedicationDetailView(
+                name: dose.medication.name ?? "",
+                dose: dose.medication.dose ?? "",
+                pillPhotoData: dose.medication.pillPhotoData
+            )
+        }
         // Reload when the app returns from background so that doses logged from a
         // notification action (TOOK_IT) surface without waiting for the 5-min poll.
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
@@ -112,7 +120,8 @@ struct TodayView: View {
                             dose: dose,
                             onTake: { Task { await viewModel.markTaken(dose) } },
                             onSkip: { Task { await viewModel.skip(dose) } },
-                            onSnooze: { print("TODO snooze") }
+                            onSnooze: { print("TODO snooze") },
+                            onLearnMore: { detailDose = dose }
                         )
                     }
                 }

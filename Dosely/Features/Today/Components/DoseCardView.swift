@@ -5,6 +5,7 @@ struct DoseCardView: View {
     var onTake: () -> Void
     var onSkip: () -> Void
     var onSnooze: () -> Void
+    var onLearnMore: () -> Void = {}
 
     @State private var isExpanded = false
 
@@ -146,6 +147,18 @@ struct DoseCardView: View {
                 expandedButton("Snooze 10 min", background: .dsWarning, action: onSnooze,
                                a11y: "Snooze this dose for ten minutes")
             }
+
+            Button(action: onLearnMore) {
+                Label("Learn more", systemImage: "info.circle")
+                    .dsBodyLarge()
+                    .foregroundColor(.dsPrimary)
+                    .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DSSpacing.rMd)
+                            .stroke(Color.dsPrimary, lineWidth: 1.5)
+                    )
+            }
+            .accessibilityLabel("Learn more about \(dose.medication.name ?? "this medication")")
         }
     }
 

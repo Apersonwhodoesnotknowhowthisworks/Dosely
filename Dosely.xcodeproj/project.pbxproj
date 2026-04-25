@@ -57,6 +57,10 @@
 		BFD0000000000000000000075 /* PasswordResetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000075 /* PasswordResetView.swift */; };
 		BFD0000000000000000000076 /* MedicalDisclaimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000076 /* MedicalDisclaimerView.swift */; };
 		BFD0000000000000000000077 /* SettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000077 /* SettingsSheet.swift */; };
+		BFD0000000000000000000080 /* DrugInfoRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000080 /* DrugInfoRepository.swift */; };
+		BFD0000000000000000000081 /* MedicationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000081 /* MedicationDetailView.swift */; };
+		BFD0000000000000000000082 /* drug_info.json in Resources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000082 /* drug_info.json */; };
+		BFD0000000000000000000083 /* DrugInfoRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000083 /* DrugInfoRepositoryTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -120,6 +124,10 @@
 		FRD0000000000000000000075 /* PasswordResetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordResetView.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000076 /* MedicalDisclaimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalDisclaimerView.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000077 /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000080 /* DrugInfoRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrugInfoRepository.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000081 /* MedicationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationDetailView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000082 /* drug_info.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = drug_info.json; sourceTree = "<group>"; };
+		FRD0000000000000000000083 /* DrugInfoRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrugInfoRepositoryTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -171,10 +179,19 @@
 				GRP0000000000000000000005 /* DesignSystem */,
 				GRP0000000000000000000006 /* Data */,
 				GRP0000000000000000000008 /* Features */,
+				GRP0000000000000000000013 /* Resources */,
 				FRD0000000000000000000005 /* Assets.xcassets */,
 				GRP0000000000000000000004 /* Preview Content */,
 			);
 			path = Dosely;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000013 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000082 /* drug_info.json */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		GRP0000000000000000000004 /* Preview Content */ = {
@@ -201,6 +218,7 @@
 			children = (
 				FRD0000000000000000000014 /* CoreDataStack.swift */,
 				FRD0000000000000000000015 /* MedicationRepository.swift */,
+				FRD0000000000000000000080 /* DrugInfoRepository.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -209,6 +227,7 @@
 			isa = PBXGroup;
 			children = (
 				FRD0000000000000000000021 /* MedicationRepositoryTests.swift */,
+				FRD0000000000000000000083 /* DrugInfoRepositoryTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -221,8 +240,17 @@
 				GRP000000000000000000000E /* Notifications */,
 				GRP000000000000000000000F /* History */,
 				GRP0000000000000000000011 /* Auth */,
+				GRP0000000000000000000012 /* MedicationDetail */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000012 /* MedicationDetail */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000081 /* MedicationDetailView.swift */,
+			);
+			path = MedicationDetail;
 			sourceTree = "<group>";
 		};
 		GRP0000000000000000000011 /* Auth */ = {
@@ -413,6 +441,7 @@
 				BFD0000000000000000000006 /* Preview Assets.xcassets in Resources */,
 				BFD0000000000000000000005 /* Assets.xcassets in Resources */,
 				13D32A5E2F9B2444005253C1 /* GoogleService-Info.plist in Resources */,
+				BFD0000000000000000000082 /* drug_info.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -474,6 +503,8 @@
 				BFD0000000000000000000075 /* PasswordResetView.swift in Sources */,
 				BFD0000000000000000000076 /* MedicalDisclaimerView.swift in Sources */,
 				BFD0000000000000000000077 /* SettingsSheet.swift in Sources */,
+				BFD0000000000000000000080 /* DrugInfoRepository.swift in Sources */,
+				BFD0000000000000000000081 /* MedicationDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -482,6 +513,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BFD0000000000000000000021 /* MedicationRepositoryTests.swift in Sources */,
+				BFD0000000000000000000083 /* DrugInfoRepositoryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

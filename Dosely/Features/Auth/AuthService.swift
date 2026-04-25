@@ -153,6 +153,13 @@ final class AuthService: ObservableObject {
 
     static func friendly(_ error: Error) -> String {
         let ns = error as NSError
+        #if DEBUG
+        print("[AUTH-DEBUG] domain=\(ns.domain) code=\(ns.code) desc=\(ns.localizedDescription)")
+        if let underlying = ns.userInfo[NSUnderlyingErrorKey] as? NSError {
+            print("[AUTH-DEBUG]   underlying: domain=\(underlying.domain) code=\(underlying.code) desc=\(underlying.localizedDescription)")
+        }
+        #endif
+
         switch ns.code {
         case AuthErrorCode.emailAlreadyInUse.rawValue:
             return "An account with this email already exists."
@@ -171,9 +178,21 @@ final class AuthService: ObservableObject {
             return "Network error. Please check your connection."
         case AuthErrorCode.tooManyRequests.rawValue:
             return "Too many attempts. Please try again later."
+        case AuthErrorCode.operationNotAllowed.rawValue:
+            return "Email sign-in isn't enabled for this Firebase project. Enable it in the Firebase console under Authentication → Sign-in method."
+        case AuthErrorCode.missingEmail.rawValue:
+            return "Please enter your email address."
+        case AuthErrorCode.accountExistsWithDifferentCredential.rawValue:
+            return "An account exists with a different sign-in method for this email."
+        case AuthErrorCode.internalError.rawValue:
+            return "Firebase encountered an internal error. Please try again."
         default:
             if let authError = error as? AuthError { return authError.localizedDescription }
+            #if DEBUG
+            return "Auth error (code \(ns.code)). Check console for details."
+            #else
             return "Something went wrong. Please try again."
+            #endif
         }
     }
 

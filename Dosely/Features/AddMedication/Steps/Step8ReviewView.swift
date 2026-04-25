@@ -2,6 +2,7 @@ import SwiftUI
 
 struct Step8ReviewView: View {
     @EnvironmentObject var state: AddMedicationState
+    @State private var showingDetail = false
     var onSave: () -> Void
 
     var body: some View {
@@ -19,9 +20,27 @@ struct Step8ReviewView: View {
                     row(label: "Food",     value: foodText, jumpTo: .foodRule)
                     row(label: "Supply",   value: "\(state.currentSupply) pills", jumpTo: .supply)
                     row(label: "Notes",    value: state.notes.isEmpty ? "—" : state.notes, jumpTo: .notes)
+
+                    if !state.name.trimmingCharacters(in: .whitespaces).isEmpty {
+                        Button(action: { showingDetail = true }) {
+                            Label("Learn about this medication", systemImage: "info.circle")
+                                .dsBodyLarge()
+                                .foregroundColor(.dsPrimary)
+                                .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: DSSpacing.rMd)
+                                        .stroke(Color.dsPrimary, lineWidth: 1.5)
+                                )
+                        }
+                        .accessibilityLabel("Learn about \(state.name)")
+                        .padding(.top, DSSpacing.sm)
+                    }
                 }
             }
             .frame(maxHeight: 420)
+        }
+        .sheet(isPresented: $showingDetail) {
+            MedicationDetailView(name: state.name, dose: state.dose)
         }
     }
 

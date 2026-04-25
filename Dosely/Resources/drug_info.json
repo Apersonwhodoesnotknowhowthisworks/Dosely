@@ -1,0 +1,124 @@
+{
+  "meds": [
+    {
+      "nameKey": "metformin",
+      "commonNames": ["Metformin", "Glucophage", "Fortamet", "Glumetza", "Riomet"],
+      "whatItDoes": "Lowers blood sugar in adults with type 2 diabetes. It helps your body use insulin better and tells the liver to make less sugar.",
+      "howToTake": "Swallow with a meal and a full glass of water. Most people take it once or twice a day at the same times each day.",
+      "commonSideEffects": ["Upset stomach", "Diarrhea", "Gas or bloating", "Metallic taste in the mouth"],
+      "seriousSideEffects": ["Severe muscle pain or weakness", "Trouble breathing", "Unusual tiredness or sleepiness", "Stomach pain that does not go away"],
+      "foodGuide": {
+        "safe": ["Most regular meals", "Water"],
+        "caution": ["Heavy alcohol use can raise the risk of side effects"],
+        "avoid": []
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=metformin"
+    },
+    {
+      "nameKey": "lisinopril",
+      "commonNames": ["Lisinopril", "Prinivil", "Zestril", "Qbrelis"],
+      "whatItDoes": "Lowers blood pressure and helps the heart pump more easily. It belongs to a group of medicines called ACE inhibitors.",
+      "howToTake": "Swallow with water at the same time each day. It can be taken with or without food. The first dose may make you a little dizzy, so sit or lie down for a while after.",
+      "commonSideEffects": ["Dry cough", "Dizziness when standing up", "Headache", "Tiredness"],
+      "seriousSideEffects": ["Swelling of the face, lips, tongue, or throat", "Trouble breathing or swallowing", "Fainting", "Very little urine"],
+      "foodGuide": {
+        "safe": ["Most regular meals", "Water"],
+        "caution": ["Salt substitutes that contain potassium", "Foods very high in potassium such as bananas and orange juice if eaten in large amounts", "Alcohol can lower blood pressure too much"],
+        "avoid": []
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=lisinopril"
+    },
+    {
+      "nameKey": "atorvastatin",
+      "commonNames": ["Atorvastatin", "Lipitor"],
+      "whatItDoes": "Lowers high cholesterol and lowers the chance of a heart attack or stroke. It is one of a group of medicines called statins.",
+      "howToTake": "Swallow with water once a day. It can be taken any time of day, with or without food. Many people take it in the evening because the body makes the most cholesterol overnight.",
+      "commonSideEffects": ["Mild muscle aches", "Headache", "Joint pain", "Mild stomach upset"],
+      "seriousSideEffects": ["Severe or unexplained muscle pain or weakness", "Dark or tea-colored urine", "Yellowing of the skin or eyes", "Severe tiredness"],
+      "foodGuide": {
+        "safe": ["Most regular meals", "Water"],
+        "caution": ["Alcohol may raise the risk of liver problems"],
+        "avoid": ["Grapefruit and grapefruit juice — they can raise the level of this medicine in your blood"]
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=atorvastatin"
+    },
+    {
+      "nameKey": "amlodipine",
+      "commonNames": ["Amlodipine", "Norvasc", "Katerzia"],
+      "whatItDoes": "Relaxes blood vessels so the heart does not have to work as hard. It is used for high blood pressure and chest pain (angina).",
+      "howToTake": "Swallow with water once a day at the same time. It can be taken with or without food.",
+      "commonSideEffects": ["Swelling of the ankles or feet", "Flushing or warm face", "Headache", "Dizziness"],
+      "seriousSideEffects": ["Chest pain that gets worse", "Very fast or pounding heartbeat", "Severe swelling that spreads"],
+      "foodGuide": {
+        "safe": ["Most regular meals", "Water"],
+        "caution": ["Grapefruit juice in large amounts may slightly raise the level in your blood", "Alcohol can add to dizziness"],
+        "avoid": []
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=amlodipine"
+    },
+    {
+      "nameKey": "levothyroxine",
+      "commonNames": ["Levothyroxine", "Synthroid", "Levoxyl", "Euthyrox", "Tirosint", "Eltroxin"],
+      "whatItDoes": "Replaces the thyroid hormone your body is missing. It is used when the thyroid gland does not make enough hormone on its own.",
+      "howToTake": "Swallow with a full glass of water on an empty stomach, ideally 30 to 60 minutes before breakfast. Take it at the same time every day.",
+      "commonSideEffects": ["Hair thinning during the first months", "Mild headache", "Trouble sleeping if dose is too high", "Slight changes in weight"],
+      "seriousSideEffects": ["Chest pain", "Very fast or irregular heartbeat", "Heavy sweating or tremor", "Trouble breathing"],
+      "foodGuide": {
+        "safe": ["Water"],
+        "caution": ["High-fiber meals near the dose can lower how much medicine your body absorbs"],
+        "avoid": ["Coffee, calcium supplements, iron supplements, soy, and antacids within four hours of the dose — they block absorption"]
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=levothyroxine"
+    },
+    {
+      "nameKey": "warfarin",
+      "commonNames": ["Warfarin", "Coumadin", "Jantoven"],
+      "whatItDoes": "Thins the blood to help prevent dangerous blood clots, strokes, and heart attacks. It needs regular blood tests to keep the dose right.",
+      "howToTake": "Swallow with water once a day at the same time. It can be taken with or without food. Never skip blood tests — the dose may need to change often.",
+      "commonSideEffects": ["Easy bruising", "Bleeding gums when brushing teeth", "Longer bleeding from small cuts", "Hair thinning"],
+      "seriousSideEffects": ["Heavy or unusual bleeding", "Blood in urine or black stools", "Severe headache or sudden weakness", "Coughing up blood"],
+      "foodGuide": {
+        "safe": ["Water", "Most regular meals if your overall diet stays steady"],
+        "caution": ["Leafy green vegetables such as spinach, kale, and broccoli are high in vitamin K — you do not need to avoid them, but keep your daily intake about the same so the dose stays right", "Cranberry juice in large amounts"],
+        "avoid": ["Heavy alcohol use", "Sudden big changes in how much vitamin K food you eat"]
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=warfarin"
+    },
+    {
+      "nameKey": "aspirin_low_dose",
+      "commonNames": ["Aspirin", "Aspirin (low-dose)", "Baby aspirin", "Bayer Low Dose", "Ecotrin"],
+      "whatItDoes": "A daily small dose helps prevent blood clots in some people who have had a heart attack or stroke, when a doctor has told them to take it. Only use it if your doctor has told you to.",
+      "howToTake": "Swallow with a full glass of water and a small snack to protect your stomach. Take it at the same time each day.",
+      "commonSideEffects": ["Mild stomach upset", "Heartburn", "Easy bruising"],
+      "seriousSideEffects": ["Black or bloody stools", "Vomiting that looks like coffee grounds", "Severe stomach pain", "Sudden weakness, slurred speech, or trouble seeing"],
+      "foodGuide": {
+        "safe": ["Most regular meals", "Water"],
+        "caution": ["Alcohol can raise the risk of stomach bleeding"],
+        "avoid": []
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=aspirin"
+    },
+    {
+      "nameKey": "omeprazole",
+      "commonNames": ["Omeprazole", "Prilosec", "Losec"],
+      "whatItDoes": "Lowers the amount of acid your stomach makes. It is used for heartburn, acid reflux, and stomach ulcers.",
+      "howToTake": "Swallow whole with water 30 to 60 minutes before a meal, usually breakfast. Do not crush or chew the capsule.",
+      "commonSideEffects": ["Headache", "Stomach pain", "Diarrhea or constipation", "Gas"],
+      "seriousSideEffects": ["Severe or watery diarrhea", "Bone fractures with long-term use", "Severe rash, blisters, or peeling skin", "Numbness or muscle cramps"],
+      "foodGuide": {
+        "safe": ["Water", "Most regular meals after the dose"],
+        "caution": ["Alcohol can make heartburn worse"],
+        "avoid": []
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=omeprazole"
+    }
+  ]
+}
