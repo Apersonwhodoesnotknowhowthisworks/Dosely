@@ -230,30 +230,39 @@ struct MedicationDetailView: View {
 
     @ViewBuilder
     private func dynamicSections(_ drug: OpenFDADrug, sourceLabel: String) -> some View {
+        let parsed = OpenFDAContentParser.parse(drug)
+
         sourceBadge
 
-        if let text = drug.indications, !text.trimmingCharacters(in: .whitespaces).isEmpty {
+        if let text = parsed.whatItDoes {
             labelSection(title: "What it does", body: text)
         }
 
-        if let raw = drug.dosageAndAdministration, !raw.trimmingCharacters(in: .whitespaces).isEmpty {
-            let body = Self.sanitizeTakeItNow(raw)
-            labelSection(title: "How to take it",
-                         body: body,
-                         footer: "Always follow your doctor's instructions.")
+        if let text = parsed.howToTake {
+            labelSection(title: "How to take it", body: text)
         }
 
-        if let text = drug.adverseReactions, !text.trimmingCharacters(in: .whitespaces).isEmpty {
-            labelSection(title: "Side effects (per the label)", body: text)
+        if !parsed.commonSideEffects.isEmpty {
+            bulletLabelSection(
+                title: "Side effects — common",
+                items: parsed.commonSideEffects,
+                color: .dsTextPrimary
+            )
         }
 
-        if let text = drug.warnings, !text.trimmingCharacters(in: .whitespaces).isEmpty {
-            labelSection(title: "Warnings — call your doctor",
-                         body: text,
-                         color: .dsDanger)
+        if !parsed.warnings.isEmpty {
+            bulletLabelSection(
+                title: "Side effects — call your doctor",
+                items: parsed.warnings,
+                color: .dsDanger
+            )
         }
 
         sourceFooter(label: sourceLabel, url: drug.sourceURL)
+
+        if !parsed.rawFallback.isEmpty {
+            fullFDATextDisclosure(parsed.rawFallback)
+        }
     }
 
     private var sourceBadge: some View {
@@ -280,11 +289,7 @@ struct MedicationDetailView: View {
                               color: Color = .dsTextPrimary) -> some View {
         section(title: title) {
             VStack(alignment: .leading, spacing: DSSpacing.sm) {
-                Text("This is the official label. Ask your pharmacist if any of this is unclear.")
-                    .font(.body.italic())
-                    .dynamicTypeSize(.large ... .accessibility5)
-                    .foregroundColor(.dsTextSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                fdaLabelCaption
                 Text(body)
                     .dsBodyLarge()
                     .foregroundColor(color)
@@ -299,13 +304,55 @@ struct MedicationDetailView: View {
         }
     }
 
-    private static func sanitizeTakeItNow(_ s: String) -> String {
-        // Belt-and-braces guard against the imperative "take it now" pattern
-        // (B.1 S2). The footer caveat covers it semantically; this keeps the
-        // exact phrase out of the rendered text just in case.
-        s.replacingOccurrences(of: "take it now",
-                               with: "take it as your doctor directs",
-                               options: .caseInsensitive)
+    @ViewBuilder
+    private func bulletLabelSection(title: String,
+                                    items: [String],
+                                    color: Color) -> some View {
+        section(title: title) {
+            VStack(alignment: .leading, spacing: DSSpacing.sm) {
+                fdaLabelCaption
+                bulletList(items, color: color)
+            }
+        }
+    }
+
+    private var fdaLabelCaption: some View {
+        Text("This is from the official FDA label. Ask your pharmacist if any of this is unclear.")
+            .font(.body.italic())
+            .dynamicTypeSize(.large ... .accessibility5)
+            .foregroundColor(.dsTextSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    @ViewBuilder
+    private func fullFDATextDisclosure(_ fields: [String: String]) -> some View {
+        DisclosureGroup {
+            VStack(alignment: .leading, spacing: DSSpacing.md) {
+                ForEach(fields.keys.sorted(), id: \.self) { label in
+                    if let text = fields[label] {
+                        VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                            Text(label)
+                                .dsCaption()
+                                .foregroundColor(.dsTextSecondary)
+                                .accessibilityAddTraits(.isHeader)
+                            Text(text)
+                                .dsBodyRegular()
+                                .foregroundColor(.dsTextSecondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            }
+            .padding(.top, DSSpacing.sm)
+        } label: {
+            Text("Show full FDA text")
+                .dsBodyLarge()
+                .foregroundColor(.dsPrimary)
+        }
+        .padding(DSSpacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.dsSurface)
+        .cornerRadius(DSSpacing.rMd)
     }
 
     // MARK: - Section helpers
@@ -349,16 +396,25 @@ struct MedicationDetailView: View {
     private func bulletList(_ items: [String], color: Color) -> some View {
         VStack(alignment: .leading, spacing: DSSpacing.xs) {
             ForEach(items, id: \.self) { item in
-                HStack(alignment: .top, spacing: DSSpacing.sm) {
-                    Text("•")
-                        .dsBodyLarge()
-                        .foregroundColor(color)
-                        .accessibilityHidden(true)
-                    Text(item)
-                        .dsBodyLarge()
-                        .foregroundColor(color)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                BulletRow(text: item, color: color)
+            }
+        }
+    }
+
+    private struct BulletRow: View {
+        let text: String
+        let color: Color
+
+        var body: some View {
+            HStack(alignment: .top, spacing: DSSpacing.sm) {
+                Text("•")
+                    .dsBodyLarge()
+                    .foregroundColor(color)
+                    .accessibilityHidden(true)
+                Text(text)
+                    .dsBodyLarge()
+                    .foregroundColor(color)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -514,6 +570,22 @@ private extension OpenFDADrug {
         adverseReactions: "Most common adverse reactions (>1%) are related to bleeding.",
         sourceURL: "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=eliquis"
     )
+
+    /// Realistic-shaped fixture: multi-paragraph indications, comma-list
+    /// adverse reactions, semicolon-list warnings — exercises every parser
+    /// strategy at once.
+    static let realisticDynamicPreview = OpenFDADrug(
+        brandName: "ELIQUIS",
+        genericName: "APIXABAN",
+        indications: """
+        ELIQUIS is indicated to reduce the risk of stroke and systemic embolism in patients with non-valvular atrial fibrillation. \
+        It is also used for the treatment of deep vein thrombosis (DVT) and of pulmonary embolism (PE), and for the prophylaxis of DVT after hip or knee replacement surgery.
+        """,
+        dosageAndAdministration: "The recommended dose is 5 mg orally twice daily. Patients meeting the dose-reduction criteria should receive 2.5 mg twice daily instead.",
+        warnings: "Premature discontinuation of any oral anticoagulant increases the risk of thrombotic events; spinal or epidural hematoma may occur in patients undergoing neuraxial anesthesia; bleeding risk is elevated in patients with severe renal impairment",
+        adverseReactions: "The most common adverse reactions include bleeding events, gastrointestinal disturbance, nausea, anemia, and bruising.",
+        sourceURL: "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=eliquis"
+    )
 }
 
 #Preview("Metformin · curated") {
@@ -529,6 +601,11 @@ private extension OpenFDADrug {
 #Preview("Eliquis · openFDA dynamic") {
     MedicationDetailView(name: "Eliquis", dose: "5mg",
                          phase: .loaded(.dynamic(.eliquisPreview, sourceLabel: "openFDA · DailyMed")))
+}
+
+#Preview("Eliquis · realistic openFDA shape") {
+    MedicationDetailView(name: "Eliquis", dose: "5mg",
+                         phase: .loaded(.dynamic(.realisticDynamicPreview, sourceLabel: "openFDA · DailyMed")))
 }
 
 #Preview("Imaginary · missing") {
