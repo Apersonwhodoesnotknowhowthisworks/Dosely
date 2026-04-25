@@ -66,6 +66,12 @@
 		BFD0000000000000000000092 /* DrugInfoCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000092 /* DrugInfoCacheTests.swift */; };
 		BFD0000000000000000000093 /* OpenFDAContentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000093 /* OpenFDAContentParser.swift */; };
 		BFD0000000000000000000094 /* OpenFDAContentParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000094 /* OpenFDAContentParserTests.swift */; };
+		BFD00000000000000000000A0 /* OCRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000A0 /* OCRService.swift */; };
+		BFD00000000000000000000A1 /* PrescriptionParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000A1 /* PrescriptionParser.swift */; };
+		BFD00000000000000000000A2 /* CameraScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000A2 /* CameraScanView.swift */; };
+		BFD00000000000000000000A3 /* ScanReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000A3 /* ScanReviewView.swift */; };
+		BFD00000000000000000000A4 /* ScanCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000A4 /* ScanCoordinator.swift */; };
+		BFD00000000000000000000A5 /* PrescriptionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000A5 /* PrescriptionParserTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -138,6 +144,12 @@
 		FRD0000000000000000000092 /* DrugInfoCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrugInfoCacheTests.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000093 /* OpenFDAContentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenFDAContentParser.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000094 /* OpenFDAContentParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenFDAContentParserTests.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000A0 /* OCRService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRService.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000A1 /* PrescriptionParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrescriptionParser.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000A2 /* CameraScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraScanView.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000A3 /* ScanReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanReviewView.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000A4 /* ScanCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanCoordinator.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000A5 /* PrescriptionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrescriptionParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -243,6 +255,7 @@
 				FRD0000000000000000000083 /* DrugInfoRepositoryTests.swift */,
 				FRD0000000000000000000092 /* DrugInfoCacheTests.swift */,
 				FRD0000000000000000000094 /* OpenFDAContentParserTests.swift */,
+				FRD00000000000000000000A5 /* PrescriptionParserTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -309,8 +322,21 @@
 				FRD0000000000000000000040 /* AddMedicationFlow.swift */,
 				GRP000000000000000000000C /* Components */,
 				GRP000000000000000000000D /* Steps */,
+				GRP0000000000000000000014 /* Scan */,
 			);
 			path = AddMedication;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000014 /* Scan */ = {
+			isa = PBXGroup;
+			children = (
+				FRD00000000000000000000A0 /* OCRService.swift */,
+				FRD00000000000000000000A1 /* PrescriptionParser.swift */,
+				FRD00000000000000000000A2 /* CameraScanView.swift */,
+				FRD00000000000000000000A3 /* ScanReviewView.swift */,
+				FRD00000000000000000000A4 /* ScanCoordinator.swift */,
+			);
+			path = Scan;
 			sourceTree = "<group>";
 		};
 		GRP000000000000000000000C /* Components */ = {
@@ -523,6 +549,11 @@
 				BFD0000000000000000000090 /* OpenFDADrugService.swift in Sources */,
 				BFD0000000000000000000091 /* DrugInfoCache.swift in Sources */,
 				BFD0000000000000000000093 /* OpenFDAContentParser.swift in Sources */,
+				BFD00000000000000000000A0 /* OCRService.swift in Sources */,
+				BFD00000000000000000000A1 /* PrescriptionParser.swift in Sources */,
+				BFD00000000000000000000A2 /* CameraScanView.swift in Sources */,
+				BFD00000000000000000000A3 /* ScanReviewView.swift in Sources */,
+				BFD00000000000000000000A4 /* ScanCoordinator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -534,6 +565,7 @@
 				BFD0000000000000000000083 /* DrugInfoRepositoryTests.swift in Sources */,
 				BFD0000000000000000000092 /* DrugInfoCacheTests.swift in Sources */,
 				BFD0000000000000000000094 /* OpenFDAContentParserTests.swift in Sources */,
+				BFD00000000000000000000A5 /* PrescriptionParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -677,6 +709,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Dosely/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Dosely uses the camera to scan prescription labels so you don't have to type them in by hand.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -705,6 +738,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Dosely/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Dosely uses the camera to scan prescription labels so you don't have to type them in by hand.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

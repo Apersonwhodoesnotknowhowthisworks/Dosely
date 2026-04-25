@@ -54,6 +54,53 @@ final class AddMedicationState: ObservableObject {
         f.dateFormat = "h:mm a"
         return f.string(from: date)
     }
+
+    /// Applies a scanned prescription to the in-flight state. Only fields
+    /// whose confidence is medium or high are filled — low-confidence fields
+    /// are left blank so the user types them in (B.1 S2).
+    func applyScanned(_ parsed: ParsedPrescription) {
+        if let value = parsed.name.value, parsed.name.confidence != .low {
+            self.name = value
+        }
+        if let value = parsed.dose.value, parsed.dose.confidence != .low {
+            self.dose = value
+        }
+        if let value = parsed.pillsPerDose.value, parsed.pillsPerDose.confidence != .low {
+            self.pillsPerDose = value
+        }
+        if let freq = parsed.frequency.value, parsed.frequency.confidence != .low {
+            timesPerDay = AddMedicationState.timesPerDay(fromFrequency: freq)
+            prepopulateTimes()
+        }
+        if let value = parsed.foodRule.value, parsed.foodRule.confidence != .low {
+            self.foodRule = value
+        }
+        if let value = parsed.quantity.value, parsed.quantity.confidence != .low {
+            self.currentSupply = max(0, min(value, 200))
+        }
+    }
+
+    static func timesPerDay(fromFrequency freq: String) -> Int {
+        let lower = freq.lowercased()
+        if lower.contains("twice") || lower.contains("2 times")        { return 2 }
+        if lower.contains("three") || lower.contains("3 times")        { return 3 }
+        if lower.contains("four")  || lower.contains("4 times")        { return 4 }
+        if lower.contains("once")  || lower.contains("daily") ||
+           lower.contains("at bedtime") || lower.contains("as needed") { return 1 }
+        if lower.contains("every"),
+           let regex = try? NSRegularExpression(pattern: #"every\s+(\d+)\s+hour"#,
+                                                options: .caseInsensitive),
+           let match = regex.firstMatch(in: lower,
+                                        options: [],
+                                        range: NSRange(lower.startIndex..., in: lower)),
+           match.numberOfRanges >= 2 {
+            let n = (lower as NSString).substring(with: match.range(at: 1))
+            if let hrs = Int(n), hrs > 0, hrs <= 24 {
+                return max(1, min(4, 24 / hrs))
+            }
+        }
+        return 1
+    }
 }
 
 struct AddMedicationFlow: View {
