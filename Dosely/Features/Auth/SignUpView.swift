@@ -7,7 +7,6 @@ struct SignUpView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var confirm = ""
-    @State private var showBiometricPrompt = false
     @FocusState private var focusedField: Field?
 
     enum Field { case email, password, confirm }
@@ -69,16 +68,10 @@ struct SignUpView: View {
         }
         .navigationTitle(Text("auth.createaccount"))
         .navigationBarTitleDisplayMode(.inline)
-        .alert(L("auth.signup.faceid.title"), isPresented: $showBiometricPrompt) {
-            Button(L("common.yes")) {
-                authService.setBiometric(enabled: true)
-            }
-            Button(L("common.notnow"), role: .cancel) {
-                authService.setBiometric(enabled: false)
-            }
-        } message: {
-            Text("auth.signup.faceid.message")
-        }
+        // The Face ID enrollment alert lives on AuthGate (on TodayView)
+        // because this view is torn down the instant `currentUser` flips
+        // to non-nil. AuthService.signUp() sets needsBiometricEnrollmentPrompt
+        // when biometrics are available; AuthGate presents the alert there.
     }
 
     @ViewBuilder
@@ -130,9 +123,8 @@ struct SignUpView: View {
         let trimmed = email.trimmingCharacters(in: .whitespaces)
         do {
             try await authService.signUp(email: trimmed, password: password)
-            if authService.biometricAvailable {
-                showBiometricPrompt = true
-            }
+            // AuthService sets needsBiometricEnrollmentPrompt / needsDisclaimer.
+            // AuthGate observes both and presents them in sequence on TodayView.
         } catch {
             // errorMessage set by service
         }

@@ -24,6 +24,12 @@ final class AuthService: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var needsDisclaimer: Bool = false
+    /// True after a successful sign-up *only* when the device supports
+    /// biometrics and the user hasn't already enabled them. AuthGate
+    /// presents the enrollment alert on TodayView when this flips true —
+    /// SignUpView itself can't host the alert because it gets torn down
+    /// the instant `currentUser` becomes non-nil.
+    @Published var needsBiometricEnrollmentPrompt: Bool = false
 
     private var authHandle: AuthStateDidChangeListenerHandle?
 
@@ -47,11 +53,28 @@ final class AuthService: ObservableObject {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             Keychain.set(email, for: .lastEmail)
             await refreshAndStoreToken(for: result.user)
-            self.needsDisclaimer = !UserDefaults.standard.bool(forKey: "disclaimer_accepted")
+            // Post-signup state machine: biometric prompt FIRST (if the
+            // device can do it and the user hasn't already enabled it),
+            // disclaimer SECOND. `completeBiometricEnrollmentPrompt(...)`
+            // hops to the disclaimer when the alert dismisses.
+            if biometricAvailable && !biometricEnabled {
+                needsBiometricEnrollmentPrompt = true
+            } else {
+                needsDisclaimer = !UserDefaults.standard.bool(forKey: "disclaimer_accepted")
+            }
         } catch {
             errorMessage = Self.friendly(error)
             throw error
         }
+    }
+
+    /// Called from AuthGate's biometric-enrollment alert. Persists the
+    /// user's choice to Keychain and advances the post-signup flow to the
+    /// medical disclaimer (if it hasn't already been accepted).
+    func completeBiometricEnrollmentPrompt(enableBiometric: Bool) {
+        setBiometric(enabled: enableBiometric)
+        needsBiometricEnrollmentPrompt = false
+        needsDisclaimer = !UserDefaults.standard.bool(forKey: "disclaimer_accepted")
     }
 
     func signIn(email: String, password: String) async throws {
