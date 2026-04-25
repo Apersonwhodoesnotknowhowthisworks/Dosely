@@ -23,10 +23,10 @@ struct LoginView: View {
                         }
 
                         VStack(alignment: .leading, spacing: DSSpacing.sm) {
-                            Text("Welcome to Dosely")
+                            Text("auth.welcome.title")
                                 .dsTitleLarge()
                                 .foregroundColor(.dsTextPrimary)
-                            Text("Sign in to keep your medications safe.")
+                            Text("auth.welcome.subtitle")
                                 .dsBodyRegular()
                                 .foregroundColor(.dsTextSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -38,7 +38,7 @@ struct LoginView: View {
                         }
 
                         Button(action: { Task { await signIn() } }) {
-                            Text("Sign in")
+                            Text("auth.signin")
                                 .dsBodyLarge()
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
@@ -46,11 +46,11 @@ struct LoginView: View {
                                 .cornerRadius(DSSpacing.rMd)
                         }
                         .disabled(!canSubmit)
-                        .accessibilityLabel("Sign in")
+                        .accessibilityLabel(Text("auth.signin"))
 
                         if showFaceIDButton {
                             Button(action: { Task { await biometric() } }) {
-                                Label("Use Face ID", systemImage: "faceid")
+                                Label("auth.signin.faceid", systemImage: "faceid")
                                     .dsBodyLarge()
                                     .foregroundColor(.dsPrimary)
                                     .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
@@ -59,25 +59,25 @@ struct LoginView: View {
                                             .stroke(Color.dsPrimary, lineWidth: 1.5)
                                     )
                             }
-                            .accessibilityLabel("Sign in with Face ID")
+                            .accessibilityLabel(Text("auth.signin.faceid"))
                         }
 
-                        Button("Forgot password?") { showingReset = true }
+                        Button(L("auth.forgotpassword")) { showingReset = true }
                             .dsBodyLarge()
                             .foregroundColor(.dsPrimary)
                             .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
-                            .accessibilityLabel("Reset forgotten password")
+                            .accessibilityLabel(Text("auth.forgotpassword"))
 
                         Spacer(minLength: DSSpacing.xl)
 
                         HStack(spacing: DSSpacing.xs) {
-                            Text("New here?")
+                            Text("auth.newhere")
                                 .dsBodyRegular()
                                 .foregroundColor(.dsTextSecondary)
-                            Button("Create an account") { showingSignUp = true }
+                            Button(L("auth.createaccount")) { showingSignUp = true }
                                 .dsBodyLarge()
                                 .foregroundColor(.dsPrimary)
-                                .accessibilityLabel("Create a new Dosely account")
+                                .accessibilityLabel(Text("auth.createaccount"))
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -99,7 +99,7 @@ struct LoginView: View {
     }
 
     private var emailField: some View {
-        TextField("Email", text: $email)
+        TextField(L("auth.email.placeholder"), text: $email)
             .dsBodyLarge()
             .keyboardType(.emailAddress)
             .autocorrectionDisabled()
@@ -112,11 +112,11 @@ struct LoginView: View {
             .focused($focusedField, equals: .email)
             .submitLabel(.next)
             .onSubmit { focusedField = .password }
-            .accessibilityLabel("Email address")
+            .accessibilityLabel(Text("auth.email.placeholder"))
     }
 
     private var passwordField: some View {
-        SecureField("Password", text: $password)
+        SecureField(L("auth.password.placeholder"), text: $password)
             .dsBodyLarge()
             .textContentType(.password)
             .padding(DSSpacing.md)
@@ -126,7 +126,7 @@ struct LoginView: View {
             .focused($focusedField, equals: .password)
             .submitLabel(.go)
             .onSubmit { Task { await signIn() } }
-            .accessibilityLabel("Password")
+            .accessibilityLabel(Text("auth.password.placeholder"))
     }
 
     private var canSubmit: Bool {
@@ -171,7 +171,7 @@ private struct ErrorBanner: View {
                     .foregroundColor(.white)
                     .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
             }
-            .accessibilityLabel("Dismiss error")
+            .accessibilityLabel(Text("auth.error.dismiss"))
         }
         .padding(DSSpacing.md)
         .background(Color.dsDanger)

@@ -7,11 +7,11 @@ struct EmptyTodayView: View {
                 .font(.system(size: 56))
                 .foregroundColor(.dsPrimary)
                 .accessibilityHidden(true)
-            Text("No medications scheduled today")
+            Text("today.empty.title")
                 .dsTitleMedium()
                 .foregroundColor(.dsTextPrimary)
                 .multilineTextAlignment(.center)
-            Text("Tap + to add one")
+            Text("today.empty.hint")
                 .dsBodyLarge()
                 .foregroundColor(.dsTextSecondary)
                 .multilineTextAlignment(.center)
@@ -19,6 +19,6 @@ struct EmptyTodayView: View {
         .padding(DSSpacing.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("No medications scheduled today. Tap the plus button to add one.")
+        .accessibilityLabel(Text("today.empty.combined"))
     }
 }

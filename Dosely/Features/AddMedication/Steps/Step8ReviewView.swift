@@ -8,22 +8,34 @@ struct Step8ReviewView: View {
     var body: some View {
         StepShell(
             stepNumber: 8,
-            question: "Review and save",
-            primaryTitle: "Save medication",
+            question: L("addmed.step8.title"),
+            primaryTitle: L("addmed.step8.save"),
             primaryAction: onSave
         ) {
             ScrollView {
                 VStack(spacing: DSSpacing.sm) {
-                    row(label: "Name",     value: state.name.isEmpty ? "—" : state.name, jumpTo: nil)
-                    row(label: "Dose",     value: "\(state.dose) · \(state.pillsPerDose) \(pillWord)", jumpTo: .dose)
-                    row(label: "Schedule", value: scheduleText, jumpTo: .frequency)
-                    row(label: "Food",     value: foodText, jumpTo: .foodRule)
-                    row(label: "Supply",   value: "\(state.currentSupply) pills", jumpTo: .supply)
-                    row(label: "Notes",    value: state.notes.isEmpty ? "—" : state.notes, jumpTo: .notes)
+                    row(label: L("addmed.step8.row.name"),
+                        value: state.name.isEmpty ? L("addmed.empty") : state.name,
+                        jumpTo: nil)
+                    row(label: L("addmed.step8.row.dose"),
+                        value: doseText,
+                        jumpTo: .dose)
+                    row(label: L("addmed.step8.row.schedule"),
+                        value: scheduleText,
+                        jumpTo: .frequency)
+                    row(label: L("addmed.step8.row.food"),
+                        value: foodText,
+                        jumpTo: .foodRule)
+                    row(label: L("addmed.step8.row.supply"),
+                        value: L("addmed.supply.pills", state.currentSupply),
+                        jumpTo: .supply)
+                    row(label: L("addmed.step8.row.notes"),
+                        value: state.notes.isEmpty ? L("addmed.empty") : state.notes,
+                        jumpTo: .notes)
 
                     if !state.name.trimmingCharacters(in: .whitespaces).isEmpty {
                         Button(action: { showingDetail = true }) {
-                            Label("Learn about this medication", systemImage: "info.circle")
+                            Label("addmed.step8.learnmore", systemImage: "info.circle")
                                 .dsBodyLarge()
                                 .foregroundColor(.dsPrimary)
                                 .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
@@ -32,7 +44,7 @@ struct Step8ReviewView: View {
                                         .stroke(Color.dsPrimary, lineWidth: 1.5)
                                 )
                         }
-                        .accessibilityLabel("Learn about \(state.name)")
+                        .accessibilityLabel(Text("addmed.step8.learnmore"))
                         .padding(.top, DSSpacing.sm)
                     }
                 }
@@ -58,11 +70,10 @@ struct Step8ReviewView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             if let step {
-                Button("Edit") { jump(to: step) }
+                Button(L("common.edit")) { jump(to: step) }
                     .dsBodyRegular()
                     .foregroundColor(.dsPrimary)
                     .frame(minHeight: DSSpacing.minTapTarget)
-                    .accessibilityLabel("Edit \(label.lowercased())")
             }
         }
         .padding(DSSpacing.md)
@@ -71,24 +82,33 @@ struct Step8ReviewView: View {
     }
 
     private func jump(to step: AddStep) {
-        // Truncate the path so we land on `step` as the top.
         guard let idx = state.path.firstIndex(of: step) else { return }
         state.path = Array(state.path.prefix(idx + 1))
     }
 
-    private var pillWord: String { state.pillsPerDose == 1 ? "pill" : "pills" }
+    private var pillWord: String {
+        state.pillsPerDose == 1 ? L("today.dose.pill") : L("today.dose.pills")
+    }
+
+    private var doseText: String {
+        "\(state.dose) · \(state.pillsPerDose) \(pillWord)"
+    }
 
     private var foodText: String {
         switch state.foodRule {
-        case "with":    return "With food"
-        case "without": return "Without food"
-        default:        return "Either is fine"
+        case "with":    return L("addmed.food.with")
+        case "without": return L("addmed.food.without")
+        default:        return L("addmed.food.either")
         }
     }
 
     private var scheduleText: String {
-        let times = state.doseTimes.map(AddMedicationState.formatDisplay).joined(separator: ", ")
-        let per = state.timesPerDay == 1 ? "Once a day" : "\(state.timesPerDay) times a day"
+        let times = state.doseTimes
+            .map { LocalizedFormatters.timeFormatter.string(from: $0) }
+            .joined(separator: ", ")
+        let per = state.timesPerDay == 1
+            ? L("addmed.schedule.oncedaily")
+            : L("addmed.schedule.timesperday", state.timesPerDay)
         return "\(per) · \(times)"
     }
 }

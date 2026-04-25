@@ -2,8 +2,10 @@ import SwiftUI
 
 struct StepShell<Content: View>: View {
     let stepNumber: Int
+    /// Pre-localized question string. Callers pass `L("addmed.stepN.question")`.
     let question: String
-    var primaryTitle: String? = "Next"
+    /// Pre-localized primary button title. Defaults to localized "Next".
+    var primaryTitle: String? = nil
     var primaryEnabled: Bool = true
     var primaryAction: (() -> Void)? = nil
     var secondaryTitle: String? = nil
@@ -36,9 +38,10 @@ struct StepShell<Content: View>: View {
                     .accessibilityLabel(secondaryTitle)
                 }
 
-                if let primaryTitle, let primaryAction {
-                    Button(action: primaryAction) {
-                        Text(primaryTitle)
+                if primaryAction != nil {
+                    let title = primaryTitle ?? L("common.next")
+                    Button(action: { primaryAction?() }) {
+                        Text(title)
                             .dsBodyLarge()
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
@@ -46,7 +49,7 @@ struct StepShell<Content: View>: View {
                             .cornerRadius(DSSpacing.rMd)
                     }
                     .disabled(!primaryEnabled)
-                    .accessibilityLabel(primaryTitle)
+                    .accessibilityLabel(title)
                 }
             }
             .padding(.horizontal, DSSpacing.lg)
@@ -59,7 +62,7 @@ struct StepShell<Content: View>: View {
 
     private var progress: some View {
         VStack(alignment: .leading, spacing: DSSpacing.xs) {
-            Text("Step \(stepNumber) of \(AddStep.totalSteps)")
+            Text(L("addmed.stepof", stepNumber, AddStep.totalSteps))
                 .dsCaption()
                 .foregroundColor(.dsTextSecondary)
             GeometryReader { geo in
@@ -77,6 +80,6 @@ struct StepShell<Content: View>: View {
         .padding(.horizontal, DSSpacing.lg)
         .padding(.top, DSSpacing.sm)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Step \(stepNumber) of \(AddStep.totalSteps)")
+        .accessibilityLabel(L("addmed.stepof", stepNumber, AddStep.totalSteps))
     }
 }

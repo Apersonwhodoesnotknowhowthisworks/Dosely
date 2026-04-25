@@ -8,29 +8,29 @@ struct Step3FrequencyView: View {
     var body: some View {
         StepShell(
             stepNumber: 3,
-            question: "How many times per day?",
-            primaryTitle: showingCustom ? "Next" : nil,
+            question: L("addmed.step3.question"),
+            primaryTitle: showingCustom ? L("common.next") : nil,
             primaryEnabled: customValid,
             primaryAction: showingCustom ? { commitCustom() } : nil
         ) {
             VStack(spacing: DSSpacing.md) {
-                frequencyButton(label: "Once",    count: 1)
-                frequencyButton(label: "Twice",   count: 2)
-                frequencyButton(label: "3 times", count: 3)
-                frequencyButton(label: "4 times", count: 4)
+                frequencyButton(label: L("addmed.step3.once"),  count: 1)
+                frequencyButton(label: L("addmed.step3.twice"), count: 2)
+                frequencyButton(label: L("addmed.step3.three"), count: 3)
+                frequencyButton(label: L("addmed.step3.four"),  count: 4)
 
                 if showingCustom {
                     HStack {
-                        Text("Times per day")
+                        Text("addmed.step3.timesperday")
                             .dsBodyLarge()
                             .foregroundColor(.dsTextPrimary)
                         Spacer()
-                        TextField("5-10", text: $customText)
+                        TextField(L("addmed.step3.range"), text: $customText)
                             .dsBodyLarge()
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
-                            .accessibilityLabel("Custom times per day")
+                            .accessibilityLabel(Text("addmed.step3.timesperday"))
                     }
                     .padding(DSSpacing.md)
                     .frame(minHeight: DSSpacing.minTapTarget)
@@ -38,14 +38,14 @@ struct Step3FrequencyView: View {
                     .cornerRadius(DSSpacing.rMd)
                 } else {
                     Button(action: { showingCustom = true }) {
-                        Text("Custom")
+                        Text("addmed.step3.custom")
                             .dsBodyLarge()
                             .foregroundColor(.dsPrimary)
                             .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
                             .background(Color.dsSurface)
                             .cornerRadius(DSSpacing.rMd)
                     }
-                    .accessibilityLabel("Custom number of times per day")
+                    .accessibilityLabel(Text("addmed.step3.custom"))
                 }
             }
         }
@@ -60,7 +60,7 @@ struct Step3FrequencyView: View {
                 .background(Color.dsPrimary)
                 .cornerRadius(DSSpacing.rMd)
         }
-        .accessibilityLabel("\(label) per day")
+        .accessibilityLabel(label)
     }
 
     private func choose(count: Int) {

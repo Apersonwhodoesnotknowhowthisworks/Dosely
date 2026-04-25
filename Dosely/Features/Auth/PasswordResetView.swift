@@ -29,12 +29,12 @@ struct PasswordResetView: View {
                         .background(Color.black.opacity(0.15).ignoresSafeArea())
                 }
             }
-            .navigationTitle("Reset password")
+            .navigationTitle(Text("auth.reset.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Cancel") { dismiss() }
-                        .accessibilityLabel("Cancel password reset")
+                    Button(L("common.cancel")) { dismiss() }
+                        .accessibilityLabel(Text("common.cancel"))
                 }
             }
             .onAppear {
@@ -46,7 +46,7 @@ struct PasswordResetView: View {
 
     private var formState: some View {
         VStack(alignment: .leading, spacing: DSSpacing.lg) {
-            Text("Enter the email you signed up with and we'll send you a reset link.")
+            Text("auth.reset.body")
                 .dsBodyLarge()
                 .foregroundColor(.dsTextPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -61,7 +61,7 @@ struct PasswordResetView: View {
                     .cornerRadius(DSSpacing.rMd)
             }
 
-            TextField("Email", text: $email)
+            TextField(L("auth.email.placeholder"), text: $email)
                 .dsBodyLarge()
                 .keyboardType(.emailAddress)
                 .autocorrectionDisabled()
@@ -72,10 +72,10 @@ struct PasswordResetView: View {
                 .background(Color.dsSurface)
                 .cornerRadius(DSSpacing.rMd)
                 .focused($focused)
-                .accessibilityLabel("Email address")
+                .accessibilityLabel(Text("auth.email.placeholder"))
 
             Button(action: { Task { await send() } }) {
-                Text("Send reset link")
+                Text("auth.reset.send")
                     .dsBodyLarge()
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
@@ -83,7 +83,7 @@ struct PasswordResetView: View {
                     .cornerRadius(DSSpacing.rMd)
             }
             .disabled(!canSubmit)
-            .accessibilityLabel("Send password reset link")
+            .accessibilityLabel(Text("auth.reset.send"))
         }
     }
 
@@ -93,23 +93,23 @@ struct PasswordResetView: View {
                 .font(.system(size: 56))
                 .foregroundColor(.dsPrimary)
                 .accessibilityHidden(true)
-            Text("Check your email")
+            Text("auth.reset.sent.title")
                 .dsTitleMedium()
                 .foregroundColor(.dsTextPrimary)
-            Text("We've sent a password reset link to \(email).")
+            Text(L("auth.reset.sent.body", email as NSString))
                 .dsBodyRegular()
                 .foregroundColor(.dsTextSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Button(action: { dismiss() }) {
-                Text("OK")
+                Text("common.ok")
                     .dsBodyLarge()
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
                     .background(Color.dsPrimary)
                     .cornerRadius(DSSpacing.rMd)
             }
-            .accessibilityLabel("Dismiss")
+            .accessibilityLabel(Text("common.ok"))
         }
         .padding(.top, DSSpacing.xxl)
         .frame(maxWidth: .infinity)

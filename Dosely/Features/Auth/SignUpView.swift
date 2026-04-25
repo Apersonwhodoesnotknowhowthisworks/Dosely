@@ -19,10 +19,10 @@ struct SignUpView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: DSSpacing.lg) {
                     VStack(alignment: .leading, spacing: DSSpacing.sm) {
-                        Text("Create your Dosely account")
+                        Text("auth.signup.title")
                             .dsTitleLarge()
                             .foregroundColor(.dsTextPrimary)
-                        Text("Your medications, safe and private.")
+                        Text("auth.signup.subtitle")
                             .dsBodyRegular()
                             .foregroundColor(.dsTextSecondary)
                     }
@@ -38,13 +38,17 @@ struct SignUpView: View {
                     }
 
                     VStack(spacing: DSSpacing.md) {
-                        field("Email", text: $email, secure: false, keyboard: .emailAddress, content: .emailAddress, focus: .email, next: .password)
-                        field("Password", text: $password, secure: true, content: .newPassword, focus: .password, next: .confirm)
-                        field("Confirm password", text: $confirm, secure: true, content: .newPassword, focus: .confirm, next: nil)
+                        field(L("auth.email.placeholder"), text: $email, secure: false,
+                              keyboard: .emailAddress, content: .emailAddress,
+                              focus: .email, next: .password)
+                        field(L("auth.password.placeholder"), text: $password, secure: true,
+                              content: .newPassword, focus: .password, next: .confirm)
+                        field(L("auth.signup.confirm.placeholder"), text: $confirm, secure: true,
+                              content: .newPassword, focus: .confirm, next: nil)
                     }
 
                     Button(action: { Task { await createAccount() } }) {
-                        Text("Create account")
+                        Text("auth.signup.button")
                             .dsBodyLarge()
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
@@ -52,7 +56,7 @@ struct SignUpView: View {
                             .cornerRadius(DSSpacing.rMd)
                     }
                     .disabled(!canSubmit)
-                    .accessibilityLabel("Create account")
+                    .accessibilityLabel(Text("auth.signup.button"))
                 }
                 .padding(DSSpacing.lg)
             }
@@ -63,17 +67,17 @@ struct SignUpView: View {
                     .background(Color.black.opacity(0.15).ignoresSafeArea())
             }
         }
-        .navigationTitle("Sign up")
+        .navigationTitle(Text("auth.createaccount"))
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Enable Face ID?", isPresented: $showBiometricPrompt) {
-            Button("Yes") {
+        .alert(L("auth.signup.faceid.title"), isPresented: $showBiometricPrompt) {
+            Button(L("common.yes")) {
                 authService.setBiometric(enabled: true)
             }
-            Button("Not now", role: .cancel) {
+            Button(L("common.notnow"), role: .cancel) {
                 authService.setBiometric(enabled: false)
             }
         } message: {
-            Text("Use Face ID for quick access next time you open Dosely.")
+            Text("auth.signup.faceid.message")
         }
     }
 
@@ -129,8 +133,6 @@ struct SignUpView: View {
             if authService.biometricAvailable {
                 showBiometricPrompt = true
             }
-            // AuthGate observes currentUser and swaps to the main app; this view
-            // unwinds automatically when the NavigationStack root changes.
         } catch {
             // errorMessage set by service
         }

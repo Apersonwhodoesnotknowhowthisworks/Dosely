@@ -2,34 +2,42 @@ import SwiftUI
 
 struct Step1NameView: View {
     @EnvironmentObject var state: AddMedicationState
+    @AppStorage("app_language") private var language: String = ""
     @FocusState private var focused: Bool
     @State private var showingScan = false
 
     var body: some View {
         StepShell(
             stepNumber: 1,
-            question: "What's the name of the medication?",
-            primaryTitle: "Next",
+            question: L("addmed.step1.question"),
             primaryEnabled: !trimmed.isEmpty,
             primaryAction: { state.path.append(.dose) }
         ) {
             VStack(alignment: .leading, spacing: DSSpacing.md) {
                 Button(action: { showingScan = true }) {
-                    Label("Scan a prescription label", systemImage: "camera.fill")
+                    Label("addmed.step1.scan", systemImage: "camera.fill")
                         .dsBodyLarge()
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
                         .background(Color.dsPrimary)
                         .cornerRadius(DSSpacing.rMd)
                 }
-                .accessibilityLabel("Scan a prescription label with the camera")
+                .accessibilityLabel(Text("addmed.step1.scan"))
 
-                Text("Or type it in")
+                if language == "pa" {
+                    Text("addmed.step1.scan.englishonly")
+                        .dsCaption()
+                        .foregroundColor(.dsTextSecondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .multilineTextAlignment(.center)
+                }
+
+                Text("addmed.step1.ortypeit")
                     .dsBodyRegular()
                     .foregroundColor(.dsTextSecondary)
                     .frame(maxWidth: .infinity)
 
-                TextField("Medication name", text: $state.name)
+                TextField(L("addmed.step1.placeholder"), text: $state.name)
                     .dsBodyLarge()
                     .foregroundColor(.dsTextPrimary)
                     .padding(DSSpacing.md)
@@ -39,7 +47,7 @@ struct Step1NameView: View {
                     .focused($focused)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.words)
-                    .accessibilityLabel("Medication name")
+                    .accessibilityLabel(Text("addmed.step1.placeholder"))
             }
         }
         .fullScreenCover(isPresented: $showingScan) {

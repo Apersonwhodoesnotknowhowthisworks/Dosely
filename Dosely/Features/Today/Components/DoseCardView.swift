@@ -27,7 +27,6 @@ struct DoseCardView: View {
             withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityHint(isExpanded ? "Double-tap to collapse" : "Double-tap for options")
     }
 
     // MARK: - Header
@@ -44,16 +43,15 @@ struct DoseCardView: View {
     }
 
     private var timeColumn: some View {
-        Text(Self.timeFormatter.string(from: dose.scheduledDate))
+        Text(timeString)
             .dsTitleMedium()
             .foregroundColor(.dsTextPrimary)
             .fixedSize(horizontal: true, vertical: false)
-            .accessibilityLabel("Scheduled for \(Self.timeFormatter.string(from: dose.scheduledDate))")
     }
 
     private var medColumn: some View {
         VStack(alignment: .leading, spacing: DSSpacing.xs) {
-            Text(dose.medication.name ?? "Medication")
+            Text(dose.medication.name ?? "")
                 .dsTitleMedium()
                 .foregroundColor(.dsTextPrimary)
                 .lineLimit(2)
@@ -79,7 +77,7 @@ struct DoseCardView: View {
         Circle()
             .fill(statusColor)
             .frame(width: 16, height: 16)
-            .accessibilityLabel("Status: \(dose.status.rawValue)")
+            .accessibilityHidden(true)
     }
 
     @ViewBuilder
@@ -87,7 +85,7 @@ struct DoseCardView: View {
         switch dose.status {
         case .upcoming:
             Button(action: onTake) {
-                Text("I took it")
+                Text("today.itookit")
                     .dsBodyLarge()
                     .foregroundColor(.white)
                     .padding(.horizontal, DSSpacing.md)
@@ -95,21 +93,19 @@ struct DoseCardView: View {
                     .background(Color.dsPrimary)
                     .cornerRadius(DSSpacing.rMd)
             }
-            .accessibilityLabel("Mark \(dose.medication.name ?? "medication") as taken")
-            .accessibilityHint("Logs this dose as taken now")
+            .accessibilityLabel(Text("today.itookit"))
 
         case .taken:
             Text(takenAtText)
                 .dsCaption()
                 .foregroundColor(.dsTextSecondary)
-                .accessibilityLabel("Taken at \(takenAtText.replacingOccurrences(of: "Taken at ", with: ""))")
 
         case .late:
-            statusLabel("Late", color: .dsWarning)
+            statusLabel(L("today.late"), color: .dsWarning)
         case .missed:
-            statusLabel("Missed", color: .dsDanger)
+            statusLabel(L("today.missed"), color: .dsDanger)
         case .skipped:
-            statusLabel("Skipped", color: .dsTextSecondary)
+            statusLabel(L("today.skipped"), color: .dsTextSecondary)
         }
     }
 
@@ -117,7 +113,6 @@ struct DoseCardView: View {
         Text(text)
             .dsBodyRegular()
             .foregroundColor(color)
-            .accessibilityLabel(text)
     }
 
     // MARK: - Expanded
@@ -130,7 +125,6 @@ struct DoseCardView: View {
                     .scaledToFit()
                     .frame(maxHeight: 160)
                     .cornerRadius(DSSpacing.rMd)
-                    .accessibilityLabel("Photo of \(dose.medication.name ?? "the pill")")
             }
 
             if let notes = dose.medication.notes, !notes.isEmpty {
@@ -140,16 +134,13 @@ struct DoseCardView: View {
             }
 
             HStack(spacing: DSSpacing.sm) {
-                expandedButton("Took it",      background: .dsPrimary,  action: onTake,
-                               a11y: "Log dose as taken")
-                expandedButton("Skip",         background: .dsTextSecondary, action: onSkip,
-                               a11y: "Skip this dose")
-                expandedButton("Snooze 10 min", background: .dsWarning, action: onSnooze,
-                               a11y: "Snooze this dose for ten minutes")
+                expandedButton(L("today.tookit"),    background: .dsPrimary,       action: onTake)
+                expandedButton(L("today.skipdose"),  background: .dsTextSecondary, action: onSkip)
+                expandedButton(L("today.snooze10"),  background: .dsWarning,       action: onSnooze)
             }
 
             Button(action: onLearnMore) {
-                Label("Learn more", systemImage: "info.circle")
+                Label("today.learnmore", systemImage: "info.circle")
                     .dsBodyLarge()
                     .foregroundColor(.dsPrimary)
                     .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
@@ -158,15 +149,14 @@ struct DoseCardView: View {
                             .stroke(Color.dsPrimary, lineWidth: 1.5)
                     )
             }
-            .accessibilityLabel("Learn more about \(dose.medication.name ?? "this medication")")
+            .accessibilityLabel(Text("today.learnmore"))
         }
     }
 
     private func expandedButton(
         _ title: String,
         background: Color,
-        action: @escaping () -> Void,
-        a11y: String
+        action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Text(title)
@@ -176,23 +166,21 @@ struct DoseCardView: View {
                 .background(background)
                 .cornerRadius(DSSpacing.rMd)
         }
-        .accessibilityLabel(a11y)
     }
 
     // MARK: - Derivations
 
     private var subtitleText: String {
-        let pillWord = dose.medication.pillsPerDose == 1 ? "pill" : "pills"
-        let count = "\(dose.medication.pillsPerDose) \(pillWord)"
-        let food: String
-        switch dose.medication.foodRule ?? "either" {
-        case "with":    food = "with food"
-        case "without": food = "without food"
-        default:        food = "with or without food"
-        }
+        let pillWord = dose.medication.pillsPerDose == 1 ? L("today.dose.pill") : L("today.dose.pills")
         let dose = dose.medication.dose ?? ""
-        if dose.isEmpty { return "\(count), \(food)" }
-        return "\(dose) · \(count), \(food)"
+        let pillCount = Int(self.dose.medication.pillsPerDose)
+        let key: String
+        switch self.dose.medication.foodRule ?? "either" {
+        case "with":    key = "today.dose.subtitle.with"
+        case "without": key = "today.dose.subtitle.without"
+        default:        key = "today.dose.subtitle.either"
+        }
+        return L(key, dose as NSString, pillCount, pillWord as NSString)
     }
 
     private var statusColor: Color {
@@ -206,15 +194,11 @@ struct DoseCardView: View {
     }
 
     private var takenAtText: String {
-        guard let actual = dose.log?.actualTime else { return "Taken" }
-        return "Taken at \(Self.timeFormatter.string(from: actual))"
+        guard let actual = dose.log?.actualTime else { return L("today.tookit") }
+        return L("today.takenat", LocalizedFormatters.timeFormatter.string(from: actual) as NSString)
     }
 
-    private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        f.amSymbol = "AM"
-        f.pmSymbol = "PM"
-        return f
-    }()
+    private var timeString: String {
+        LocalizedFormatters.timeFormatter.string(from: dose.scheduledDate)
+    }
 }

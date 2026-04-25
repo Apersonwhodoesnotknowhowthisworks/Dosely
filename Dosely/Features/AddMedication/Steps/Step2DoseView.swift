@@ -7,13 +7,12 @@ struct Step2DoseView: View {
     var body: some View {
         StepShell(
             stepNumber: 2,
-            question: "How much per dose?",
-            primaryTitle: "Next",
+            question: L("addmed.step2.question"),
             primaryEnabled: !state.dose.trimmingCharacters(in: .whitespaces).isEmpty,
             primaryAction: { state.path.append(.frequency) }
         ) {
             VStack(alignment: .leading, spacing: DSSpacing.md) {
-                TextField("e.g. 10mg", text: $state.dose)
+                TextField(L("addmed.step2.placeholder"), text: $state.dose)
                     .dsBodyLarge()
                     .foregroundColor(.dsTextPrimary)
                     .padding(DSSpacing.md)
@@ -22,10 +21,10 @@ struct Step2DoseView: View {
                     .cornerRadius(DSSpacing.rMd)
                     .focused($focused)
                     .autocorrectionDisabled()
-                    .accessibilityLabel("Dose amount")
+                    .accessibilityLabel(Text("addmed.step2.placeholder"))
                     .onAppear { focused = true }
 
-                Text("Pills per dose")
+                Text("addmed.step2.pillsperdose")
                     .dsBodyLarge()
                     .foregroundColor(.dsTextSecondary)
                     .padding(.top, DSSpacing.sm)
@@ -37,12 +36,12 @@ struct Step2DoseView: View {
                         .frame(minWidth: 40, alignment: .leading)
                     Spacer()
                     Stepper(
-                        "Pills per dose",
+                        L("addmed.step2.pillsperdose"),
                         value: $state.pillsPerDose,
                         in: 1...10
                     )
                     .labelsHidden()
-                    .accessibilityLabel("Pills per dose, currently \(state.pillsPerDose)")
+                    .accessibilityLabel(L("addmed.step2.pills.a11y", state.pillsPerDose))
                 }
                 .padding(DSSpacing.md)
                 .frame(minHeight: DSSpacing.minTapTarget)

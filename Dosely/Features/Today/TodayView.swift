@@ -16,11 +16,11 @@ struct TodayView: View {
         TabView {
             todayTab
                 .tabItem {
-                    Label("Today", systemImage: "house.fill")
+                    Label("today.title", systemImage: "house.fill")
                 }
             historyTab
                 .tabItem {
-                    Label("History", systemImage: "calendar")
+                    Label("history.title", systemImage: "calendar")
                 }
         }
         .tint(.dsPrimary)
@@ -31,18 +31,19 @@ struct TodayView: View {
     private var todayTab: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 0) {
-                Text(Self.subtitleFormatter.string(from: Date()))
+                Text(LocalizedFormatters.fullDateFormatter.string(from: Date()))
                     .dsBodyLarge()
                     .foregroundColor(.dsTextSecondary)
                     .padding(.horizontal, DSSpacing.lg)
                     .padding(.bottom, DSSpacing.sm)
-                    .accessibilityLabel("Today is \(Self.subtitleFormatter.string(from: Date()))")
+                    .accessibilityLabel(L("today.subtitle.todayis",
+                                          LocalizedFormatters.fullDateFormatter.string(from: Date()) as NSString))
 
                 content
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(Color.dsBackground.ignoresSafeArea())
-            .navigationTitle("Today")
+            .navigationTitle("today.title")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: { showingSettings = true }) {
@@ -50,8 +51,7 @@ struct TodayView: View {
                             .font(.title2.weight(.semibold))
                             .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
                     }
-                    .accessibilityLabel("Account and settings")
-                    .accessibilityHint("Opens account settings")
+                    .accessibilityLabel(Text("today.account"))
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
@@ -62,8 +62,7 @@ struct TodayView: View {
                             .font(.title2.weight(.semibold))
                             .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
                     }
-                    .accessibilityLabel("Add medication")
-                    .accessibilityHint("Opens the new medication form")
+                    .accessibilityLabel(Text("today.add"))
                 }
             }
             // Inset debug pills inside the NavigationStack so they don't overlap the nav bar.
@@ -137,11 +136,6 @@ struct TodayView: View {
         HistoryView(repository: repository)
     }
 
-    private static let subtitleFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "EEEE, MMMM d"
-        return f
-    }()
 }
 
 // MARK: - Previews

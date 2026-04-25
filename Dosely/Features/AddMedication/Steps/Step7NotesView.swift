@@ -6,10 +6,9 @@ struct Step7NotesView: View {
     var body: some View {
         StepShell(
             stepNumber: 7,
-            question: "Any notes from the doctor?",
-            primaryTitle: "Next",
+            question: L("addmed.step7.question"),
             primaryAction: { state.path.append(.review) },
-            secondaryTitle: "Skip",
+            secondaryTitle: L("common.skip"),
             secondaryAction: {
                 state.notes = ""
                 state.path.append(.review)
@@ -23,7 +22,7 @@ struct Step7NotesView: View {
                 .frame(minHeight: 160)
                 .background(Color.dsSurface)
                 .cornerRadius(DSSpacing.rMd)
-                .accessibilityLabel("Doctor's notes")
+                .accessibilityLabel(Text("addmed.step7.placeholder"))
         }
     }
 }

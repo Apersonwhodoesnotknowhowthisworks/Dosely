@@ -6,15 +6,14 @@ struct Step4TimesView: View {
     var body: some View {
         StepShell(
             stepNumber: 4,
-            question: "At what times?",
-            primaryTitle: "Next",
+            question: L("addmed.step4.question"),
             primaryEnabled: !state.doseTimes.isEmpty,
             primaryAction: { state.path.append(.foodRule) }
         ) {
             VStack(spacing: DSSpacing.sm) {
                 ForEach(state.doseTimes.indices, id: \.self) { idx in
                     HStack {
-                        Text("Dose \(idx + 1)")
+                        Text(L("addmed.step4.dose", idx + 1))
                             .dsBodyLarge()
                             .foregroundColor(.dsTextSecondary)
                         Spacer()
@@ -27,7 +26,7 @@ struct Step4TimesView: View {
                             displayedComponents: .hourAndMinute
                         )
                         .labelsHidden()
-                        .accessibilityLabel("Time for dose \(idx + 1)")
+                        .accessibilityLabel(L("addmed.step4.time.a11y", idx + 1))
                     }
                     .padding(DSSpacing.md)
                     .frame(minHeight: DSSpacing.minTapTarget)

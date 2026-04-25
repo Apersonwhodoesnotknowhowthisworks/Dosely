@@ -9,10 +9,10 @@ struct PermissionBanner: View {
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
-                Text("Reminders are off")
+                Text("permissionbanner.title")
                     .dsBodyLarge()
                     .foregroundColor(.white)
-                Text("Enable in Settings to get dose notifications.")
+                Text("permissionbanner.body")
                     .dsBodyRegular()
                     .foregroundColor(.white.opacity(0.95))
                     .fixedSize(horizontal: false, vertical: true)
@@ -21,7 +21,7 @@ struct PermissionBanner: View {
             Spacer(minLength: 0)
 
             Button(action: ReminderScheduler.openSystemSettings) {
-                Text("Settings")
+                Text("permissionbanner.settings")
                     .dsBodyRegular()
                     .foregroundColor(.dsWarning)
                     .padding(.horizontal, DSSpacing.md)
@@ -29,7 +29,7 @@ struct PermissionBanner: View {
                     .background(Color.white)
                     .cornerRadius(DSSpacing.rMd)
             }
-            .accessibilityLabel("Open system settings to enable notifications")
+            .accessibilityLabel(Text("permissionbanner.settings"))
         }
         .padding(DSSpacing.md)
         .background(Color.dsWarning)

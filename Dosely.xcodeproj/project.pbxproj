@@ -72,6 +72,13 @@
 		BFD00000000000000000000A3 /* ScanReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000A3 /* ScanReviewView.swift */; };
 		BFD00000000000000000000A4 /* ScanCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000A4 /* ScanCoordinator.swift */; };
 		BFD00000000000000000000A5 /* PrescriptionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000A5 /* PrescriptionParserTests.swift */; };
+		BFD00000000000000000000B0 /* LocalizationBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000B0 /* LocalizationBundle.swift */; };
+		BFD00000000000000000000B1 /* LocalizedFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000B1 /* LocalizedFormatters.swift */; };
+		BFD00000000000000000000B2 /* LanguagePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000B2 /* LanguagePickerView.swift */; };
+		BFD00000000000000000000B3 /* VoiceReadoutHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000B3 /* VoiceReadoutHelper.swift */; };
+		BFD00000000000000000000B4 /* drug_info_pa.json in Resources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000B4 /* drug_info_pa.json */; };
+		BFD00000000000000000000C0 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = GRP0000000000000000000017 /* Localizable.strings */; };
+		BFD00000000000000000000C1 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = GRP0000000000000000000018 /* Localizable.stringsdict */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -150,6 +157,15 @@
 		FRD00000000000000000000A3 /* ScanReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanReviewView.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000A4 /* ScanCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanCoordinator.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000A5 /* PrescriptionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrescriptionParserTests.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000B0 /* LocalizationBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationBundle.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000B1 /* LocalizedFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizedFormatters.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000B2 /* LanguagePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguagePickerView.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000B3 /* VoiceReadoutHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceReadoutHelper.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000B4 /* drug_info_pa.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = drug_info_pa.json; sourceTree = "<group>"; };
+		FRD00000000000000000000C0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		FRD00000000000000000000C1 /* pa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pa; path = pa.lproj/Localizable.strings; sourceTree = "<group>"; };
+		FRD00000000000000000000C2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
+		FRD00000000000000000000C3 /* pa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = pa; path = pa.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -200,20 +216,13 @@
 				FRD0000000000000000000004 /* Dosely.xcdatamodeld */,
 				GRP0000000000000000000005 /* DesignSystem */,
 				GRP0000000000000000000006 /* Data */,
+				GRP0000000000000000000015 /* Localization */,
 				GRP0000000000000000000008 /* Features */,
 				GRP0000000000000000000013 /* Resources */,
 				FRD0000000000000000000005 /* Assets.xcassets */,
 				GRP0000000000000000000004 /* Preview Content */,
 			);
 			path = Dosely;
-			sourceTree = "<group>";
-		};
-		GRP0000000000000000000013 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000082 /* drug_info.json */,
-			);
-			path = Resources;
 			sourceTree = "<group>";
 		};
 		GRP0000000000000000000004 /* Preview Content */ = {
@@ -273,29 +282,6 @@
 			path = Features;
 			sourceTree = "<group>";
 		};
-		GRP0000000000000000000012 /* MedicationDetail */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000081 /* MedicationDetailView.swift */,
-			);
-			path = MedicationDetail;
-			sourceTree = "<group>";
-		};
-		GRP0000000000000000000011 /* Auth */ = {
-			isa = PBXGroup;
-			children = (
-				FRD0000000000000000000070 /* Keychain.swift */,
-				FRD0000000000000000000071 /* AuthService.swift */,
-				FRD0000000000000000000072 /* AuthGate.swift */,
-				FRD0000000000000000000073 /* LoginView.swift */,
-				FRD0000000000000000000074 /* SignUpView.swift */,
-				FRD0000000000000000000075 /* PasswordResetView.swift */,
-				FRD0000000000000000000076 /* MedicalDisclaimerView.swift */,
-				FRD0000000000000000000077 /* SettingsSheet.swift */,
-			);
-			path = Auth;
-			sourceTree = "<group>";
-		};
 		GRP0000000000000000000009 /* Today */ = {
 			isa = PBXGroup;
 			children = (
@@ -325,18 +311,6 @@
 				GRP0000000000000000000014 /* Scan */,
 			);
 			path = AddMedication;
-			sourceTree = "<group>";
-		};
-		GRP0000000000000000000014 /* Scan */ = {
-			isa = PBXGroup;
-			children = (
-				FRD00000000000000000000A0 /* OCRService.swift */,
-				FRD00000000000000000000A1 /* PrescriptionParser.swift */,
-				FRD00000000000000000000A2 /* CameraScanView.swift */,
-				FRD00000000000000000000A3 /* ScanReviewView.swift */,
-				FRD00000000000000000000A4 /* ScanCoordinator.swift */,
-			);
-			path = Scan;
 			sourceTree = "<group>";
 		};
 		GRP000000000000000000000C /* Components */ = {
@@ -370,6 +344,7 @@
 				FRD0000000000000000000051 /* MissedDoseChecker.swift */,
 				FRD0000000000000000000052 /* PermissionBanner.swift */,
 				FRD0000000000000000000053 /* DebugToolbar.swift */,
+				FRD00000000000000000000B3 /* VoiceReadoutHelper.swift */,
 			);
 			path = Notifications;
 			sourceTree = "<group>";
@@ -393,6 +368,62 @@
 				FRD0000000000000000000065 /* WeekCellDetailView.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000011 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000070 /* Keychain.swift */,
+				FRD0000000000000000000071 /* AuthService.swift */,
+				FRD0000000000000000000072 /* AuthGate.swift */,
+				FRD0000000000000000000073 /* LoginView.swift */,
+				FRD0000000000000000000074 /* SignUpView.swift */,
+				FRD0000000000000000000075 /* PasswordResetView.swift */,
+				FRD0000000000000000000076 /* MedicalDisclaimerView.swift */,
+				FRD0000000000000000000077 /* SettingsSheet.swift */,
+				FRD00000000000000000000B2 /* LanguagePickerView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000012 /* MedicationDetail */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000081 /* MedicationDetailView.swift */,
+			);
+			path = MedicationDetail;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000013 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				FRD0000000000000000000082 /* drug_info.json */,
+				FRD00000000000000000000B4 /* drug_info_pa.json */,
+				GRP0000000000000000000017 /* Localizable.strings */,
+				GRP0000000000000000000018 /* Localizable.stringsdict */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000014 /* Scan */ = {
+			isa = PBXGroup;
+			children = (
+				FRD00000000000000000000A0 /* OCRService.swift */,
+				FRD00000000000000000000A1 /* PrescriptionParser.swift */,
+				FRD00000000000000000000A2 /* CameraScanView.swift */,
+				FRD00000000000000000000A3 /* ScanReviewView.swift */,
+				FRD00000000000000000000A4 /* ScanCoordinator.swift */,
+			);
+			path = Scan;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000015 /* Localization */ = {
+			isa = PBXGroup;
+			children = (
+				FRD00000000000000000000B0 /* LocalizationBundle.swift */,
+				FRD00000000000000000000B1 /* LocalizedFormatters.swift */,
+			);
+			path = Localization;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -459,6 +490,7 @@
 			knownRegions = (
 				en,
 				Base,
+				pa,
 			);
 			mainGroup = GRP0000000000000000000001;
 			packageReferences = (
@@ -483,6 +515,9 @@
 				BFD0000000000000000000005 /* Assets.xcassets in Resources */,
 				13D32A5E2F9B2444005253C1 /* GoogleService-Info.plist in Resources */,
 				BFD0000000000000000000082 /* drug_info.json in Resources */,
+				BFD00000000000000000000B4 /* drug_info_pa.json in Resources */,
+				BFD00000000000000000000C0 /* Localizable.strings in Resources */,
+				BFD00000000000000000000C1 /* Localizable.stringsdict in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -554,6 +589,10 @@
 				BFD00000000000000000000A2 /* CameraScanView.swift in Sources */,
 				BFD00000000000000000000A3 /* ScanReviewView.swift in Sources */,
 				BFD00000000000000000000A4 /* ScanCoordinator.swift in Sources */,
+				BFD00000000000000000000B0 /* LocalizationBundle.swift in Sources */,
+				BFD00000000000000000000B1 /* LocalizedFormatters.swift in Sources */,
+				BFD00000000000000000000B2 /* LanguagePickerView.swift in Sources */,
+				BFD00000000000000000000B3 /* VoiceReadoutHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -578,6 +617,27 @@
 			targetProxy = CIP0000000000000000000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		GRP0000000000000000000017 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				FRD00000000000000000000C0 /* en */,
+				FRD00000000000000000000C1 /* pa */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000018 /* Localizable.stringsdict */ = {
+			isa = PBXVariantGroup;
+			children = (
+				FRD00000000000000000000C2 /* en */,
+				FRD00000000000000000000C3 /* pa */,
+			);
+			name = Localizable.stringsdict;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		BCP0000000000000000000001 /* Debug */ = {

@@ -12,12 +12,16 @@ final class NotificationsAppDelegate: NSObject, UIApplicationDelegate, UNUserNot
         return true
     }
 
-    // Show banners even when the app is foregrounded.
+    // Show banners even when the app is foregrounded, and speak the body
+    // through `VoiceReadoutHelper` for the language the user picked. The
+    // helper silently no-ops if no voice is installed for that language.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        let body = notification.request.content.body
+        VoiceReadoutHelper.speak(body)
         completionHandler([.banner, .sound])
     }
 

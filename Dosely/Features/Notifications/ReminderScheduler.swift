@@ -14,12 +14,12 @@ enum ReminderScheduler {
     static func registerCategories() {
         let took = UNNotificationAction(
             identifier: tookItActionID,
-            title: "I took it",
+            title: L("notifications.action.tookit"),
             options: []
         )
         let snooze = UNNotificationAction(
             identifier: snoozeActionID,
-            title: "Snooze 10 min",
+            title: L("notifications.action.snooze"),
             options: []
         )
         let category = UNNotificationCategory(
@@ -83,8 +83,8 @@ enum ReminderScheduler {
             else { continue }
 
             let content = UNMutableNotificationContent()
-            content.title = "Time for your medicine"
-            content.body = "\(name) — \(dose), \(foodText)"
+            content.title = L("notifications.title")
+            content.body = L("notifications.body", name as NSString, dose as NSString, foodText as NSString)
             content.sound = .default
             content.categoryIdentifier = categoryID
             content.userInfo = [
@@ -194,9 +194,9 @@ enum ReminderScheduler {
 
     static func foodRuleDisplayText(_ rule: String?) -> String {
         switch rule {
-        case "with":    return "with food"
-        case "without": return "without food"
-        default:        return "with or without food"
+        case "with":    return L("food.with")
+        case "without": return L("food.without")
+        default:        return L("food.either")
         }
     }
 

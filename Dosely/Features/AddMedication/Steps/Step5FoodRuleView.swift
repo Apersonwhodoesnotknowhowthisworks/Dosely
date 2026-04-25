@@ -6,14 +6,13 @@ struct Step5FoodRuleView: View {
     var body: some View {
         StepShell(
             stepNumber: 5,
-            question: "How should you take this?",
-            primaryTitle: nil,
+            question: L("addmed.step5.question"),
             primaryAction: nil
         ) {
             VStack(spacing: DSSpacing.md) {
-                choiceButton("With food",      value: "with")
-                choiceButton("Without food",   value: "without")
-                choiceButton("Either is fine", value: "either")
+                choiceButton(L("addmed.step5.with"),    value: "with")
+                choiceButton(L("addmed.step5.without"), value: "without")
+                choiceButton(L("addmed.step5.either"),  value: "either")
             }
         }
     }

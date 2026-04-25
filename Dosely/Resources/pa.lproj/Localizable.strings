@@ -1,0 +1,232 @@
+// REVIEW NEEDED: every string must be reviewed by a fluent Punjabi speaker before client testing.
+// Tone target: conversational Punjabi a younger family member would use to explain things to grandma.
+
+// MARK: - Common
+"common.cancel" = "ਰੱਦ ਕਰੋ";
+"common.ok" = "ਠੀਕ ਹੈ";
+"common.done" = "ਹੋ ਗਿਆ";
+"common.skip" = "ਛੱਡ ਦਿਓ";
+"common.next" = "ਅੱਗੇ";
+"common.save" = "ਸੰਭਾਲੋ";
+"common.close" = "ਬੰਦ ਕਰੋ";
+"common.edit" = "ਬਦਲੋ";
+"common.retry" = "ਫੇਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ";
+"common.tryagain" = "ਫੇਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ";
+"common.continue" = "ਜਾਰੀ ਰੱਖੋ";
+"common.yes" = "ਹਾਂ";
+"common.no" = "ਨਹੀਂ";
+"common.notnow" = "ਹੁਣੇ ਨਹੀਂ";
+
+// MARK: - Today
+"today.title" = "ਅੱਜ";
+"today.empty.title" = "ਅੱਜ ਕੋਈ ਦਵਾਈ ਨਹੀਂ ਹੈ";
+"today.empty.hint" = "ਨਵੀਂ ਦਵਾਈ ਜੋੜਨ ਲਈ + ਦਬਾਓ";
+"today.empty.combined" = "ਅੱਜ ਕੋਈ ਦਵਾਈ ਨਹੀਂ ਹੈ। ਨਵੀਂ ਜੋੜਨ ਲਈ + ਦਬਾਓ।";
+"today.itookit" = "ਮੈਂ ਲੈ ਲਈ";
+"today.takenat" = "%@ ਉੱਤੇ ਲਈ";
+"today.late" = "ਦੇਰ ਨਾਲ";
+"today.missed" = "ਛੁੱਟ ਗਈ";
+"today.skipped" = "ਛੱਡ ਦਿੱਤੀ";
+"today.snooze10" = "10 ਮਿੰਟ ਬਾਅਦ ਯਾਦ ਕਰਾਓ";
+"today.tookit" = "ਲੈ ਲਈ";
+"today.skipdose" = "ਛੱਡੋ";
+"today.learnmore" = "ਹੋਰ ਜਾਣੋ";
+"today.subtitle.todayis" = "ਅੱਜ %@ ਹੈ";
+"today.dose.subtitle.with" = "%@ · %d %@, ਖਾਣੇ ਨਾਲ";
+"today.dose.subtitle.without" = "%@ · %d %@, ਖਾਣੇ ਤੋਂ ਬਿਨਾਂ";
+"today.dose.subtitle.either" = "%@ · %d %@, ਖਾਣੇ ਨਾਲ ਜਾਂ ਬਿਨਾਂ";
+"today.dose.pill" = "ਗੋਲੀ";
+"today.dose.pills" = "ਗੋਲੀਆਂ";
+"today.add" = "ਦਵਾਈ ਜੋੜੋ";
+"today.account" = "ਖਾਤਾ ਅਤੇ ਸੈਟਿੰਗਾਂ";
+
+// MARK: - History
+"history.title" = "ਪਿਛਲਾ ਰਿਕਾਰਡ";
+"history.thisweek" = "ਇਸ ਹਫ਼ਤੇ";
+"history.adherence" = "%@: %d%% (%d/%d ਖੁਰਾਕਾਂ ਲਈਆਂ)";
+"history.empty" = "%@: ਅਜੇ ਤੱਕ ਕੋਈ ਖੁਰਾਕ ਦਰਜ ਨਹੀਂ";
+"history.previousweek" = "ਪਿਛਲਾ ਹਫ਼ਤਾ";
+"history.nextweek" = "ਅਗਲਾ ਹਫ਼ਤਾ";
+"history.slot.morning" = "ਸਵੇਰ";
+"history.slot.morning.subtitle" = "11 ਤੋਂ ਪਹਿਲਾਂ";
+"history.slot.noon" = "ਦੁਪਹਿਰ";
+"history.slot.noon.subtitle" = "11–3";
+"history.slot.evening" = "ਸ਼ਾਮ";
+"history.slot.evening.subtitle" = "3–8";
+"history.slot.bedtime" = "ਰਾਤ";
+"history.slot.bedtime.subtitle" = "8 ਤੋਂ ਬਾਅਦ";
+"history.day.mon" = "ਸੋਮ";
+"history.day.tue" = "ਮੰਗਲ";
+"history.day.wed" = "ਬੁੱਧ";
+"history.day.thu" = "ਵੀਰ";
+"history.day.fri" = "ਸ਼ੁੱਕਰ";
+"history.day.sat" = "ਸ਼ਨੀ";
+"history.day.sun" = "ਐਤ";
+"history.cell.allTaken" = "ਸਾਰੀਆਂ ਲਈਆਂ";
+"history.cell.missed" = "ਛੁੱਟ ਗਈ";
+"history.cell.late" = "ਦੇਰ ਨਾਲ ਜਾਂ ਅਧੂਰੀ";
+"history.cell.upcoming" = "ਆਉਣ ਵਾਲੀ";
+"history.cell.empty" = "ਕੋਈ ਖੁਰਾਕ ਨਹੀਂ";
+"history.cell.noschedule" = "%@ %@, ਕੋਈ ਖੁਰਾਕ ਨਹੀਂ";
+"history.cell.summary" = "%@ %@, %d ਵਿੱਚੋਂ %d ਖੁਰਾਕਾਂ ਲਈਆਂ, %@";
+"history.detail.empty" = "ਇਸ ਸਮੇਂ ਕੋਈ ਖੁਰਾਕ ਨਹੀਂ ਸੀ";
+"history.detail.scheduled" = "ਸਮਾਂ %@ · %@";
+"history.detail.takenat" = "ਸਮਾਂ %@ · %@ ਉੱਤੇ ਲਈ";
+
+// MARK: - AddMedication
+"addmed.cancel" = "ਦਵਾਈ ਜੋੜਨੀ ਰੱਦ ਕਰੋ";
+"addmed.step1.question" = "ਦਵਾਈ ਦਾ ਨਾਮ ਕੀ ਹੈ?";
+"addmed.step1.placeholder" = "ਦਵਾਈ ਦਾ ਨਾਮ";
+"addmed.step1.scan" = "ਪਰਚੀ ਦਾ ਲੇਬਲ ਸਕੈਨ ਕਰੋ";
+"addmed.step1.scan.englishonly" = "ਲੇਬਲ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਪੜ੍ਹਿਆ ਜਾਵੇਗਾ";
+"addmed.step1.ortypeit" = "ਜਾਂ ਆਪ ਟਾਈਪ ਕਰੋ";
+"addmed.step2.question" = "ਇੱਕ ਵਾਰੀ ਕਿੰਨੀ ਲੈਣੀ ਹੈ?";
+"addmed.step2.placeholder" = "ਉਦਾਹਰਣ: 10mg";
+"addmed.step2.pillsperdose" = "ਇੱਕ ਵਾਰੀ ਕਿੰਨੀਆਂ ਗੋਲੀਆਂ";
+"addmed.step2.pills.a11y" = "ਇੱਕ ਵਾਰੀ ਕਿੰਨੀਆਂ ਗੋਲੀਆਂ, ਹੁਣੇ %d";
+"addmed.step3.question" = "ਦਿਨ ਵਿੱਚ ਕਿੰਨੀ ਵਾਰ?";
+"addmed.step3.once" = "ਇੱਕ ਵਾਰ";
+"addmed.step3.twice" = "ਦੋ ਵਾਰ";
+"addmed.step3.three" = "3 ਵਾਰ";
+"addmed.step3.four" = "4 ਵਾਰ";
+"addmed.step3.custom" = "ਹੋਰ";
+"addmed.step3.timesperday" = "ਦਿਨ ਵਿੱਚ ਕਿੰਨੀ ਵਾਰ";
+"addmed.step3.range" = "5-10";
+"addmed.step4.question" = "ਕਿੰਨੇ ਵਜੇ?";
+"addmed.step4.dose" = "ਖੁਰਾਕ %d";
+"addmed.step4.time.a11y" = "ਖੁਰਾਕ %d ਦਾ ਸਮਾਂ";
+"addmed.step5.question" = "ਇਹ ਕਿਵੇਂ ਲੈਣੀ ਹੈ?";
+"addmed.step5.with" = "ਖਾਣੇ ਨਾਲ";
+"addmed.step5.without" = "ਖਾਣੇ ਤੋਂ ਬਿਨਾਂ";
+"addmed.step5.either" = "ਕੋਈ ਵੀ";
+"addmed.step6.question" = "ਹੁਣ ਤੁਹਾਡੇ ਕੋਲ ਕਿੰਨੀਆਂ ਗੋਲੀਆਂ ਹਨ?";
+"addmed.step6.supply.a11y" = "ਮੌਜੂਦ ਗੋਲੀਆਂ, ਹੁਣੇ %d";
+"addmed.step7.question" = "ਡਾਕਟਰ ਨੇ ਕੋਈ ਖ਼ਾਸ ਗੱਲ ਦੱਸੀ ਹੈ?";
+"addmed.step7.placeholder" = "ਡਾਕਟਰ ਦੀ ਹਿਦਾਇਤ";
+"addmed.step8.title" = "ਜਾਂਚ ਕਰੋ ਅਤੇ ਸੰਭਾਲੋ";
+"addmed.step8.save" = "ਦਵਾਈ ਸੰਭਾਲੋ";
+"addmed.step8.row.name" = "ਨਾਮ";
+"addmed.step8.row.dose" = "ਖੁਰਾਕ";
+"addmed.step8.row.schedule" = "ਸਮਾਂ";
+"addmed.step8.row.food" = "ਖਾਣਾ";
+"addmed.step8.row.supply" = "ਮੌਜੂਦ ਗੋਲੀਆਂ";
+"addmed.step8.row.notes" = "ਹਿਦਾਇਤ";
+"addmed.step8.learnmore" = "ਇਸ ਦਵਾਈ ਬਾਰੇ ਜਾਣੋ";
+"addmed.stepof" = "ਪੜਾਅ %d / %d";
+"addmed.schedule.oncedaily" = "ਦਿਨ ਵਿੱਚ ਇੱਕ ਵਾਰ";
+"addmed.schedule.timesperday" = "ਦਿਨ ਵਿੱਚ %d ਵਾਰ";
+"addmed.food.with" = "ਖਾਣੇ ਨਾਲ";
+"addmed.food.without" = "ਖਾਣੇ ਤੋਂ ਬਿਨਾਂ";
+"addmed.food.either" = "ਕੋਈ ਵੀ";
+"addmed.supply.pills" = "%d ਗੋਲੀਆਂ";
+"addmed.empty" = "—";
+
+// MARK: - Auth
+"auth.welcome.title" = "Dosely ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ";
+"auth.welcome.subtitle" = "ਆਪਣੀਆਂ ਦਵਾਈਆਂ ਸੰਭਾਲਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।";
+"auth.email.placeholder" = "ਈਮੇਲ";
+"auth.password.placeholder" = "ਪਾਸਵਰਡ";
+"auth.signin" = "ਸਾਈਨ ਇਨ";
+"auth.signin.faceid" = "Face ID ਵਰਤੋ";
+"auth.forgotpassword" = "ਪਾਸਵਰਡ ਭੁੱਲ ਗਏ?";
+"auth.newhere" = "ਨਵੇਂ ਹੋ?";
+"auth.createaccount" = "ਖਾਤਾ ਬਣਾਓ";
+"auth.signup.title" = "ਆਪਣਾ Dosely ਖਾਤਾ ਬਣਾਓ";
+"auth.signup.subtitle" = "ਤੁਹਾਡੀਆਂ ਦਵਾਈਆਂ ਸੁਰੱਖਿਅਤ ਅਤੇ ਨਿੱਜੀ।";
+"auth.signup.confirm.placeholder" = "ਪਾਸਵਰਡ ਦੁਬਾਰਾ ਲਿਖੋ";
+"auth.signup.button" = "ਖਾਤਾ ਬਣਾਓ";
+"auth.signup.faceid.title" = "Face ID ਚਾਲੂ ਕਰੋ?";
+"auth.signup.faceid.message" = "ਅਗਲੀ ਵਾਰ Dosely ਖੋਲ੍ਹਣ ਵੇਲੇ Face ID ਨਾਲ ਜਲਦੀ ਅੰਦਰ ਆਉਣ ਲਈ।";
+"auth.reset.title" = "ਪਾਸਵਰਡ ਬਦਲੋ";
+"auth.reset.body" = "ਆਪਣੀ ਈਮੇਲ ਪਾਓ — ਅਸੀਂ ਤੁਹਾਨੂੰ ਪਾਸਵਰਡ ਬਦਲਣ ਦਾ ਲਿੰਕ ਭੇਜਾਂਗੇ।";
+"auth.reset.send" = "ਲਿੰਕ ਭੇਜੋ";
+"auth.reset.sent.title" = "ਆਪਣੀ ਈਮੇਲ ਚੈੱਕ ਕਰੋ";
+"auth.reset.sent.body" = "ਅਸੀਂ %@ ਉੱਤੇ ਪਾਸਵਰਡ ਬਦਲਣ ਦਾ ਲਿੰਕ ਭੇਜ ਦਿੱਤਾ ਹੈ।";
+"auth.error.dismiss" = "ਗ਼ਲਤੀ ਬੰਦ ਕਰੋ";
+
+// MARK: - Settings
+"settings.title" = "ਖਾਤਾ";
+"settings.signedinas" = "ਇਸ ਨਾਮ ਨਾਲ ਸਾਈਨ ਇਨ";
+"settings.signout" = "ਸਾਈਨ ਆਊਟ";
+"settings.faceid.title" = "Face ID ਵਰਤੋ";
+"settings.faceid.subtitle" = "ਅਗਲੀ ਵਾਰ Dosely ਖੋਲ੍ਹਣ ਵੇਲੇ ਜਲਦੀ ਸਾਈਨ ਇਨ ਹੋਣ ਲਈ।";
+"settings.language.row" = "ਭਾਸ਼ਾ / Language";
+"settings.language.title" = "ਭਾਸ਼ਾ";
+"settings.close" = "ਸੈਟਿੰਗਾਂ ਬੰਦ ਕਰੋ";
+
+// MARK: - Disclaimer
+"disclaimer.title" = "ਅੱਗੇ ਵਧਣ ਤੋਂ ਪਹਿਲਾਂ";
+"disclaimer.body1" = "Dosely ਯਾਦ ਕਰਾਉਣ ਵਾਲਾ ਟੂਲ ਹੈ। ਇਹ ਡਾਕਟਰ ਦੀ ਸਲਾਹ, ਪਛਾਣ ਜਾਂ ਇਲਾਜ ਦੀ ਥਾਂ ਨਹੀਂ ਲੈ ਸਕਦਾ।";
+"disclaimer.body2" = "ਦਵਾਈਆਂ, ਖੁਰਾਕ ਵਿੱਚ ਬਦਲਾਅ, ਮਾੜੇ ਅਸਰ ਜਾਂ ਦੂਜੀਆਂ ਦਵਾਈਆਂ ਨਾਲ ਮੇਲ ਬਾਰੇ ਆਪਣੇ ਡਾਕਟਰ ਜਾਂ ਫਾਰਮਾਸਿਸਟ ਨਾਲ ਜ਼ਰੂਰ ਗੱਲ ਕਰੋ। ਜੇ ਅਚਾਨਕ ਤਬੀਅਤ ਖ਼ਰਾਬ ਹੋਵੇ, ਤੁਰੰਤ ਐਮਰਜੈਂਸੀ ਨੂੰ ਫੋਨ ਕਰੋ।";
+"disclaimer.body3" = "\"ਮੈਨੂੰ ਪਤਾ ਲੱਗ ਗਿਆ\" ਦਬਾ ਕੇ ਤੁਸੀਂ ਮੰਨਦੇ ਹੋ ਕਿ ਤੁਸੀਂ ਆਪਣੇ ਡਾਕਟਰ ਉੱਤੇ ਭਰੋਸਾ ਕਰੋਗੇ ਅਤੇ Dosely ਨੂੰ ਸਿਰਫ਼ ਇੱਕ ਮਦਦਗਾਰ ਟੂਲ ਵਜੋਂ ਵਰਤੋਗੇ।";
+"disclaimer.understand" = "ਮੈਨੂੰ ਪਤਾ ਲੱਗ ਗਿਆ";
+
+// MARK: - Notifications
+"notifications.title" = "ਦਵਾਈ ਲੈਣ ਦਾ ਸਮਾਂ ਹੈ";
+"notifications.body" = "%@ — %@, %@";
+"notifications.action.tookit" = "ਮੈਂ ਲੈ ਲਈ";
+"notifications.action.snooze" = "10 ਮਿੰਟ ਬਾਅਦ ਯਾਦ ਕਰਾਓ";
+"food.with" = "ਖਾਣੇ ਨਾਲ";
+"food.without" = "ਖਾਣੇ ਤੋਂ ਬਿਨਾਂ";
+"food.either" = "ਖਾਣੇ ਨਾਲ ਜਾਂ ਬਿਨਾਂ";
+"permissionbanner.title" = "ਯਾਦ ਕਰਾਉਣ ਵਾਲੀਆਂ ਸੂਚਨਾਵਾਂ ਬੰਦ ਹਨ";
+"permissionbanner.body" = "ਖੁਰਾਕ ਯਾਦ ਕਰਾਉਣ ਲਈ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਚਾਲੂ ਕਰੋ।";
+"permissionbanner.settings" = "ਸੈਟਿੰਗਾਂ";
+
+// MARK: - Medication detail
+"medication.detail.title" = "ਦਵਾਈ ਦੀ ਜਾਣਕਾਰੀ";
+"medication.detail.disclaimer" = "ਇਹ ਆਮ ਜਾਣਕਾਰੀ ਹੈ। ਆਪਣੇ ਡਾਕਟਰ ਦੀ ਖ਼ਾਸ ਹਿਦਾਇਤ ਜ਼ਰੂਰ ਮੰਨੋ।";
+"medication.detail.section.whatitdoes" = "ਇਹ ਕੀ ਕਰਦੀ ਹੈ";
+"medication.detail.section.howtotake" = "ਕਿਵੇਂ ਲੈਣੀ ਹੈ";
+"medication.detail.section.foodanddrink" = "ਖਾਣਾ ਅਤੇ ਪੀਣਾ";
+"medication.detail.section.safe" = "ਨਾਲ ਠੀਕ ਹੈ";
+"medication.detail.section.caution" = "ਧਿਆਨ ਨਾਲ";
+"medication.detail.section.avoid" = "ਨਾ ਲਉ";
+"medication.detail.section.sideeffects.common" = "ਆਮ ਮਾੜੇ ਅਸਰ";
+"medication.detail.section.sideeffects.serious" = "ਡਾਕਟਰ ਨੂੰ ਫੋਨ ਕਰੋ";
+"medication.detail.source" = "ਸਰੋਤ";
+"medication.detail.fda.badge" = "openFDA ਤੋਂ (ਡਾਕਟਰੀ ਲੇਬਲ)";
+"medication.detail.fda.disclaimer" = "ਇਹ ਅੰਗਰੇਜ਼ੀ ਦੇ ਅਸਲ FDA ਲੇਬਲ ਤੋਂ ਹੈ। ਜੇ ਕੁਝ ਸਮਝ ਨਾ ਆਵੇ, ਫਾਰਮਾਸਿਸਟ ਤੋਂ ਪੁੱਛੋ।";
+"medication.detail.fda.followdoctor" = "ਆਪਣੇ ਡਾਕਟਰ ਦੀ ਹਿਦਾਇਤ ਜ਼ਰੂਰ ਮੰਨੋ।";
+"medication.detail.fda.fulltext" = "ਪੂਰਾ FDA ਲੇਬਲ ਦੇਖੋ";
+"medication.detail.warnings" = "ਖ਼ਬਰਦਾਰੀ — ਡਾਕਟਰ ਨੂੰ ਫੋਨ ਕਰੋ";
+"medication.detail.noinfo.title" = "ਅਜੇ ਕੋਈ ਜਾਣਕਾਰੀ ਨਹੀਂ";
+"medication.detail.noinfo.body" = "ਇਸ ਦਵਾਈ ਬਾਰੇ ਅਜੇ ਸਾਡੇ ਕੋਲ ਜਾਣਕਾਰੀ ਨਹੀਂ। ਫਾਰਮਾਸਿਸਟ ਤੋਂ ਪੁੱਛੋ।";
+"medication.detail.error.title" = "ਜਾਣਕਾਰੀ ਵਾਲੀ ਸੇਵਾ ਨਾਲ ਸੰਪਰਕ ਨਹੀਂ ਹੋਇਆ";
+"medication.detail.error.offline" = "ਲੱਗਦਾ ਹੈ ਤੁਸੀਂ ਆਫ਼ਲਾਈਨ ਹੋ। ਆਪਣਾ ਇੰਟਰਨੈੱਟ ਚੈੱਕ ਕਰ ਕੇ ਫੇਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
+"medication.detail.translation.notavailable" = "ਇਸ ਦਵਾਈ ਦਾ ਪੰਜਾਬੀ ਅਨੁਵਾਦ ਅਜੇ ਤਿਆਰ ਨਹੀਂ। ਅੰਗਰੇਜ਼ੀ ਜਾਣਕਾਰੀ ਦਿਖਾਈ ਜਾ ਰਹੀ ਹੈ।";
+"medication.detail.loading" = "ਜਾਣਕਾਰੀ ਲੱਭ ਰਹੇ ਹਾਂ…";
+
+// MARK: - Scan
+"scan.title.review" = "ਸਕੈਨ ਜਾਂਚੋ";
+"scan.cancel" = "ਸਕੈਨ ਰੱਦ ਕਰੋ";
+"scan.takephoto" = "ਫੋਟੋ ਖਿੱਚੋ";
+"scan.takephoto.hint" = "ਲੇਬਲ ਪੜ੍ਹਨ ਲਈ ਫੋਟੋ ਖਿੱਚੀ ਜਾਵੇਗੀ";
+"scan.guide" = "ਕੈਮਰਾ ਲੇਬਲ ਉੱਤੇ ਰੱਖੋ";
+"scan.flash.on" = "ਫਲੈਸ਼ ਬੰਦ ਕਰੋ";
+"scan.flash.off" = "ਫਲੈਸ਼ ਚਾਲੂ ਕਰੋ";
+"scan.permission.title" = "ਲੇਬਲ ਸਕੈਨ ਕਰਨ ਲਈ ਕੈਮਰੇ ਦੀ ਆਗਿਆ ਚਾਹੀਦੀ ਹੈ";
+"scan.permission.body" = "ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਜਾ ਕੇ Dosely ਨੂੰ ਕੈਮਰੇ ਦੀ ਆਗਿਆ ਦਿਓ, ਜਾਂ ਆਪ ਟਾਈਪ ਕਰੋ।";
+"scan.permission.settings" = "ਸੈਟਿੰਗਾਂ ਖੋਲ੍ਹੋ";
+"scan.typeitin" = "ਇਸ ਦੀ ਥਾਂ ਟਾਈਪ ਕਰੋ";
+"scan.failed.title" = "ਕੈਮਰਾ ਨਹੀਂ ਖੁੱਲ੍ਹਿਆ";
+"scan.processing" = "ਲੇਬਲ ਪੜ੍ਹ ਰਹੇ ਹਾਂ…";
+"scan.fallback.title" = "ਇਹ ਲੇਬਲ ਸਾਫ਼ ਨਹੀਂ ਪੜ੍ਹਿਆ ਗਿਆ";
+"scan.fallback.body" = "ਕੋਈ ਗੱਲ ਨਹੀਂ — ਤੁਸੀਂ ਆਪ ਟਾਈਪ ਕਰ ਸਕਦੇ ਹੋ ਜਾਂ ਫੇਰ ਫੋਟੋ ਖਿੱਚ ਸਕਦੇ ਹੋ।";
+"scan.fallback.tryagain" = "ਫੇਰ ਫੋਟੋ ਖਿੱਚੋ";
+"scan.review.continue" = "ਠੀਕ ਹੈ, ਅੱਗੇ ਚੱਲੋ";
+"scan.review.tryagain" = "ਫੇਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ";
+"scan.review.medname" = "ਦਵਾਈ ਦਾ ਨਾਮ";
+"scan.review.dose" = "ਖੁਰਾਕ";
+"scan.review.frequency" = "ਕਿੰਨੀ ਵਾਰ";
+"scan.review.foodrule" = "ਖਾਣੇ ਨਾਲ ਜਾਂ ਬਿਨਾਂ";
+"scan.review.quantity" = "ਮੌਜੂਦ ਗੋਲੀਆਂ";
+"scan.review.confidence.medium" = "ਜ਼ਰੂਰ ਜਾਂਚ ਲਉ";
+"scan.review.confidence.low" = "ਅਸੀਂ ਇਹ ਨਹੀਂ ਪੜ੍ਹ ਸਕੇ — ਆਪ ਟਾਈਪ ਕਰੋ";
+"scan.review.thumb.a11y" = "ਪਰਚੀ ਦੇ ਲੇਬਲ ਦੀ ਫੋਟੋ";
+
+// MARK: - LanguagePicker
+"languagepicker.title" = "ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ";
+"languagepicker.english" = "English";
+"languagepicker.punjabi" = "ਪੰਜਾਬੀ (Punjabi)";
+"languagepicker.cancel" = "ਰੱਦ ਕਰੋ";

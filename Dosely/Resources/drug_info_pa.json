@@ -1,0 +1,125 @@
+{
+  "_review_note": "REVIEW NEEDED — every translation must be reviewed by a fluent Punjabi speaker (preferably a healthcare worker familiar with how patients in BC actually describe these meds) before client testing. Drug names retain English transliteration in parentheses because Canadian pharmacy bottles carry English labels.",
+  "meds": [
+    {
+      "nameKey": "metformin",
+      "commonNames": ["Metformin", "Glucophage", "Fortamet", "Glumetza", "Riomet"],
+      "whatItDoes": "ਟਾਈਪ 2 ਸ਼ੂਗਰ ਵਾਲੇ ਬਾਲਗਾਂ ਵਿੱਚ ਖ਼ੂਨ ਦੀ ਸ਼ੂਗਰ ਘਟਾਉਂਦੀ ਹੈ। ਇਹ ਸਰੀਰ ਨੂੰ ਆਪਣੀ ਇਨਸੁਲਿਨ ਚੰਗੀ ਤਰ੍ਹਾਂ ਵਰਤਣ ਵਿੱਚ ਮਦਦ ਕਰਦੀ ਹੈ ਅਤੇ ਜਿਗਰ ਤੋਂ ਬਣਨ ਵਾਲੀ ਸ਼ੂਗਰ ਵੀ ਘਟਾਉਂਦੀ ਹੈ।",
+      "howToTake": "ਖਾਣੇ ਨਾਲ ਪੂਰਾ ਗਿਲਾਸ ਪਾਣੀ ਪੀ ਕੇ ਨਿਗਲੋ। ਜ਼ਿਆਦਾਤਰ ਲੋਕ ਇਹ ਦਿਨ ਵਿੱਚ ਇੱਕ ਜਾਂ ਦੋ ਵਾਰੀ, ਉਸੇ ਸਮੇਂ ਉੱਤੇ ਲੈਂਦੇ ਹਨ।",
+      "commonSideEffects": ["ਪੇਟ ਖ਼ਰਾਬ ਹੋਣਾ", "ਟੱਟੀਆਂ ਲੱਗਣੀਆਂ", "ਗੈਸ ਜਾਂ ਪੇਟ ਫੁੱਲਣਾ", "ਮੂੰਹ ਵਿੱਚ ਧਾਤੂ ਜਿਹਾ ਸੁਆਦ"],
+      "seriousSideEffects": ["ਮਾਸਪੇਸ਼ੀਆਂ ਵਿੱਚ ਤੇਜ਼ ਦਰਦ ਜਾਂ ਕਮਜ਼ੋਰੀ", "ਸਾਹ ਲੈਣ ਵਿੱਚ ਮੁਸ਼ਕਲ", "ਜ਼ਿਆਦਾ ਥਕਾਵਟ ਜਾਂ ਨੀਂਦ ਆਉਣੀ", "ਪੇਟ ਦਰਦ ਜੋ ਠੀਕ ਨਾ ਹੋਵੇ"],
+      "foodGuide": {
+        "safe": ["ਆਮ ਖਾਣਾ", "ਪਾਣੀ"],
+        "caution": ["ਜ਼ਿਆਦਾ ਸ਼ਰਾਬ ਪੀਣ ਨਾਲ ਮਾੜੇ ਅਸਰ ਵਧ ਸਕਦੇ ਹਨ"],
+        "avoid": []
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=metformin"
+    },
+    {
+      "nameKey": "lisinopril",
+      "commonNames": ["Lisinopril", "Prinivil", "Zestril", "Qbrelis"],
+      "whatItDoes": "ਖ਼ੂਨ ਦਾ ਦਬਾਅ ਘਟਾਉਂਦੀ ਹੈ ਅਤੇ ਦਿਲ ਨੂੰ ਘੱਟ ਮਿਹਨਤ ਕਰਨ ਵਿੱਚ ਮਦਦ ਕਰਦੀ ਹੈ। ਇਹ ACE ਇਨਹਿਬੀਟਰ ਨਾਮ ਦੀਆਂ ਦਵਾਈਆਂ ਵਿੱਚੋਂ ਹੈ।",
+      "howToTake": "ਪਾਣੀ ਨਾਲ ਹਰ ਰੋਜ਼ ਉਸੇ ਸਮੇਂ ਉੱਤੇ ਨਿਗਲੋ। ਖਾਣੇ ਨਾਲ ਜਾਂ ਬਿਨਾਂ ਲਈ ਜਾ ਸਕਦੀ ਹੈ। ਪਹਿਲੀ ਖੁਰਾਕ ਨਾਲ ਥੋੜ੍ਹਾ ਚੱਕਰ ਆ ਸਕਦਾ ਹੈ — ਥੋੜ੍ਹੀ ਦੇਰ ਬੈਠ ਜਾਂ ਲੇਟ ਜਾਉ।",
+      "commonSideEffects": ["ਸੁੱਕੀ ਖੰਘ", "ਖੜ੍ਹੇ ਹੋਣ ਉੱਤੇ ਚੱਕਰ ਆਉਣੇ", "ਸਿਰ ਦਰਦ", "ਥਕਾਵਟ"],
+      "seriousSideEffects": ["ਮੂੰਹ, ਬੁੱਲ੍ਹ, ਜੀਭ ਜਾਂ ਗਲੇ ਦੀ ਸੋਜ", "ਸਾਹ ਜਾਂ ਨਿਗਲਣ ਵਿੱਚ ਮੁਸ਼ਕਲ", "ਬੇਹੋਸ਼ੀ", "ਬਹੁਤ ਘੱਟ ਪਿਸ਼ਾਬ ਆਉਣਾ"],
+      "foodGuide": {
+        "safe": ["ਆਮ ਖਾਣਾ", "ਪਾਣੀ"],
+        "caution": ["ਪੋਟਾਸ਼ੀਅਮ ਵਾਲੇ ਨਮਕ ਦੇ ਬਦਲ", "ਬਹੁਤ ਜ਼ਿਆਦਾ ਕੇਲੇ ਜਾਂ ਸੰਤਰੇ ਦਾ ਜੂਸ", "ਸ਼ਰਾਬ ਨਾਲ ਖ਼ੂਨ ਦਾ ਦਬਾਅ ਜ਼ਿਆਦਾ ਡਿੱਗ ਸਕਦਾ ਹੈ"],
+        "avoid": []
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=lisinopril"
+    },
+    {
+      "nameKey": "atorvastatin",
+      "commonNames": ["Atorvastatin", "Lipitor"],
+      "whatItDoes": "ਉੱਚੇ ਕੋਲੈਸਟ੍ਰੋਲ ਨੂੰ ਘਟਾਉਂਦੀ ਹੈ ਅਤੇ ਦਿਲ ਦਾ ਦੌਰਾ ਜਾਂ ਅਧਰੰਗ ਹੋਣ ਦਾ ਖ਼ਤਰਾ ਘਟਾਉਂਦੀ ਹੈ। ਇਹ ਸਟੈਟਿਨ ਨਾਮ ਦੀਆਂ ਦਵਾਈਆਂ ਵਿੱਚੋਂ ਹੈ।",
+      "howToTake": "ਦਿਨ ਵਿੱਚ ਇੱਕ ਵਾਰ ਪਾਣੀ ਨਾਲ ਨਿਗਲੋ। ਕਿਸੇ ਵੀ ਸਮੇਂ, ਖਾਣੇ ਨਾਲ ਜਾਂ ਬਿਨਾਂ ਲਈ ਜਾ ਸਕਦੀ ਹੈ। ਕਈ ਲੋਕ ਇਹ ਸ਼ਾਮ ਨੂੰ ਲੈਂਦੇ ਹਨ ਕਿਉਂਕਿ ਸਰੀਰ ਰਾਤ ਨੂੰ ਜ਼ਿਆਦਾ ਕੋਲੈਸਟ੍ਰੋਲ ਬਣਾਉਂਦਾ ਹੈ।",
+      "commonSideEffects": ["ਹਲਕਾ ਮਾਸਪੇਸ਼ੀ ਦਰਦ", "ਸਿਰ ਦਰਦ", "ਜੋੜਾਂ ਵਿੱਚ ਦਰਦ", "ਹਲਕਾ ਪੇਟ ਖ਼ਰਾਬ"],
+      "seriousSideEffects": ["ਬਿਨਾਂ ਕਾਰਨ ਮਾਸਪੇਸ਼ੀ ਦਾ ਤੇਜ਼ ਦਰਦ ਜਾਂ ਕਮਜ਼ੋਰੀ", "ਚਾਹ ਵਰਗੇ ਰੰਗ ਦਾ ਪਿਸ਼ਾਬ", "ਚਮੜੀ ਜਾਂ ਅੱਖਾਂ ਦਾ ਪੀਲਾ ਪੈਣਾ", "ਜ਼ਿਆਦਾ ਥਕਾਵਟ"],
+      "foodGuide": {
+        "safe": ["ਆਮ ਖਾਣਾ", "ਪਾਣੀ"],
+        "caution": ["ਸ਼ਰਾਬ ਨਾਲ ਜਿਗਰ ਨੂੰ ਨੁਕਸਾਨ ਦਾ ਖ਼ਤਰਾ ਵਧ ਸਕਦਾ ਹੈ"],
+        "avoid": ["ਅੰਗੂਰਫਲ (grapefruit) ਅਤੇ ਉਸ ਦਾ ਜੂਸ — ਖ਼ੂਨ ਵਿੱਚ ਦਵਾਈ ਦਾ ਪੱਧਰ ਵਧਾ ਸਕਦਾ ਹੈ"]
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=atorvastatin"
+    },
+    {
+      "nameKey": "amlodipine",
+      "commonNames": ["Amlodipine", "Norvasc", "Katerzia"],
+      "whatItDoes": "ਖ਼ੂਨ ਦੀਆਂ ਨਾੜੀਆਂ ਨੂੰ ਢਿੱਲਾ ਕਰਦੀ ਹੈ ਤਾਂ ਜੋ ਦਿਲ ਨੂੰ ਘੱਟ ਮਿਹਨਤ ਕਰਨੀ ਪਵੇ। ਇਹ ਉੱਚੇ ਖ਼ੂਨ ਦੇ ਦਬਾਅ ਅਤੇ ਛਾਤੀ ਦੇ ਦਰਦ (ਏਨਜਾਈਨਾ) ਲਈ ਵਰਤੀ ਜਾਂਦੀ ਹੈ।",
+      "howToTake": "ਦਿਨ ਵਿੱਚ ਇੱਕ ਵਾਰ ਉਸੇ ਸਮੇਂ ਉੱਤੇ ਪਾਣੀ ਨਾਲ ਨਿਗਲੋ। ਖਾਣੇ ਨਾਲ ਜਾਂ ਬਿਨਾਂ ਲਈ ਜਾ ਸਕਦੀ ਹੈ।",
+      "commonSideEffects": ["ਪੈਰਾਂ ਜਾਂ ਟਖਣਿਆਂ ਦੀ ਸੋਜ", "ਚਿਹਰੇ ਉੱਤੇ ਗਰਮੀ ਜਾਂ ਲਾਲੀ", "ਸਿਰ ਦਰਦ", "ਚੱਕਰ ਆਉਣੇ"],
+      "seriousSideEffects": ["ਛਾਤੀ ਦਾ ਵਧਦਾ ਦਰਦ", "ਬਹੁਤ ਤੇਜ਼ ਜਾਂ ਜ਼ੋਰ ਨਾਲ ਧੜਕਣ", "ਫੈਲਦੀ ਸੋਜ"],
+      "foodGuide": {
+        "safe": ["ਆਮ ਖਾਣਾ", "ਪਾਣੀ"],
+        "caution": ["ਜ਼ਿਆਦਾ ਅੰਗੂਰਫਲ ਦਾ ਜੂਸ ਖ਼ੂਨ ਵਿੱਚ ਦਵਾਈ ਦਾ ਪੱਧਰ ਥੋੜ੍ਹਾ ਵਧਾ ਸਕਦਾ ਹੈ", "ਸ਼ਰਾਬ ਨਾਲ ਚੱਕਰ ਵਧ ਸਕਦੇ ਹਨ"],
+        "avoid": []
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=amlodipine"
+    },
+    {
+      "nameKey": "levothyroxine",
+      "commonNames": ["Levothyroxine", "Synthroid", "Levoxyl", "Euthyrox", "Tirosint", "Eltroxin"],
+      "whatItDoes": "ਥਾਇਰਾਇਡ ਹਾਰਮੋਨ ਦੀ ਘਾਟ ਪੂਰੀ ਕਰਦੀ ਹੈ। ਜਦੋਂ ਥਾਇਰਾਇਡ ਗ੍ਰੰਥੀ ਆਪ ਕਾਫ਼ੀ ਹਾਰਮੋਨ ਨਾ ਬਣਾਏ ਤਾਂ ਇਹ ਵਰਤੀ ਜਾਂਦੀ ਹੈ।",
+      "howToTake": "ਖਾਲੀ ਪੇਟ, ਨਾਸ਼ਤੇ ਤੋਂ 30-60 ਮਿੰਟ ਪਹਿਲਾਂ ਪੂਰੇ ਗਿਲਾਸ ਪਾਣੀ ਨਾਲ ਨਿਗਲੋ। ਹਰ ਰੋਜ਼ ਉਸੇ ਸਮੇਂ ਉੱਤੇ ਲਉ।",
+      "commonSideEffects": ["ਪਹਿਲੇ ਮਹੀਨਿਆਂ ਵਿੱਚ ਵਾਲ ਪਤਲੇ ਹੋਣੇ", "ਹਲਕਾ ਸਿਰ ਦਰਦ", "ਖੁਰਾਕ ਜ਼ਿਆਦਾ ਹੋਵੇ ਤਾਂ ਨੀਂਦ ਨਾ ਆਉਣੀ", "ਭਾਰ ਥੋੜ੍ਹਾ ਬਦਲਣਾ"],
+      "seriousSideEffects": ["ਛਾਤੀ ਦਾ ਦਰਦ", "ਬਹੁਤ ਤੇਜ਼ ਜਾਂ ਅਸਾਧਾਰਨ ਧੜਕਣ", "ਜ਼ਿਆਦਾ ਪਸੀਨਾ ਜਾਂ ਕੰਬਣੀ", "ਸਾਹ ਲੈਣ ਵਿੱਚ ਮੁਸ਼ਕਲ"],
+      "foodGuide": {
+        "safe": ["ਪਾਣੀ"],
+        "caution": ["ਖੁਰਾਕ ਦੇ ਨੇੜੇ ਜ਼ਿਆਦਾ ਫਾਈਬਰ ਵਾਲਾ ਖਾਣਾ ਦਵਾਈ ਦਾ ਅਸਰ ਘਟਾ ਸਕਦਾ ਹੈ"],
+        "avoid": ["ਖੁਰਾਕ ਦੇ 4 ਘੰਟੇ ਅੰਦਰ ਚਾਹ-ਕਾਫ਼ੀ, ਕੈਲਸ਼ੀਅਮ, ਆਇਰਨ, ਸੋਏ ਜਾਂ ਏਂਟਾਸਿਡ — ਦਵਾਈ ਨੂੰ ਜਜ਼ਬ ਹੋਣ ਤੋਂ ਰੋਕਦੇ ਹਨ"]
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=levothyroxine"
+    },
+    {
+      "nameKey": "warfarin",
+      "commonNames": ["Warfarin", "Coumadin", "Jantoven"],
+      "whatItDoes": "ਖ਼ੂਨ ਨੂੰ ਪਤਲਾ ਕਰਦੀ ਹੈ ਤਾਂ ਜੋ ਖ਼ਤਰਨਾਕ ਥੱਕੇ, ਅਧਰੰਗ ਜਾਂ ਦਿਲ ਦਾ ਦੌਰਾ ਨਾ ਹੋਵੇ। ਇਸ ਦੀ ਖੁਰਾਕ ਠੀਕ ਰੱਖਣ ਲਈ ਪੱਕੇ ਖ਼ੂਨ ਦੇ ਟੈਸਟ ਜ਼ਰੂਰੀ ਹਨ।",
+      "howToTake": "ਦਿਨ ਵਿੱਚ ਇੱਕ ਵਾਰ ਉਸੇ ਸਮੇਂ ਉੱਤੇ ਪਾਣੀ ਨਾਲ ਨਿਗਲੋ। ਖਾਣੇ ਨਾਲ ਜਾਂ ਬਿਨਾਂ ਲਈ ਜਾ ਸਕਦੀ ਹੈ। ਖ਼ੂਨ ਦੇ ਟੈਸਟ ਕਦੇ ਨਾ ਛੱਡੋ — ਖੁਰਾਕ ਅਕਸਰ ਬਦਲਣੀ ਪੈਂਦੀ ਹੈ।",
+      "commonSideEffects": ["ਅਸਾਨੀ ਨਾਲ ਨੀਲ ਪੈਣੇ", "ਬੁਰਸ਼ ਕਰਨ ਵੇਲੇ ਮਸੂੜਿਆਂ ਵਿੱਚੋਂ ਲਹੂ", "ਛੋਟੇ ਜ਼ਖ਼ਮ ਵਿੱਚੋਂ ਲੰਮਾ ਖ਼ੂਨ ਆਉਣਾ", "ਵਾਲ ਪਤਲੇ ਹੋਣੇ"],
+      "seriousSideEffects": ["ਜ਼ਿਆਦਾ ਜਾਂ ਅਸਾਧਾਰਨ ਖ਼ੂਨ", "ਪਿਸ਼ਾਬ ਜਾਂ ਟੱਟੀ ਵਿੱਚ ਖ਼ੂਨ", "ਤੇਜ਼ ਸਿਰ ਦਰਦ ਜਾਂ ਅਚਾਨਕ ਕਮਜ਼ੋਰੀ", "ਖੰਘ ਨਾਲ ਖ਼ੂਨ ਆਉਣਾ"],
+      "foodGuide": {
+        "safe": ["ਪਾਣੀ", "ਆਮ ਖਾਣਾ ਜੇ ਖ਼ੁਰਾਕ ਦਾ ਸਾਰਾ ਸਟਾਈਲ ਇੱਕੋ ਜਿਹਾ ਰਹੇ"],
+        "caution": ["ਪਾਲਕ, ਸਾਗ, ਬ੍ਰੋਕਲੀ ਵਰਗੇ ਹਰੇ ਪੱਤੇਦਾਰ ਸਬਜ਼ੀਆਂ ਵਿੱਚ ਵਿਟਾਮਿਨ K ਹੁੰਦਾ ਹੈ — ਇਨ੍ਹਾਂ ਨੂੰ ਛੱਡਣਾ ਨਹੀਂ, ਪਰ ਹਰ ਰੋਜ਼ ਉਨੇ ਹੀ ਖਾਉ ਤਾਂ ਜੋ ਖੁਰਾਕ ਦਾ ਅਸਰ ਠੀਕ ਰਹੇ", "ਜ਼ਿਆਦਾ ਕਰੈਨਬੇਰੀ ਜੂਸ"],
+        "avoid": ["ਜ਼ਿਆਦਾ ਸ਼ਰਾਬ", "ਵਿਟਾਮਿਨ K ਵਾਲੇ ਖਾਣੇ ਵਿੱਚ ਅਚਾਨਕ ਵੱਡੇ ਬਦਲਾਅ"]
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=warfarin"
+    },
+    {
+      "nameKey": "aspirin_low_dose",
+      "commonNames": ["Aspirin", "Aspirin (low-dose)", "Baby aspirin", "Bayer Low Dose", "Ecotrin"],
+      "whatItDoes": "ਡਾਕਟਰ ਦੀ ਸਲਾਹ ਨਾਲ ਰੋਜ਼ ਦੀ ਛੋਟੀ ਖੁਰਾਕ ਜਿਨ੍ਹਾਂ ਨੂੰ ਦਿਲ ਦਾ ਦੌਰਾ ਜਾਂ ਅਧਰੰਗ ਹੋ ਚੁੱਕਾ ਹੈ ਉਨ੍ਹਾਂ ਵਿੱਚ ਖ਼ੂਨ ਦੇ ਥੱਕੇ ਰੋਕਣ ਵਿੱਚ ਮਦਦ ਕਰਦੀ ਹੈ। ਸਿਰਫ਼ ਡਾਕਟਰ ਦੇ ਕਹਿਣ ਉੱਤੇ ਹੀ ਲਉ।",
+      "howToTake": "ਪੇਟ ਨੂੰ ਬਚਾਉਣ ਲਈ ਪੂਰੇ ਗਿਲਾਸ ਪਾਣੀ ਅਤੇ ਥੋੜ੍ਹੇ ਜਿਹੇ ਨਾਸ਼ਤੇ ਨਾਲ ਨਿਗਲੋ। ਹਰ ਰੋਜ਼ ਉਸੇ ਸਮੇਂ ਉੱਤੇ ਲਉ।",
+      "commonSideEffects": ["ਹਲਕਾ ਪੇਟ ਖ਼ਰਾਬ", "ਛਾਤੀ ਵਿੱਚ ਜਲਣ", "ਅਸਾਨੀ ਨਾਲ ਨੀਲ ਪੈਣੇ"],
+      "seriousSideEffects": ["ਕਾਲੀਆਂ ਜਾਂ ਖ਼ੂਨ ਵਾਲੀਆਂ ਟੱਟੀਆਂ", "ਕੌਫ਼ੀ ਵਰਗੀ ਉਲਟੀ", "ਪੇਟ ਦਾ ਤੇਜ਼ ਦਰਦ", "ਅਚਾਨਕ ਕਮਜ਼ੋਰੀ, ਬੋਲਣ ਜਾਂ ਦੇਖਣ ਵਿੱਚ ਮੁਸ਼ਕਲ"],
+      "foodGuide": {
+        "safe": ["ਆਮ ਖਾਣਾ", "ਪਾਣੀ"],
+        "caution": ["ਸ਼ਰਾਬ ਨਾਲ ਪੇਟ ਵਿੱਚ ਖ਼ੂਨ ਆਉਣ ਦਾ ਖ਼ਤਰਾ ਵਧ ਸਕਦਾ ਹੈ"],
+        "avoid": []
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=aspirin"
+    },
+    {
+      "nameKey": "omeprazole",
+      "commonNames": ["Omeprazole", "Prilosec", "Losec"],
+      "whatItDoes": "ਪੇਟ ਵਿੱਚ ਬਣਨ ਵਾਲੇ ਤੇਜ਼ਾਬ ਨੂੰ ਘਟਾਉਂਦੀ ਹੈ। ਇਹ ਛਾਤੀ ਦੀ ਜਲਣ, ਤੇਜ਼ਾਬ, ਅਤੇ ਪੇਟ ਦੇ ਜ਼ਖ਼ਮਾਂ ਲਈ ਵਰਤੀ ਜਾਂਦੀ ਹੈ।",
+      "howToTake": "ਖਾਣੇ ਤੋਂ 30-60 ਮਿੰਟ ਪਹਿਲਾਂ, ਆਮ ਤੌਰ ਉੱਤੇ ਨਾਸ਼ਤੇ ਤੋਂ ਪਹਿਲਾਂ, ਪਾਣੀ ਨਾਲ ਪੂਰੀ ਨਿਗਲੋ। ਕੈਪਸੂਲ ਨੂੰ ਚਬਾਉਣਾ ਜਾਂ ਪੀਸਣਾ ਨਹੀਂ।",
+      "commonSideEffects": ["ਸਿਰ ਦਰਦ", "ਪੇਟ ਦਰਦ", "ਟੱਟੀਆਂ ਜਾਂ ਕਬਜ਼", "ਗੈਸ"],
+      "seriousSideEffects": ["ਤੇਜ਼ ਜਾਂ ਪਾਣੀ ਵਰਗੀਆਂ ਟੱਟੀਆਂ", "ਲੰਮੇ ਸਮੇਂ ਦੀ ਵਰਤੋਂ ਨਾਲ ਹੱਡੀ ਟੁੱਟਣ", "ਤੇਜ਼ ਚਮੜੀ ਦੇ ਦਾਣੇ, ਛਾਲੇ ਜਾਂ ਚਮੜੀ ਉਤਰਨੀ", "ਸੁੰਨ ਹੋਣਾ ਜਾਂ ਮਾਸਪੇਸ਼ੀ ਵਿੱਚ ਅਕੜਾਅ"],
+      "foodGuide": {
+        "safe": ["ਪਾਣੀ", "ਖੁਰਾਕ ਤੋਂ ਬਾਅਦ ਆਮ ਖਾਣਾ"],
+        "caution": ["ਸ਼ਰਾਬ ਨਾਲ ਛਾਤੀ ਦੀ ਜਲਣ ਵਧ ਸਕਦੀ ਹੈ"],
+        "avoid": []
+      },
+      "source": "DailyMed · U.S. National Library of Medicine",
+      "sourceUrl": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=omeprazole"
+    }
+  ]
+}

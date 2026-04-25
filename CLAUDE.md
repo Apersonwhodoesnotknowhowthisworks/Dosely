@@ -73,3 +73,14 @@ Located in `Dosely/DesignSystem/`. Use these tokens everywhere — do not hardco
 
 - Every change commits to git with a descriptive message
 - The app is tested on a real iPhone, not just the simulator — simulator passes are not proof of correctness for this audience (touch targets, Dynamic Type, VoiceOver, haptics all behave differently on device)
+
+## Localization
+
+- **Languages shipped:** English (`en`), Punjabi/Gurmukhi (`pa`). `pa` is a must-have because the primary client's first language is Punjabi.
+- **String files:** `Dosely/Resources/en.lproj/Localizable.strings` (+`.stringsdict` for plurals), and the `pa.lproj` mirror. Drug-info corpus is in `Dosely/Resources/drug_info.json` (English) and `Dosely/Resources/drug_info_pa.json`.
+- **Runtime switching:** Bundle swizzle. `Dosely/Localization/LocalizationBundle.swift` overrides `Bundle.main.localizedString(forKey:value:table:)` to look in the `.lproj` whose code matches `UserDefaults.standard.string(forKey: "app_language")`. The app's `body` is stamped with `.id(language)` so SwiftUI rebuilds the entire tree when the user flips language. No restart required. (The alternative — show a "Restart Dosely to apply" alert — was judged worse for elderly users.)
+- **First-launch picker:** `LanguagePickerView` shows on first run, gated by `@AppStorage("language_picked")`. Settings ▸ Language re-presents the same picker.
+- **Numbers:** Western Arabic everywhere (1, 2, 3) regardless of language. Older Punjabi-Canadian readers in BC are accustomed to Latin numerals; Gurmukhi numerals add cognitive load. Enforced via `Locale(identifier: "<lang>@numbers=latn")` in `LocalizedFormatters`.
+- **OCR (label scanner):** English only. Apple's Vision framework does **not** support Gurmukhi for text recognition through iOS 18, so the scan flow stays in English with a Punjabi caption ("ਲੇਬਲ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਪੜ੍ਹਿਆ ਜਾਵੇਗਾ") under the Scan button when language is `pa`.
+- **Voice readout:** `VoiceReadoutHelper.swift` is a minimal wrapper around `AVSpeechSynthesizer`. Speaks `pa-IN` for Punjabi, `en-US` for English. If no voice is installed for the requested language, logs `[VOICE-DEBUG]` and silently no-ops. Full `VoiceReadoutService` lands in a later accessibility prompt.
+- **Translation review:** every Punjabi string in `pa.lproj/Localizable.strings` is AI-generated draft. The fluent-speaker checklist lives at `docs/translations_review.md`. **Do not ship to clients before review.**

@@ -6,8 +6,7 @@ struct Step6SupplyView: View {
     var body: some View {
         StepShell(
             stepNumber: 6,
-            question: "How many pills do you have right now?",
-            primaryTitle: "Next",
+            question: L("addmed.step6.question"),
             primaryAction: { state.path.append(.notes) }
         ) {
             HStack {
@@ -17,12 +16,12 @@ struct Step6SupplyView: View {
                     .frame(minWidth: 80, alignment: .leading)
                 Spacer()
                 Stepper(
-                    "Current supply",
+                    L("addmed.step6.question"),
                     value: $state.currentSupply,
                     in: 0...200
                 )
                 .labelsHidden()
-                .accessibilityLabel("Pills on hand, currently \(state.currentSupply)")
+                .accessibilityLabel(L("addmed.step6.supply.a11y", state.currentSupply))
             }
             .padding(DSSpacing.md)
             .frame(minHeight: DSSpacing.minTapTarget)

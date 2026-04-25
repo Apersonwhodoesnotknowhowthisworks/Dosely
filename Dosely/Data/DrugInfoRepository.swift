@@ -38,13 +38,32 @@ final class DrugInfoRepository {
     /// reachability guarantee.
     private(set) var hasNetworkRecently: Bool = true
 
+    private let englishDrugs: [DrugInfo]
+
     init(bundle: Bundle = .main,
          filename: String = "drug_info",
          cache: DrugInfoCache = .shared,
          remote: DrugRemoteService = OpenFDADrugService()) {
-        self.drugs = Self.load(bundle: bundle, filename: filename)
+        self.englishDrugs = Self.load(bundle: bundle, filename: filename)
+        self.drugs = self.englishDrugs    // legacy field; lookups use locale-aware path below
         self.cache = cache
         self.remote = remote
+        self.bundle = bundle
+        self.filenameBase = filename
+    }
+
+    private let bundle: Bundle
+    private let filenameBase: String
+
+    /// Locale-aware corpus. `pa` reads `drug_info_pa.json` if present; any
+    /// medication missing from the Punjabi file falls through to English.
+    private var localizedDrugs: [DrugInfo] {
+        let lang = UserDefaults.standard.string(forKey: "app_language") ?? ""
+        guard lang == "pa" else { return englishDrugs }
+        let pa = Self.load(bundle: bundle, filename: filenameBase + "_pa")
+        guard !pa.isEmpty else { return englishDrugs }
+        let paByKey = Dictionary(uniqueKeysWithValues: pa.map { ($0.nameKey, $0) })
+        return englishDrugs.map { paByKey[$0.nameKey] ?? $0 }
     }
 
     private struct Payload: Codable {
@@ -74,7 +93,9 @@ final class DrugInfoRepository {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalized.isEmpty else { return nil }
 
-        for drug in drugs {
+        let corpus = localizedDrugs
+
+        for drug in corpus {
             if drug.nameKey.lowercased() == normalized { return drug }
             for common in drug.commonNames where common.lowercased() == normalized {
                 return drug
@@ -82,7 +103,7 @@ final class DrugInfoRepository {
         }
 
         var bestMatch: (drug: DrugInfo, length: Int)?
-        for drug in drugs {
+        for drug in corpus {
             let candidates = drug.commonNames + [drug.nameKey]
             for candidate in candidates {
                 let lc = candidate.lowercased()
