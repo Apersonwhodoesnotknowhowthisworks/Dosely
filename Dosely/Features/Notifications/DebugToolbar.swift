@@ -10,22 +10,33 @@ struct DebugToolbarModifier: ViewModifier {
         #if DEBUG
         content
             .safeAreaInset(edge: .top) {
-                HStack(spacing: DSSpacing.xs) {
-                    Spacer()
-                    pill(title: "Test notification (30s)",
-                         a11y: "DEBUG: schedule test notification in 30 seconds") {
-                        Task { await handleTestTap() }
+                VStack(spacing: DSSpacing.xs) {
+                    HStack(spacing: DSSpacing.xs) {
+                        Spacer()
+                        pill(title: "Test notification (30s)",
+                             a11y: "DEBUG: schedule test notification in 30 seconds") {
+                            Task { await handleTestTap() }
+                        }
+                        pill(title: "Schedule real dose (2 min)",
+                             a11y: "Schedule real dose verification in 2 minutes") {
+                            Task { await handleScheduleVerifyRx() }
+                        }
                     }
-                    pill(title: "Schedule real dose (2 min)",
-                         a11y: "Schedule real dose verification in 2 minutes") {
-                        Task { await handleScheduleVerifyRx() }
+                    HStack(spacing: DSSpacing.xs) {
+                        Spacer()
+                        pill(title: "Clear drug cache",
+                             a11y: "DEBUG: clear drug info cache") {
+                            Task {
+                                await DrugInfoCache.shared.clear()
+                                print("[DRUG-DEBUG] cleared")
+                            }
+                        }
                     }
                 }
                 .padding(.trailing, DSSpacing.md)
                 .padding(.top, DSSpacing.xs)
             }
             .task {
-                // Opt-in auto-trigger for shell-driven verification of the test button.
                 if ProcessInfo.processInfo.arguments.contains("-DoselyAutoTest") {
                     await handleTestTap()
                 }
@@ -59,8 +70,6 @@ struct DebugToolbarModifier: ViewModifier {
         .accessibilityLabel(a11y)
     }
 
-    // MARK: - Shared permission gate
-
     @MainActor
     private func performWithPermission(_ action: @MainActor @escaping () async -> Void) async {
         let status = await ReminderScheduler.currentStatus()
@@ -82,8 +91,6 @@ struct DebugToolbarModifier: ViewModifier {
         }
     }
 
-    // MARK: - Button actions
-
     @MainActor
     private func handleTestTap() async {
         await performWithPermission {
@@ -104,8 +111,6 @@ struct DebugToolbarModifier: ViewModifier {
     private func scheduleVerifyRx() async {
         let repository = MedicationRepository()
 
-        // Compute the fire minute: now + 2 min with seconds truncated to 0.
-        // UNCalendarNotificationTrigger matches HH:mm:00, so this is the authoritative fire time.
         let calendar = Calendar.current
         let future = Date().addingTimeInterval(2 * 60)
         let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: future)

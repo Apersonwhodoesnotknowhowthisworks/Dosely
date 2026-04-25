@@ -20,13 +20,31 @@ struct FoodGuide: Codable, Equatable {
     let avoid: [String]
 }
 
+enum DrugSource {
+    case curated(DrugInfo)
+    case dynamic(OpenFDADrug, sourceLabel: String)
+    case missing
+}
+
 final class DrugInfoRepository {
     static let shared = DrugInfoRepository()
 
     private let drugs: [DrugInfo]
+    private let cache: DrugInfoCache
+    private let remote: DrugRemoteService
 
-    init(bundle: Bundle = .main, filename: String = "drug_info") {
+    /// Best-effort flag flipped after every Tier 3 attempt. UI may use it to
+    /// decide between "offline" copy and a generic retry message. Not a
+    /// reachability guarantee.
+    private(set) var hasNetworkRecently: Bool = true
+
+    init(bundle: Bundle = .main,
+         filename: String = "drug_info",
+         cache: DrugInfoCache = .shared,
+         remote: DrugRemoteService = OpenFDADrugService()) {
         self.drugs = Self.load(bundle: bundle, filename: filename)
+        self.cache = cache
+        self.remote = remote
     }
 
     private struct Payload: Codable {
@@ -42,17 +60,20 @@ final class DrugInfoRepository {
         return payload.meds
     }
 
-    /// Looks up drug info by an arbitrary medication name string. Matching is
-    /// case-insensitive, whitespace-trimmed, and falls back to a substring
-    /// match against `commonNames` so input like "Atorvastatin 20mg" or
-    /// "metformin er" still finds the right entry.
-    func lookupInfo(for medName: String) -> DrugInfo? {
+    /// Total curated entries — useful for tests and logging.
+    var count: Int { drugs.count }
+
+    // MARK: - Tier 1 — curated lookup (fast, offline, plain-language)
+
+    /// Looks up a curated entry by an arbitrary medication name. Matching is
+    /// case-insensitive, whitespace-trimmed, with a longest-substring fuzzy
+    /// fallback so input like "Atorvastatin 20mg" still resolves.
+    func lookupCurated(for medName: String) -> DrugInfo? {
         let normalized = medName
             .lowercased()
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalized.isEmpty else { return nil }
 
-        // Exact match first
         for drug in drugs {
             if drug.nameKey.lowercased() == normalized { return drug }
             for common in drug.commonNames where common.lowercased() == normalized {
@@ -60,8 +81,6 @@ final class DrugInfoRepository {
             }
         }
 
-        // Fuzzy: bidirectional substring match. Prefers the longest matching
-        // common-name so "Aspirin (low-dose)" beats "Aspirin" when both fit.
         var bestMatch: (drug: DrugInfo, length: Int)?
         for drug in drugs {
             let candidates = drug.commonNames + [drug.nameKey]
@@ -78,6 +97,35 @@ final class DrugInfoRepository {
         return bestMatch?.drug
     }
 
-    /// Total entries loaded — useful for tests and logging.
-    var count: Int { drugs.count }
+    // MARK: - Three-tier orchestration
+
+    /// Looks up info across all three tiers. Always returns a `DrugSource`;
+    /// throws only when Tier 3 fails *and* there is no Tier 1 / Tier 2 fallback,
+    /// so callers can show a retry banner without losing the offline-first
+    /// guarantee for known meds.
+    func lookupAny(for medName: String) async throws -> DrugSource {
+        // Tier 1 — curated catalogue
+        if let curated = lookupCurated(for: medName) {
+            return .curated(curated)
+        }
+
+        // Tier 2 — on-disk cache of prior openFDA fetches
+        if let cached = await cache.get(medName) {
+            return .dynamic(cached, sourceLabel: "openFDA · DailyMed (cached)")
+        }
+
+        // Tier 3 — live openFDA query
+        do {
+            let result = try await remote.fetchInfo(for: medName)
+            hasNetworkRecently = true
+            if let drug = result {
+                await cache.set(medName, drug)
+                return .dynamic(drug, sourceLabel: "openFDA · DailyMed")
+            }
+            return .missing
+        } catch {
+            hasNetworkRecently = false
+            throw error
+        }
+    }
 }
