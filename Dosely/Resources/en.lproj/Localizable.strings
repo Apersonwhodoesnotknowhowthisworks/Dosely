@@ -240,3 +240,89 @@
 // MARK: - Care Circle
 "circle.default.name" = "My Family";
 "circle.default.foundername" = "Me";
+
+// MARK: - Supervisor dashboard
+"supervisor.tab.people" = "People";
+"supervisor.selector.title" = "Choose who to view";
+"supervisor.selector.all" = "All";
+"supervisor.selector.all.a11y" = "Show everyone in the care circle";
+"supervisor.selector.person.a11y" = "Show schedule for %@";
+"supervisor.empty.title" = "No family members yet";
+"supervisor.empty.body" = "Tap the People tab to add your first family member.";
+"supervisor.schedule.empty.all" = "Nothing scheduled today across the circle.";
+"supervisor.schedule.empty.person" = "%@ has nothing scheduled today.";
+"supervisor.adherence.title" = "This week";
+"supervisor.adherence.summary" = "%@: %d%% this week (%d/%d doses on time)";
+"supervisor.adherence.empty" = "No doses logged for %@ yet this week.";
+"supervisor.adherence.tapforhistory" = "Opens the History tab for this person";
+"supervisor.alerts.title" = "Alerts";
+"supervisor.alerts.empty" = "No active alerts.";
+"supervisor.alerts.stub.refill.title" = "Refill check";
+"supervisor.alerts.stub.refill.body" = "Watch %@'s pill supply this week.";
+"supervisor.quickactions.title" = "Quick actions";
+"supervisor.quickactions.addmed" = "Add medication";
+"supervisor.quickactions.medicalid" = "Edit Medical ID";
+"supervisor.quickactions.settings" = "Settings";
+"supervisor.medicalid.placeholder.title" = "Coming soon";
+"supervisor.medicalid.placeholder.body" = "The Medical ID editor lands in the next update.";
+"supervisor.addmed.picker.title" = "Add medication for whom?";
+"supervisor.addmed.picker.self" = "Myself";
+
+// MARK: - Supervisor people
+"supervisor.people.title" = "People";
+"supervisor.people.add" = "Add a family member";
+"supervisor.people.you" = "(you)";
+"supervisor.people.empty.title" = "Just you so far";
+"supervisor.people.empty.body" = "Add a family member, then assign their medications from the Today tab.";
+"supervisor.role.supervisor" = "Supervisor";
+"supervisor.role.deviceclient" = "Device client";
+"supervisor.role.managedclient" = "Managed client";
+
+// MARK: - Add person
+"supervisor.add.title" = "Add a family member";
+"supervisor.add.choose" = "Choose what kind of family member you'd like to add.";
+"supervisor.add.managed.title" = "Managed family member";
+"supervisor.add.managed.blurb" = "Someone you fully manage. They can't sign in themselves.";
+"supervisor.add.device.title" = "Family member with a PIN";
+"supervisor.add.device.blurb" = "They unlock the app on this device with a 4-digit PIN.";
+"supervisor.add.device.pin" = "4-digit PIN";
+"supervisor.add.device.pin.placeholder" = "1234";
+"supervisor.add.device.handoff.title" = "Hand them the phone";
+"supervisor.add.device.handoff.body" = "Hand the phone to %@ now and have them tap their face on the next screen.";
+"supervisor.add.supervisor.title" = "Invite another supervisor";
+"supervisor.add.supervisor.blurb" = "Send a 6-digit code to a family member who has their own iPhone.";
+"supervisor.add.supervisor.body" = "Send this 6-digit code to your family member. They'll enter it after creating their Dosely account.";
+"supervisor.add.supervisor.copy" = "Copy code";
+"supervisor.add.supervisor.code.a11y" = "Six digit join code: %@";
+"supervisor.add.supervisor.footer" = "Codes expire as soon as you regenerate them.";
+
+// MARK: - Person detail
+"supervisor.person.name" = "Name";
+"supervisor.person.language" = "Language";
+"supervisor.person.pinreset.title" = "Reset PIN";
+"supervisor.person.pinreset.body" = "Enter a new 4-digit PIN. The current one will stop working.";
+"supervisor.person.pinreset.placeholder" = "New PIN";
+"supervisor.person.pinreset.action" = "Reset PIN";
+"supervisor.person.promote.title" = "Give them a PIN";
+"supervisor.person.promote.body" = "They'll be able to unlock Dosely on this device with the PIN you set.";
+"supervisor.person.demote.title" = "Remove their PIN";
+"supervisor.person.demote.body" = "They'll no longer be able to sign in. You'll log all their doses on their behalf.";
+"supervisor.person.remove" = "Remove from circle";
+"supervisor.person.remove.subtitle" = "Their medications and history will be deleted.";
+"supervisor.person.remove.title" = "Remove this family member?";
+"supervisor.person.remove.body" = "This deletes %@'s medications and dose history. This cannot be undone.";
+"supervisor.person.error.title" = "Something went wrong";
+"supervisor.person.error.generic" = "We couldn't complete that. Please try again.";
+"supervisor.person.error.lastsupervisor" = "You can't remove the last supervisor — invite another one first.";
+"supervisor.person.error.permission" = "Only a supervisor in this circle can do that.";
+"supervisor.person.error.invalidpin" = "Please enter a valid PIN.";
+"supervisor.person.error.invalidrole" = "That role change isn't allowed.";
+
+// MARK: - Circle settings
+"supervisor.circle.title" = "Care circle";
+"supervisor.circle.name" = "Circle name";
+"supervisor.circle.joincode" = "Join code";
+"supervisor.circle.regenerate" = "Regenerate";
+"supervisor.circle.rename.title" = "Rename circle";
+"supervisor.circle.regenerate.title" = "Regenerate join code?";
+"supervisor.circle.regenerate.body" = "The current code will stop working immediately. Anyone you've already shared it with will need the new one.";

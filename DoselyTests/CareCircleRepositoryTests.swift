@@ -98,4 +98,24 @@ final class CareCircleRepositoryTests: XCTestCase {
         XCTAssertNotNil(newCode)
         XCTAssertNotEqual(newCode, original)
     }
+
+    func testRenameCircleUpdatesName() async {
+        let circle = await repo.createCareCircle(
+            name: "Original", foundingSupervisorFirebaseUID: "f", founderName: "F"
+        )
+        let ok = await repo.renameCircle(careCircleID: circle.id!, newName: "Renamed")
+        XCTAssertTrue(ok)
+        let refreshed = await repo.fetchCareCircle(id: circle.id!)
+        XCTAssertEqual(refreshed?.name, "Renamed")
+    }
+
+    func testRenameCircleRejectsBlankName() async {
+        let circle = await repo.createCareCircle(
+            name: "Original", foundingSupervisorFirebaseUID: "f", founderName: "F"
+        )
+        let ok = await repo.renameCircle(careCircleID: circle.id!, newName: "   ")
+        XCTAssertFalse(ok)
+        let refreshed = await repo.fetchCareCircle(id: circle.id!)
+        XCTAssertEqual(refreshed?.name, "Original")
+    }
 }

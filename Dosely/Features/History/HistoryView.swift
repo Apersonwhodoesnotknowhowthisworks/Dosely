@@ -5,8 +5,19 @@ struct HistoryView: View {
     @StateObject private var viewModel: HistoryViewModel
     @State private var selectedCell: GridCell?
 
-    init(repository: MedicationRepository = MedicationRepository()) {
+    /// When non-nil this overrides `authService.currentPerson?.id`. The
+    /// supervisor dashboard sets it to the active client so the History
+    /// tab is scoped to whoever the supervisor is viewing.
+    let personIDOverride: UUID?
+
+    init(repository: MedicationRepository = MedicationRepository(),
+         personIDOverride: UUID? = nil) {
         _viewModel = StateObject(wrappedValue: HistoryViewModel(repository: repository))
+        self.personIDOverride = personIDOverride
+    }
+
+    private var effectivePersonID: UUID? {
+        personIDOverride ?? authService.currentPerson?.id
     }
 
     var body: some View {
@@ -47,8 +58,8 @@ struct HistoryView: View {
                 }
             }
         }
-        .task(id: authService.currentPerson?.id) {
-            guard let personID = authService.currentPerson?.id else { return }
+        .task(id: effectivePersonID) {
+            guard let personID = effectivePersonID else { return }
             await viewModel.load(personID: personID)
         }
         .sheet(item: $selectedCell) { cell in

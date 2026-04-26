@@ -243,3 +243,89 @@
 // MARK: - Care Circle
 "circle.default.name" = "ਮੇਰਾ ਪਰਿਵਾਰ";
 "circle.default.foundername" = "ਮੈਂ";
+
+// MARK: - Supervisor dashboard
+"supervisor.tab.people" = "ਪਰਿਵਾਰ";
+"supervisor.selector.title" = "ਚੁਣੋ ਕਿਸਨੂੰ ਦੇਖਣਾ ਹੈ";
+"supervisor.selector.all" = "ਸਾਰੇ";
+"supervisor.selector.all.a11y" = "ਪੂਰੇ ਪਰਿਵਾਰ ਦਾ ਸ਼ਡਿਊਲ ਦਿਖਾਓ";
+"supervisor.selector.person.a11y" = "%@ ਦਾ ਸ਼ਡਿਊਲ ਦਿਖਾਓ";
+"supervisor.empty.title" = "ਅਜੇ ਕੋਈ ਪਰਿਵਾਰਕ ਮੈਂਬਰ ਨਹੀਂ";
+"supervisor.empty.body" = "ਪਹਿਲਾ ਮੈਂਬਰ ਜੋੜਣ ਲਈ People ਟੈਬ ਦਬਾਓ।";
+"supervisor.schedule.empty.all" = "ਅੱਜ ਕਿਸੇ ਦੀ ਵੀ ਦਵਾਈ ਨਹੀਂ ਹੈ।";
+"supervisor.schedule.empty.person" = "ਅੱਜ %@ ਦੀ ਕੋਈ ਦਵਾਈ ਨਹੀਂ ਹੈ।";
+"supervisor.adherence.title" = "ਇਸ ਹਫ਼ਤੇ";
+"supervisor.adherence.summary" = "%@: ਇਸ ਹਫ਼ਤੇ %d%% (%d/%d ਖੁਰਾਕਾਂ ਸਮੇਂ ਸਿਰ)";
+"supervisor.adherence.empty" = "ਇਸ ਹਫ਼ਤੇ %@ ਦੀ ਕੋਈ ਖੁਰਾਕ ਦਰਜ ਨਹੀਂ ਹੋਈ।";
+"supervisor.adherence.tapforhistory" = "ਇਸ ਮੈਂਬਰ ਦੀ History ਟੈਬ ਖੁੱਲ੍ਹਦੀ ਹੈ";
+"supervisor.alerts.title" = "ਚੇਤਾਵਨੀਆਂ";
+"supervisor.alerts.empty" = "ਕੋਈ ਚੇਤਾਵਨੀ ਨਹੀਂ।";
+"supervisor.alerts.stub.refill.title" = "ਦਵਾਈ ਦੀ ਜਾਂਚ";
+"supervisor.alerts.stub.refill.body" = "ਇਸ ਹਫ਼ਤੇ %@ ਦੀਆਂ ਗੋਲੀਆਂ ਦਾ ਧਿਆਨ ਰੱਖੋ।";
+"supervisor.quickactions.title" = "ਛੇਤੀ ਕੰਮ";
+"supervisor.quickactions.addmed" = "ਦਵਾਈ ਜੋੜੋ";
+"supervisor.quickactions.medicalid" = "Medical ID ਸੋਧੋ";
+"supervisor.quickactions.settings" = "ਸੈਟਿੰਗਾਂ";
+"supervisor.medicalid.placeholder.title" = "ਜਲਦੀ ਆ ਰਿਹਾ ਹੈ";
+"supervisor.medicalid.placeholder.body" = "Medical ID ਅਗਲੇ ਅਪਡੇਟ ਵਿੱਚ ਆਏਗਾ।";
+"supervisor.addmed.picker.title" = "ਕਿਸ ਲਈ ਦਵਾਈ ਜੋੜਨੀ ਹੈ?";
+"supervisor.addmed.picker.self" = "ਆਪਣੇ ਲਈ";
+
+// MARK: - Supervisor people
+"supervisor.people.title" = "ਪਰਿਵਾਰ";
+"supervisor.people.add" = "ਪਰਿਵਾਰਕ ਮੈਂਬਰ ਜੋੜੋ";
+"supervisor.people.you" = "(ਤੁਸੀਂ)";
+"supervisor.people.empty.title" = "ਅਜੇ ਕੇਵਲ ਤੁਸੀਂ";
+"supervisor.people.empty.body" = "ਇੱਕ ਮੈਂਬਰ ਜੋੜੋ, ਫਿਰ Today ਟੈਬ ਤੋਂ ਉਨ੍ਹਾਂ ਦੀਆਂ ਦਵਾਈਆਂ ਜੋੜੋ।";
+"supervisor.role.supervisor" = "ਨਿਗਰਾਨ";
+"supervisor.role.deviceclient" = "PIN ਵਾਲਾ";
+"supervisor.role.managedclient" = "ਪੂਰੇ ਪ੍ਰਬੰਧ ਵਾਲਾ";
+
+// MARK: - Add person
+"supervisor.add.title" = "ਮੈਂਬਰ ਜੋੜੋ";
+"supervisor.add.choose" = "ਚੁਣੋ ਕਿ ਤੁਸੀਂ ਕਿਸ ਕਿਸਮ ਦਾ ਮੈਂਬਰ ਜੋੜਨਾ ਚਾਹੁੰਦੇ ਹੋ।";
+"supervisor.add.managed.title" = "ਪੂਰੇ ਪ੍ਰਬੰਧ ਵਾਲਾ";
+"supervisor.add.managed.blurb" = "ਉਹ ਜੋ ਆਪ ਸਾਈਨ-ਇਨ ਨਹੀਂ ਕਰਦੇ। ਤੁਸੀਂ ਉਨ੍ਹਾਂ ਲਈ ਸਭ ਕੁਝ ਕਰਦੇ ਹੋ।";
+"supervisor.add.device.title" = "PIN ਵਾਲਾ ਮੈਂਬਰ";
+"supervisor.add.device.blurb" = "ਉਹ ਆਪਣੇ 4-ਅੰਕ PIN ਨਾਲ ਇਸ ਫ਼ੋਨ ਉੱਤੇ ਸਾਈਨ-ਇਨ ਕਰਦੇ ਹਨ।";
+"supervisor.add.device.pin" = "4-ਅੰਕ PIN";
+"supervisor.add.device.pin.placeholder" = "1234";
+"supervisor.add.device.handoff.title" = "ਫ਼ੋਨ ਉਨ੍ਹਾਂ ਨੂੰ ਫੜਾਓ";
+"supervisor.add.device.handoff.body" = "ਹੁਣ ਫ਼ੋਨ %@ ਨੂੰ ਫੜਾਓ ਅਤੇ ਅਗਲੀ ਸਕਰੀਨ ਉੱਤੇ ਆਪਣੇ ਚਿਹਰੇ ਨੂੰ ਟੈਪ ਕਰਨ ਲਈ ਕਹੋ।";
+"supervisor.add.supervisor.title" = "ਹੋਰ ਨਿਗਰਾਨ ਜੋੜੋ";
+"supervisor.add.supervisor.blurb" = "ਉਸ ਮੈਂਬਰ ਨੂੰ 6-ਅੰਕ ਕੋਡ ਭੇਜੋ ਜਿਸ ਕੋਲ ਆਪਣਾ ਫ਼ੋਨ ਹੈ।";
+"supervisor.add.supervisor.body" = "ਆਪਣੇ ਪਰਿਵਾਰਕ ਮੈਂਬਰ ਨੂੰ ਇਹ 6-ਅੰਕ ਕੋਡ ਭੇਜੋ। ਉਹ ਆਪਣਾ Dosely ਖਾਤਾ ਬਣਾਉਣ ਤੋਂ ਬਾਅਦ ਇਹ ਪਾਉਣਗੇ।";
+"supervisor.add.supervisor.copy" = "ਕੋਡ ਕਾਪੀ ਕਰੋ";
+"supervisor.add.supervisor.code.a11y" = "ਛੇ ਅੰਕਾਂ ਦਾ ਜੁਆਇਨ ਕੋਡ: %@";
+"supervisor.add.supervisor.footer" = "ਜਦੋਂ ਤੁਸੀਂ ਨਵਾਂ ਕੋਡ ਬਣਾਉਂਦੇ ਹੋ, ਪੁਰਾਣਾ ਫ਼ੌਰਨ ਬੰਦ ਹੋ ਜਾਂਦਾ ਹੈ।";
+
+// MARK: - Person detail
+"supervisor.person.name" = "ਨਾਮ";
+"supervisor.person.language" = "ਭਾਸ਼ਾ";
+"supervisor.person.pinreset.title" = "PIN ਨਵਾਂ ਕਰੋ";
+"supervisor.person.pinreset.body" = "ਨਵਾਂ 4-ਅੰਕ PIN ਪਾਉ। ਮੌਜੂਦਾ PIN ਫ਼ੌਰਨ ਬੰਦ ਹੋ ਜਾਏਗਾ।";
+"supervisor.person.pinreset.placeholder" = "ਨਵਾਂ PIN";
+"supervisor.person.pinreset.action" = "PIN ਨਵਾਂ ਕਰੋ";
+"supervisor.person.promote.title" = "PIN ਦਿਉ";
+"supervisor.person.promote.body" = "ਉਹ ਇਸ ਫ਼ੋਨ ਉੱਤੇ ਆਪਣੇ PIN ਨਾਲ Dosely ਖੋਲ੍ਹ ਸਕਣਗੇ।";
+"supervisor.person.demote.title" = "PIN ਹਟਾਉ";
+"supervisor.person.demote.body" = "ਉਹ ਆਪ ਸਾਈਨ-ਇਨ ਨਹੀਂ ਕਰ ਸਕਣਗੇ। ਤੁਸੀਂ ਉਨ੍ਹਾਂ ਦੀਆਂ ਸਭ ਖੁਰਾਕਾਂ ਉਨ੍ਹਾਂ ਵੱਲੋਂ ਦਰਜ ਕਰੋਗੇ।";
+"supervisor.person.remove" = "ਪਰਿਵਾਰ ਤੋਂ ਹਟਾਉ";
+"supervisor.person.remove.subtitle" = "ਉਨ੍ਹਾਂ ਦੀਆਂ ਦਵਾਈਆਂ ਅਤੇ ਇਤਿਹਾਸ ਮਿਟ ਜਾਏਗਾ।";
+"supervisor.person.remove.title" = "ਇਸ ਮੈਂਬਰ ਨੂੰ ਹਟਾਉਣਾ ਹੈ?";
+"supervisor.person.remove.body" = "ਇਹ %@ ਦੀਆਂ ਦਵਾਈਆਂ ਅਤੇ ਇਤਿਹਾਸ ਮਿਟਾ ਦੇਵੇਗਾ। ਇਹ ਰੀਡੂ ਨਹੀਂ ਹੋਵੇਗਾ।";
+"supervisor.person.error.title" = "ਕੁਝ ਠੀਕ ਨਹੀਂ ਹੋਇਆ";
+"supervisor.person.error.generic" = "ਅਸੀਂ ਇਹ ਪੂਰਾ ਨਹੀਂ ਕਰ ਸਕੇ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
+"supervisor.person.error.lastsupervisor" = "ਆਖਰੀ ਨਿਗਰਾਨ ਨੂੰ ਨਹੀਂ ਹਟਾ ਸਕਦੇ — ਪਹਿਲਾਂ ਕਿਸੇ ਹੋਰ ਨੂੰ ਜੋੜੋ।";
+"supervisor.person.error.permission" = "ਇਹ ਕੰਮ ਸਿਰਫ਼ ਇਸ ਪਰਿਵਾਰ ਦਾ ਨਿਗਰਾਨ ਕਰ ਸਕਦਾ ਹੈ।";
+"supervisor.person.error.invalidpin" = "ਠੀਕ PIN ਪਾਉ।";
+"supervisor.person.error.invalidrole" = "ਇਹ ਭੂਮਿਕਾ ਬਦਲਣ ਦੀ ਆਗਿਆ ਨਹੀਂ ਹੈ।";
+
+// MARK: - Circle settings
+"supervisor.circle.title" = "ਪਰਿਵਾਰ";
+"supervisor.circle.name" = "ਪਰਿਵਾਰ ਦਾ ਨਾਮ";
+"supervisor.circle.joincode" = "ਜੁਆਇਨ ਕੋਡ";
+"supervisor.circle.regenerate" = "ਨਵਾਂ ਬਣਾਉ";
+"supervisor.circle.rename.title" = "ਨਾਮ ਬਦਲੋ";
+"supervisor.circle.regenerate.title" = "ਜੁਆਇਨ ਕੋਡ ਨਵਾਂ ਕਰਨਾ?";
+"supervisor.circle.regenerate.body" = "ਮੌਜੂਦਾ ਕੋਡ ਫ਼ੌਰਨ ਬੰਦ ਹੋ ਜਾਏਗਾ। ਜਿਨ੍ਹਾਂ ਨਾਲ ਪਹਿਲਾਂ ਸਾਂਝਾ ਕੀਤਾ ਸੀ ਉਨ੍ਹਾਂ ਨੂੰ ਨਵਾਂ ਚਾਹੀਦਾ ਹੋਵੇਗਾ।";

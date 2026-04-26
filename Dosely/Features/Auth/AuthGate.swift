@@ -10,7 +10,7 @@ struct AuthGate: View {
             if authService.currentUser == nil || authService.isLocallyLocked {
                 LoginView()
             } else {
-                TodayView()
+                authedRoot
                     // Order matters: the .alert is set up before the
                     // .fullScreenCover so SwiftUI presents it first. The
                     // alert's button actions advance to `needsDisclaimer`
@@ -37,5 +37,20 @@ struct AuthGate: View {
             }
         }
         .environmentObject(authService)
+    }
+
+    /// Routes the unlocked user. Supervisors land on the multi-person
+    /// dashboard; clients keep using the single-person TodayView (full
+    /// device-client mode lands in Prompt 15). While the Person row is
+    /// still resolving (Firebase signed in but Core Data fetch in flight)
+    /// we show TodayView — it has its own loading state and is harmless
+    /// for either role.
+    @ViewBuilder
+    private var authedRoot: some View {
+        if authService.currentPerson?.role == "supervisor" {
+            SupervisorDashboardView()
+        } else {
+            TodayView()
+        }
     }
 }

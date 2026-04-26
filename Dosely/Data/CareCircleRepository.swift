@@ -102,6 +102,20 @@ final class CareCircleRepository {
         }
     }
 
+    /// Renames an existing circle. Supervisor permission is enforced at
+    /// the call site (only the supervisor screen exposes this control).
+    @discardableResult
+    func renameCircle(careCircleID: UUID, newName: String) async -> Bool {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        return await context.perform { [context] in
+            guard let circle = Self.find(id: careCircleID, in: context) else { return false }
+            circle.name = trimmed
+            try? context.save()
+            return true
+        }
+    }
+
     /// Regenerates the join code for an existing circle. Supervisor
     /// permission is enforced at the call site.
     @discardableResult

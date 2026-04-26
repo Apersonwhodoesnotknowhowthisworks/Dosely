@@ -105,6 +105,7 @@ final class AddMedicationState: ObservableObject {
 
 struct AddMedicationFlow: View {
     @EnvironmentObject var authService: AuthService
+    @Environment(\.supervisorTargetPersonID) private var supervisorTargetPersonID: UUID?
     @StateObject private var state = AddMedicationState()
     @Environment(\.dismiss) private var dismiss
     @State private var showPermissionBanner = false
@@ -154,10 +155,11 @@ struct AddMedicationFlow: View {
             saveError = "We couldn't find your profile. Please sign in again."
             return
         }
-        // For Prompt 13 the supervisor is also the only Person, so they
-        // create medications for themselves. Prompt 14 will let supervisors
-        // pick a managed-client target Person on the review screen.
-        let targetPersonID = actorID
+        // The supervisor dashboard sets `supervisorTargetPersonID` via the
+        // environment when a supervisor is creating a medication on behalf
+        // of a managed client. Otherwise (single-user / device-client
+        // path) the medication belongs to the actor themself.
+        let targetPersonID = supervisorTargetPersonID ?? actorID
 
         let trimmedNotes = state.notes.trimmingCharacters(in: .whitespacesAndNewlines)
         let schedules = state.doseTimes.map {

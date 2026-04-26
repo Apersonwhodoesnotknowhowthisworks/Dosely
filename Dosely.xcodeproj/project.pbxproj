@@ -87,6 +87,16 @@
 		BFD00000000000000000000E4 /* PersonRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000E4 /* PersonRepositoryTests.swift */; };
 		BFD00000000000000000000E5 /* CareCircleRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000E5 /* CareCircleRepositoryTests.swift */; };
 		BFD00000000000000000000E6 /* CareCircleMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000E6 /* CareCircleMigrationTests.swift */; };
+		BFD00000000000000000000F0 /* SupervisorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F0 /* SupervisorDashboardView.swift */; };
+		BFD00000000000000000000F1 /* SupervisorDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F1 /* SupervisorDashboardViewModel.swift */; };
+		BFD00000000000000000000F2 /* PersonSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F2 /* PersonSelector.swift */; };
+		BFD00000000000000000000F3 /* SupervisorScheduleSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F3 /* SupervisorScheduleSection.swift */; };
+		BFD00000000000000000000F4 /* AdherenceSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F4 /* AdherenceSummaryCard.swift */; };
+		BFD00000000000000000000F5 /* AlertsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F5 /* AlertsCard.swift */; };
+		BFD00000000000000000000F6 /* QuickActionsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F6 /* QuickActionsCard.swift */; };
+		BFD00000000000000000000F7 /* PeopleManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F7 /* PeopleManagementView.swift */; };
+		BFD00000000000000000000F8 /* PersonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F8 /* PersonDetailView.swift */; };
+		BFD00000000000000000000F9 /* AddPersonFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F9 /* AddPersonFlow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -182,6 +192,16 @@
 		FRD00000000000000000000E4 /* PersonRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonRepositoryTests.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000E5 /* CareCircleRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareCircleRepositoryTests.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000E6 /* CareCircleMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareCircleMigrationTests.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000F0 /* SupervisorDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupervisorDashboardView.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000F1 /* SupervisorDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupervisorDashboardViewModel.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000F2 /* PersonSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonSelector.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000F3 /* SupervisorScheduleSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupervisorScheduleSection.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000F4 /* AdherenceSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdherenceSummaryCard.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000F5 /* AlertsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertsCard.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000F6 /* QuickActionsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionsCard.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000F7 /* PeopleManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeopleManagementView.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000F8 /* PersonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonDetailView.swift; sourceTree = "<group>"; };
+		FRD00000000000000000000F9 /* AddPersonFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPersonFlow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -302,8 +322,42 @@
 				GRP000000000000000000000F /* History */,
 				GRP0000000000000000000011 /* Auth */,
 				GRP0000000000000000000012 /* MedicationDetail */,
+				GRP0000000000000000000020 /* Supervisor */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000020 /* Supervisor */ = {
+			isa = PBXGroup;
+			children = (
+				FRD00000000000000000000F0 /* SupervisorDashboardView.swift */,
+				FRD00000000000000000000F1 /* SupervisorDashboardViewModel.swift */,
+				GRP0000000000000000000021 /* Components */,
+				GRP0000000000000000000022 /* People */,
+			);
+			path = Supervisor;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000021 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FRD00000000000000000000F2 /* PersonSelector.swift */,
+				FRD00000000000000000000F3 /* SupervisorScheduleSection.swift */,
+				FRD00000000000000000000F4 /* AdherenceSummaryCard.swift */,
+				FRD00000000000000000000F5 /* AlertsCard.swift */,
+				FRD00000000000000000000F6 /* QuickActionsCard.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000022 /* People */ = {
+			isa = PBXGroup;
+			children = (
+				FRD00000000000000000000F7 /* PeopleManagementView.swift */,
+				FRD00000000000000000000F8 /* PersonDetailView.swift */,
+				FRD00000000000000000000F9 /* AddPersonFlow.swift */,
+			);
+			path = People;
 			sourceTree = "<group>";
 		};
 		GRP0000000000000000000009 /* Today */ = {
@@ -621,6 +675,16 @@
 				BFD00000000000000000000E1 /* PersonRepository.swift in Sources */,
 				BFD00000000000000000000E2 /* CareCircleRepository.swift in Sources */,
 				BFD00000000000000000000E3 /* CareCircleMigration.swift in Sources */,
+				BFD00000000000000000000F0 /* SupervisorDashboardView.swift in Sources */,
+				BFD00000000000000000000F1 /* SupervisorDashboardViewModel.swift in Sources */,
+				BFD00000000000000000000F2 /* PersonSelector.swift in Sources */,
+				BFD00000000000000000000F3 /* SupervisorScheduleSection.swift in Sources */,
+				BFD00000000000000000000F4 /* AdherenceSummaryCard.swift in Sources */,
+				BFD00000000000000000000F5 /* AlertsCard.swift in Sources */,
+				BFD00000000000000000000F6 /* QuickActionsCard.swift in Sources */,
+				BFD00000000000000000000F7 /* PeopleManagementView.swift in Sources */,
+				BFD00000000000000000000F8 /* PersonDetailView.swift in Sources */,
+				BFD00000000000000000000F9 /* AddPersonFlow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

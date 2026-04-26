@@ -6,6 +6,11 @@ enum PersonRepositoryError: Error, Equatable {
     case permissionDenied
     case alreadyExists
     case invalidPin
+    /// Refusing to leave a circle with no remaining supervisor — every
+    /// circle must keep at least one supervisor row so the join code,
+    /// medications, and dose logs still have an owner.
+    case lastSupervisor
+    case invalidRoleTransition
 }
 
 final class PersonRepository {
@@ -184,6 +189,108 @@ final class PersonRepository {
             target.pinSalt = salt.base64EncodedString()
             target.pinHash = hash.base64EncodedString()
             target.failedPinAttempts = 0
+            try? context.save()
+        }
+    }
+
+    /// Promote a managed client to a device client (sets a PIN) or demote a
+    /// device client back to a managed client (clears the PIN and lockout).
+    /// Refuses to touch supervisor rows — a circle's supervisors are
+    /// managed via signup / join code, not role flips.
+    func updatePersonRole(
+        personID: UUID,
+        newRole: String,
+        newPinPlaintext: String?,
+        actingSupervisorID: UUID
+    ) async throws {
+        let salt: Data?
+        let hash: Data?
+        if newRole == "device_client" {
+            guard let pin = newPinPlaintext else { throw PersonRepositoryError.invalidPin }
+            let s = PinHasher.generateSalt()
+            guard let h = PinHasher.hash(pin: pin, salt: s) else {
+                throw PersonRepositoryError.invalidPin
+            }
+            salt = s; hash = h
+        } else {
+            salt = nil; hash = nil
+        }
+
+        try await context.perform { [context] in
+            guard let target = Self.find(id: personID, in: context) else {
+                throw PersonRepositoryError.notFound
+            }
+            guard let actor = Self.find(id: actingSupervisorID, in: context) else {
+                throw PersonRepositoryError.notFound
+            }
+            guard actor.role == "supervisor",
+                  actor.careCircle?.id == target.careCircle?.id else {
+                throw PersonRepositoryError.permissionDenied
+            }
+            // Only client↔client transitions are allowed here.
+            let allowed: Set<String> = ["device_client", "managed_client"]
+            guard allowed.contains(target.role ?? ""), allowed.contains(newRole) else {
+                throw PersonRepositoryError.invalidRoleTransition
+            }
+
+            target.role = newRole
+            target.failedPinAttempts = 0
+            if newRole == "device_client" {
+                target.pinSalt = salt?.base64EncodedString()
+                target.pinHash = hash?.base64EncodedString()
+            } else {
+                target.pinSalt = nil
+                target.pinHash = nil
+            }
+            try? context.save()
+        }
+    }
+
+    /// Removes a Person from their care circle and cascades to every
+    /// Medication and DoseLog that referenced them. The destructive
+    /// confirmation lives in the UI; this method enforces:
+    /// - the actor is a supervisor in the same circle
+    /// - the target is not the last supervisor (a circle without a
+    ///   supervisor is a soft-bricked state and we refuse to create one).
+    func removePersonFromCircle(personID: UUID, actingSupervisorID: UUID) async throws {
+        try await context.perform { [context] in
+            guard let target = Self.find(id: personID, in: context) else {
+                throw PersonRepositoryError.notFound
+            }
+            guard let actor = Self.find(id: actingSupervisorID, in: context) else {
+                throw PersonRepositoryError.notFound
+            }
+            guard actor.role == "supervisor",
+                  actor.careCircle?.id == target.careCircle?.id else {
+                throw PersonRepositoryError.permissionDenied
+            }
+
+            if target.role == "supervisor" {
+                let circlePeople = (target.careCircle?.people as? Set<Person>) ?? []
+                let remainingSupervisors = circlePeople.filter {
+                    $0.role == "supervisor" && $0.id != target.id
+                }
+                if remainingSupervisors.isEmpty {
+                    throw PersonRepositoryError.lastSupervisor
+                }
+            }
+
+            // Medications and DoseLogs reference the person via UUID, not
+            // via Core Data relationship — so cascade has to be manual.
+            if let targetID = target.id {
+                let medRequest = NSFetchRequest<Medication>(entityName: "Medication")
+                medRequest.predicate = NSPredicate(format: "personID == %@", targetID as CVarArg)
+                for med in (try? context.fetch(medRequest)) ?? [] {
+                    context.delete(med)
+                }
+                let logRequest = NSFetchRequest<DoseLog>(entityName: "DoseLog")
+                logRequest.predicate = NSPredicate(format: "loggedByPersonID == %@", targetID as CVarArg)
+                for log in (try? context.fetch(logRequest)) ?? [] {
+                    context.delete(log)
+                }
+            }
+
+            context.delete(target)
             try? context.save()
         }
     }
