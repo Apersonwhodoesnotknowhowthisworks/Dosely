@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct TodayView: View {
+    @EnvironmentObject var authService: AuthService
     @StateObject private var viewModel: TodayViewModel
     private let repository: MedicationRepository
     @State private var showingAdd = false
@@ -65,25 +66,28 @@ struct TodayView: View {
                     .accessibilityLabel(Text("today.add"))
                 }
             }
-            // Inset debug pills inside the NavigationStack so they don't overlap the nav bar.
             .debugToolbar()
         }
-        .task {
+        .task(id: authService.currentPerson?.id) {
+            guard let personID = authService.currentPerson?.id else { return }
             #if DEBUG
-            await SeedData.seedIfEmpty(using: repository)
+            await SeedData.seedIfEmpty(using: repository, personID: personID, actorPersonID: personID)
             #endif
-            await MissedDoseChecker(repository: repository).run()
-            await viewModel.load()
+            await MissedDoseChecker(repository: repository).run(for: personID)
+            await viewModel.load(personID: personID)
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 5 * 60 * 1_000_000_000)
-                await MissedDoseChecker(repository: repository).run()
-                await viewModel.load()
+                await MissedDoseChecker(repository: repository).run(for: personID)
+                await viewModel.load(personID: personID)
             }
         }
         .sheet(isPresented: $showingAdd) {
             AddMedicationFlow(repository: repository) {
-                Task { await viewModel.load() }
+                if let personID = authService.currentPerson?.id {
+                    Task { await viewModel.load(personID: personID) }
+                }
             }
+            .environmentObject(authService)
         }
         .sheet(isPresented: $showingSettings) {
             SettingsSheet()
@@ -98,16 +102,17 @@ struct TodayView: View {
         // Reload when the app returns from background so that doses logged from a
         // notification action (TOOK_IT) surface without waiting for the 5-min poll.
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            guard let personID = authService.currentPerson?.id else { return }
             Task {
-                await MissedDoseChecker(repository: repository).run()
-                await viewModel.load()
+                await MissedDoseChecker(repository: repository).run(for: personID)
+                await viewModel.load(personID: personID)
             }
         }
     }
 
     @ViewBuilder
     private var content: some View {
-        if !viewModel.isLoaded {
+        if authService.currentPerson == nil || !viewModel.isLoaded {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if viewModel.doses.isEmpty {
             EmptyTodayView()
@@ -117,8 +122,8 @@ struct TodayView: View {
                     ForEach(viewModel.doses) { dose in
                         DoseCardView(
                             dose: dose,
-                            onTake: { Task { await viewModel.markTaken(dose) } },
-                            onSkip: { Task { await viewModel.skip(dose) } },
+                            onTake: { Task { await markTaken(dose) } },
+                            onSkip: { Task { await skip(dose) } },
                             onSnooze: { print("TODO snooze") },
                             onLearnMore: { detailDose = dose }
                         )
@@ -128,6 +133,16 @@ struct TodayView: View {
                 .padding(.bottom, DSSpacing.xl)
             }
         }
+    }
+
+    private func markTaken(_ dose: TodayDose) async {
+        guard let personID = authService.currentPerson?.id else { return }
+        await viewModel.markTaken(dose, loggedByPersonID: personID, personID: personID)
+    }
+
+    private func skip(_ dose: TodayDose) async {
+        guard let personID = authService.currentPerson?.id else { return }
+        await viewModel.skip(dose, loggedByPersonID: personID, personID: personID)
     }
 
     // MARK: - History tab
@@ -146,87 +161,16 @@ private enum TodayPreviewFactory {
     static func emptyRepo() -> MedicationRepository {
         MedicationRepository(stack: CoreDataStack(inMemory: true))
     }
-
-    static func repo(withDoses specs: [PreviewDoseSpec]) async -> MedicationRepository {
-        let repo = MedicationRepository(stack: CoreDataStack(inMemory: true))
-        for spec in specs {
-            let med = await repo.saveMedication(
-                name: spec.name,
-                dose: spec.dose,
-                pillsPerDose: 1,
-                foodRule: spec.foodRule,
-                notes: spec.notes,
-                currentSupply: 30,
-                pillPhotoData: nil,
-                schedules: [ScheduleInput(timeOfDay: spec.timeOfDay, daysOfWeek: 127)]
-            )
-            if let status = spec.logStatus, let medID = med.id {
-                let scheduledToday = TodayViewModel.date(for: spec.timeOfDay, on: Date()) ?? Date()
-                _ = await repo.logDose(
-                    medicationID: medID,
-                    scheduledTime: scheduledToday,
-                    actualTime: status == "taken" ? scheduledToday.addingTimeInterval(120) : nil,
-                    status: status
-                )
-            }
-        }
-        return repo
-    }
-}
-
-private struct PreviewDoseSpec {
-    let name: String
-    let dose: String
-    let timeOfDay: String
-    let foodRule: String
-    let notes: String?
-    let logStatus: String?
 }
 
 #Preview("Today · empty") {
     TodayView(repository: TodayPreviewFactory.emptyRepo())
+        .environmentObject(AuthService())
 }
 
 #Preview("Today · empty · dark") {
     TodayView(repository: TodayPreviewFactory.emptyRepo())
+        .environmentObject(AuthService())
         .preferredColorScheme(.dark)
-}
-
-#Preview("Today · 1 upcoming") {
-    // Use a far-future time so it stays "upcoming" all day.
-    TodayView(repository: MedicationRepository(stack: CoreDataStack(inMemory: true)))
-        .task {
-            // The view's own .task will seed because DEBUG is on and the store is empty.
-        }
-}
-
-#Preview("Today · 4 mixed") {
-    AsyncPreview {
-        let repo = await TodayPreviewFactory.repo(withDoses: [
-            PreviewDoseSpec(name: "Metformin",   dose: "500mg", timeOfDay: "08:00", foodRule: "with",    notes: "With water.",        logStatus: "taken"),
-            PreviewDoseSpec(name: "Lisinopril",  dose: "10mg",  timeOfDay: "09:00", foodRule: "either",  notes: "Blood pressure.",    logStatus: "late"),
-            PreviewDoseSpec(name: "Atorvastatin", dose: "20mg",  timeOfDay: "20:00", foodRule: "either",  notes: "Cholesterol.",       logStatus: nil),
-            PreviewDoseSpec(name: "Metformin",   dose: "500mg", timeOfDay: "21:00", foodRule: "with",    notes: "Evening dose.",      logStatus: nil)
-        ])
-        return TodayView(repository: repo)
-    }
-}
-
-private struct AsyncPreview<Content: View>: View {
-    @State private var content: Content?
-    let builder: () async -> Content
-
-    init(@ViewBuilder _ builder: @escaping () async -> Content) {
-        self.builder = builder
-    }
-
-    var body: some View {
-        Group {
-            if let content { content } else { ProgressView() }
-        }
-        .task {
-            if content == nil { content = await builder() }
-        }
-    }
 }
 #endif

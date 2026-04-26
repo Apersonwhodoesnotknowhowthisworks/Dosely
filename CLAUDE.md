@@ -74,6 +74,33 @@ Located in `Dosely/DesignSystem/`. Use these tokens everywhere — do not hardco
 - Every change commits to git with a descriptive message
 - The app is tested on a real iPhone, not just the simulator — simulator passes are not proof of correctness for this audience (touch targets, Dynamic Type, VoiceOver, haptics all behave differently on device)
 
+## Account model
+
+Dosely organises users into **CareCircles**: small groups (a family, a household) that share a roster of `Person` rows. Every Medication and DoseLog belongs to exactly one Person. This shape is in the codebase from day one even though the supervisor dashboard and profile picker UI ship later.
+
+- **Entities (Core Data, lightweight migration safe):**
+  - **`CareCircle`** — `id: UUID`, `name: String`, `joinCode: String?` (6-digit numeric, regenerable), `createdAt: Date`. Has-many `Person` via the `members` relationship.
+  - **`Person`** — `id: UUID`, `name: String`, `photoData: Data?`, `role: String`, `languagePreference: String`, `pinHash: Data?`, `pinSalt: Data?`, `failedPinAttempts: Int16`, `firebaseUID: String?`, belongs-to `CareCircle`.
+  - **`Medication`** gains `personID: UUID?` (the patient who takes it; required at app layer, optional in schema for migration).
+  - **`DoseLog`** gains `loggedByPersonID: UUID?` (whoever tapped "I took it" — supervisor, client, or notification action).
+
+- **Roles (`Person.role` is a string; the canonical values are):**
+  - `"supervisor"` — a Firebase-authenticated caregiver. Can create/edit/delete medications for any Person in the same circle, reset PINs, regenerate join codes, and log doses.
+  - `"device_client"` — a non-Firebase user who unlocks the device profile with a 4-digit PIN (e.g. a grandparent who shares the iPad). Can log their own doses; cannot create or edit medications.
+  - `"managed_client"` — a non-Firebase user with no PIN, fully managed by a supervisor (e.g. a bedridden patient). Same permissions as `device_client`: can be the *target* of medications and dose logs, but cannot author them.
+
+- **Permission rules (enforced at the repository layer, not the UI):**
+  - `MedicationRepository.saveMedication / deleteMedication` requires `actor.role == "supervisor"` and throws `MedicationRepositoryError.permissionDenied` otherwise.
+  - `MedicationRepository.logDose` accepts any `loggedByPersonID` — clients log their own doses; the actor identity is captured for audit.
+  - `PersonRepository.resetPin` requires the acting Person to be a supervisor in the **same** care circle as the target; cross-circle resets throw `PersonRepositoryError.permissionDenied`.
+  - The repository checks the role by reading the actor's `Person` directly from the Core Data context — it does not depend on `PersonRepository`, so there is no circular dependency.
+
+- **PIN hashing:** PBKDF2-SHA256 via CommonCrypto's `CCKeyDerivationPBKDF`. CryptoKit's PBKDF2 is not in the iOS 16 public API surface, so we use CommonCrypto. Parameters: 100,000 iterations, 32-byte derived key, 16-byte per-Person random salt generated with `SystemRandomNumberGenerator`. Salt is stored on the `Person` row alongside the hash. Verification is constant-time. Plaintext PINs are never persisted, never logged, never round-tripped. Three consecutive wrong PINs flips a lockout flag (`failedPinAttempts >= 3`); a successful verification resets the counter.
+
+- **Join codes:** 6-digit numeric (`"%06d"` of a `0..<1_000_000` draw). On `createCareCircle` and `regenerateJoinCode` we draw with collision retry against existing circles. Birthday-paradox math: ~39% chance of *any* collision in 1000 draws, so the test threshold is "≥950 unique" rather than "all unique" — a degenerate RNG would produce far more collisions.
+
+- **One-shot migration (`CareCircleMigration.runIfNeeded`):** runs the first time a Firebase user signs in after the refactor. Creates a default "My Family" circle, inserts the user as the founding supervisor, and stamps every existing Medication and DoseLog (which lack `personID` / `loggedByPersonID`) with that supervisor's id. Idempotent via `UserDefaults["circle_migration_v1_complete"]`. Auto-runs from `AuthService.resolveCurrentPerson` so users land on a working `currentPerson` without any UI bootstrap. The supervisor dashboard and profile picker (Prompts 14 and 15) replace the auto-bootstrap with proper UX.
+
 ## Localization
 
 - **Languages shipped:** English (`en`), Punjabi/Gurmukhi (`pa`). `pa` is a must-have because the primary client's first language is Punjabi.

@@ -25,6 +25,11 @@ final class AuthService: ObservableObject {
     @Published var errorMessage: String?
     @Published var needsDisclaimer: Bool = false
     @Published var needsBiometricEnrollmentPrompt: Bool = false
+    /// The active Dosely Person on this device. Set after Firebase auth
+    /// resolves AND a CareCircle exists for the user. The supervisor
+    /// dashboard (Prompt 14) and the profile picker (Prompt 15) will read
+    /// this and let the device user switch between Persons in the circle.
+    @Published var currentPerson: Person?
 
     /// Local lock that gates AuthGate even when Firebase has a live session.
     /// "Firebase signed-in" and "Dosely unlocked" are intentionally separate
@@ -44,7 +49,13 @@ final class AuthService: ObservableObject {
         self.isLocallyLocked = UserDefaults.standard.bool(forKey: Self.lockedKey)
         self.currentUser = Auth.auth().currentUser
         self.authHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-            Task { @MainActor in self?.currentUser = user }
+            Task { @MainActor in
+                self?.currentUser = user
+                await self?.resolveCurrentPerson()
+            }
+        }
+        if currentUser != nil {
+            Task { await resolveCurrentPerson() }
         }
     }
 
@@ -61,6 +72,7 @@ final class AuthService: ObservableObject {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             Keychain.set(email, for: .lastEmail)
             await refreshAndStoreToken(for: result.user)
+            await resolveCurrentPerson()
             unlock()  // brand-new account is unlocked by definition
             // Post-signup state machine: biometric prompt FIRST (if the
             // device can do it and the user hasn't already enabled it),
@@ -93,6 +105,7 @@ final class AuthService: ObservableObject {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             Keychain.set(email, for: .lastEmail)
             await refreshAndStoreToken(for: result.user)
+            await resolveCurrentPerson()
             unlock()
         } catch {
             errorMessage = Self.friendly(error)
@@ -125,7 +138,34 @@ final class AuthService: ObservableObject {
         Keychain.delete(.idToken)
         Keychain.delete(.lastEmail)
         Keychain.delete(.biometricEnabled)
+        currentPerson = nil
         lock()
+    }
+
+    // MARK: - Person resolution
+
+    /// Resolves the local Person for the current Firebase user. If no
+    /// Person exists yet (fresh signup), bootstraps a default CareCircle
+    /// + supervisor as a stopgap until Prompt 14's welcome screen lands.
+    /// Also runs the v1 care-circle migration on first invocation.
+    @MainActor
+    func resolveCurrentPerson() async {
+        guard let user = currentUser else {
+            currentPerson = nil
+            return
+        }
+        let displayName = user.displayName?.isEmpty == false
+            ? user.displayName!
+            : (user.email ?? "Me")
+        let lang = UserDefaults.standard.string(forKey: "app_language") ?? "en"
+
+        // Migration runs only on the first call after the refactor; on
+        // subsequent calls it just resolves the existing supervisor.
+        currentPerson = await CareCircleMigration.runIfNeeded(
+            firebaseUID: user.uid,
+            displayName: displayName,
+            languagePreference: lang
+        )
     }
 
     func sendPasswordReset(email: String) async throws {

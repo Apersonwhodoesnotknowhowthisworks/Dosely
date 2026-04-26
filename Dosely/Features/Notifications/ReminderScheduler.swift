@@ -87,12 +87,16 @@ enum ReminderScheduler {
             content.body = L("notifications.body", name as NSString, dose as NSString, foodText as NSString)
             content.sound = .default
             content.categoryIdentifier = categoryID
-            content.userInfo = [
+            var userInfo: [AnyHashable: Any] = [
                 "medID": medID.uuidString,
                 "scheduleID": schedID.uuidString,
                 "scheduledHour": hour,
                 "scheduledMinute": minute
             ]
+            if let personID = medication.personID?.uuidString {
+                userInfo["personID"] = personID
+            }
+            content.userInfo = userInfo
 
             var comps = DateComponents()
             comps.hour = hour

@@ -104,9 +104,11 @@ final class AddMedicationState: ObservableObject {
 }
 
 struct AddMedicationFlow: View {
+    @EnvironmentObject var authService: AuthService
     @StateObject private var state = AddMedicationState()
     @Environment(\.dismiss) private var dismiss
     @State private var showPermissionBanner = false
+    @State private var saveError: String?
 
     let repository: MedicationRepository
     var onSaved: () -> Void
@@ -148,30 +150,50 @@ struct AddMedicationFlow: View {
     }
 
     private func save() {
+        guard let actor = authService.currentPerson, let actorID = actor.id else {
+            saveError = "We couldn't find your profile. Please sign in again."
+            return
+        }
+        // For Prompt 13 the supervisor is also the only Person, so they
+        // create medications for themselves. Prompt 14 will let supervisors
+        // pick a managed-client target Person on the review screen.
+        let targetPersonID = actorID
+
         let trimmedNotes = state.notes.trimmingCharacters(in: .whitespacesAndNewlines)
         let schedules = state.doseTimes.map {
             ScheduleInput(timeOfDay: AddMedicationState.formatHHmm($0), daysOfWeek: 127)
         }
         Task {
-            // Ask on first save only. Subsequent saves skip the prompt.
             _ = await ReminderScheduler.requestPermissionIfNeeded()
             let status = await ReminderScheduler.currentStatus()
             print("[NOTIF-DEBUG] post-save authorization status: \(ReminderScheduler.describe(status))")
 
-            let med = await repository.saveMedication(
-                name: state.name.trimmingCharacters(in: .whitespaces),
-                dose: state.dose.trimmingCharacters(in: .whitespaces),
-                pillsPerDose: Int16(state.pillsPerDose),
-                foodRule: state.foodRule,
-                notes: trimmedNotes.isEmpty ? nil : trimmedNotes,
-                currentSupply: Int16(state.currentSupply),
-                pillPhotoData: nil,
-                schedules: schedules
-            )
-            ReminderScheduler.scheduleReminders(for: med)
-            await MainActor.run {
-                onSaved()
-                dismiss()
+            do {
+                let med = try await repository.saveMedication(
+                    personID: targetPersonID,
+                    actorPersonID: actorID,
+                    name: state.name.trimmingCharacters(in: .whitespaces),
+                    dose: state.dose.trimmingCharacters(in: .whitespaces),
+                    pillsPerDose: Int16(state.pillsPerDose),
+                    foodRule: state.foodRule,
+                    notes: trimmedNotes.isEmpty ? nil : trimmedNotes,
+                    currentSupply: Int16(state.currentSupply),
+                    pillPhotoData: nil,
+                    schedules: schedules
+                )
+                ReminderScheduler.scheduleReminders(for: med)
+                await MainActor.run {
+                    onSaved()
+                    dismiss()
+                }
+            } catch MedicationRepositoryError.permissionDenied {
+                await MainActor.run {
+                    saveError = "Only supervisors can save medications."
+                }
+            } catch {
+                await MainActor.run {
+                    saveError = "We couldn't save the medication. Please try again."
+                }
             }
         }
     }

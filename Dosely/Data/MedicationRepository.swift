@@ -31,6 +31,12 @@ enum WeekdayBitmask {
     }
 }
 
+enum MedicationRepositoryError: Error, Equatable {
+    case actorNotFound
+    case permissionDenied
+    case medicationNotFound
+}
+
 final class MedicationRepository {
     private let stack: CoreDataStack
 
@@ -40,9 +46,12 @@ final class MedicationRepository {
 
     private var context: NSManagedObjectContext { stack.viewContext }
 
-    func fetchAllMedications() async -> [Medication] {
+    // MARK: - Reads (scoped to one Person)
+
+    func fetchAllMedications(for personID: UUID) async -> [Medication] {
         await context.perform { [context] in
             let request = NSFetchRequest<Medication>(entityName: "Medication")
+            request.predicate = NSPredicate(format: "personID == %@", personID as CVarArg)
             request.sortDescriptors = [NSSortDescriptor(key: "dateAdded", ascending: true)]
             return (try? context.fetch(request)) ?? []
         }
@@ -54,8 +63,52 @@ final class MedicationRepository {
         }
     }
 
+    func fetchScheduledDoses(for personID: UUID, on date: Date) async -> [(Medication, DoseSchedule)] {
+        await context.perform { [context] in
+            let mask = WeekdayBitmask.mask(for: date)
+            let request = NSFetchRequest<DoseSchedule>(entityName: "DoseSchedule")
+            request.predicate = NSPredicate(format: "medication.personID == %@", personID as CVarArg)
+            request.sortDescriptors = [NSSortDescriptor(key: "timeOfDay", ascending: true)]
+            let all = (try? context.fetch(request)) ?? []
+            return all.compactMap { schedule in
+                guard (schedule.daysOfWeek & mask) != 0, let med = schedule.medication else { return nil }
+                return (med, schedule)
+            }
+        }
+    }
+
+    func fetchDoseLogs(
+        for medicationID: UUID?,
+        personID: UUID,
+        from: Date,
+        to: Date
+    ) async -> [DoseLog] {
+        await context.perform { [context] in
+            let request = NSFetchRequest<DoseLog>(entityName: "DoseLog")
+            var predicates: [NSPredicate] = [
+                NSPredicate(format: "scheduledTime >= %@ AND scheduledTime <= %@",
+                            from as NSDate, to as NSDate),
+                NSPredicate(format: "medication.personID == %@", personID as CVarArg)
+            ]
+            if let medicationID {
+                predicates.append(NSPredicate(format: "medication.id == %@", medicationID as CVarArg))
+            }
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+            request.sortDescriptors = [NSSortDescriptor(key: "scheduledTime", ascending: true)]
+            return (try? context.fetch(request)) ?? []
+        }
+    }
+
+    // MARK: - Writes
+
+    /// Creates or updates a Medication for `personID`. The acting caller
+    /// (`actorPersonID`) must be a supervisor; clients raise
+    /// `permissionDenied`. Throws are intentionally surfaced — call sites
+    /// in views catch them and present a friendly banner.
     @discardableResult
     func saveMedication(
+        personID: UUID,
+        actorPersonID: UUID,
         id: UUID? = nil,
         name: String,
         dose: String,
@@ -65,8 +118,15 @@ final class MedicationRepository {
         currentSupply: Int16,
         pillPhotoData: Data?,
         schedules: [ScheduleInput] = []
-    ) async -> Medication {
-        await context.perform { [context] in
+    ) async throws -> Medication {
+        try await context.perform { [context] in
+            guard let actor = Self.findPerson(id: actorPersonID, in: context) else {
+                throw MedicationRepositoryError.actorNotFound
+            }
+            guard actor.role == "supervisor" else {
+                throw MedicationRepositoryError.permissionDenied
+            }
+
             let med: Medication
             if let id, let existing = Self.find(id: id, in: context) {
                 med = existing
@@ -75,6 +135,7 @@ final class MedicationRepository {
                 med.id = id ?? UUID()
                 med.dateAdded = Date()
             }
+            med.personID = personID
             med.name = name
             med.dose = dose
             med.pillsPerDose = pillsPerDose
@@ -90,20 +151,30 @@ final class MedicationRepository {
         }
     }
 
-    func deleteMedication(id: UUID) async {
-        await context.perform { [context] in
+    func deleteMedication(id: UUID, actorPersonID: UUID) async throws {
+        try await context.perform { [context] in
+            guard let actor = Self.findPerson(id: actorPersonID, in: context) else {
+                throw MedicationRepositoryError.actorNotFound
+            }
+            guard actor.role == "supervisor" else {
+                throw MedicationRepositoryError.permissionDenied
+            }
             guard let med = Self.find(id: id, in: context) else { return }
             context.delete(med)
             try? context.save()
         }
     }
 
+    /// Logs a dose. `loggedByPersonID` records who marked it taken — a
+    /// supervisor logging on behalf of grandma vs. grandpa logging his own.
+    /// Both supervisors and device clients may log doses.
     @discardableResult
     func logDose(
         medicationID: UUID,
         scheduledTime: Date,
         actualTime: Date?,
-        status: String
+        status: String,
+        loggedByPersonID: UUID
     ) async -> DoseLog? {
         await context.perform { [context] in
             guard let med = Self.find(id: medicationID, in: context) else { return nil }
@@ -112,38 +183,10 @@ final class MedicationRepository {
             log.scheduledTime = scheduledTime
             log.actualTime = actualTime
             log.status = status
+            log.loggedByPersonID = loggedByPersonID
             log.medication = med
             try? context.save()
             return log
-        }
-    }
-
-    func fetchDoseLogs(for medicationID: UUID?, from: Date, to: Date) async -> [DoseLog] {
-        await context.perform { [context] in
-            let request = NSFetchRequest<DoseLog>(entityName: "DoseLog")
-            var predicates: [NSPredicate] = [
-                NSPredicate(format: "scheduledTime >= %@ AND scheduledTime <= %@",
-                            from as NSDate, to as NSDate)
-            ]
-            if let medicationID {
-                predicates.append(NSPredicate(format: "medication.id == %@", medicationID as CVarArg))
-            }
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
-            request.sortDescriptors = [NSSortDescriptor(key: "scheduledTime", ascending: true)]
-            return (try? context.fetch(request)) ?? []
-        }
-    }
-
-    func fetchScheduledDoses(on date: Date) async -> [(Medication, DoseSchedule)] {
-        await context.perform { [context] in
-            let mask = WeekdayBitmask.mask(for: date)
-            let request = NSFetchRequest<DoseSchedule>(entityName: "DoseSchedule")
-            request.sortDescriptors = [NSSortDescriptor(key: "timeOfDay", ascending: true)]
-            let all = (try? context.fetch(request)) ?? []
-            return all.compactMap { schedule in
-                guard (schedule.daysOfWeek & mask) != 0, let med = schedule.medication else { return nil }
-                return (med, schedule)
-            }
         }
     }
 
@@ -151,6 +194,13 @@ final class MedicationRepository {
 
     private static func find(id: UUID, in context: NSManagedObjectContext) -> Medication? {
         let request = NSFetchRequest<Medication>(entityName: "Medication")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        request.fetchLimit = 1
+        return (try? context.fetch(request))?.first
+    }
+
+    private static func findPerson(id: UUID, in context: NSManagedObjectContext) -> Person? {
+        let request = NSFetchRequest<Person>(entityName: "Person")
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         request.fetchLimit = 1
         return (try? context.fetch(request))?.first

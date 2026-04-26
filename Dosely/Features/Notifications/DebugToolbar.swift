@@ -3,6 +3,7 @@ import UserNotifications
 
 struct DebugToolbarModifier: ViewModifier {
     #if DEBUG
+    @EnvironmentObject var authService: AuthService
     @State private var showPermissionAlert = false
     #endif
 
@@ -109,6 +110,10 @@ struct DebugToolbarModifier: ViewModifier {
 
     @MainActor
     private func scheduleVerifyRx() async {
+        guard let actorID = authService.currentPerson?.id else {
+            print("[NOTIF-DEBUG] scheduleVerifyRx: no currentPerson — sign in first")
+            return
+        }
         let repository = MedicationRepository()
 
         let calendar = Calendar.current
@@ -117,16 +122,24 @@ struct DebugToolbarModifier: ViewModifier {
         let fireDate = calendar.date(from: comps) ?? future
         let hhmm = Self.hhmmFormatter.string(from: fireDate)
 
-        let med = await repository.saveMedication(
-            name: "Verify Rx",
-            dose: "10mg",
-            pillsPerDose: 1,
-            foodRule: "either",
-            notes: "Debug verification med",
-            currentSupply: 30,
-            pillPhotoData: nil,
-            schedules: [ScheduleInput(timeOfDay: hhmm, daysOfWeek: 127)]
-        )
+        let med: Medication
+        do {
+            med = try await repository.saveMedication(
+                personID: actorID,
+                actorPersonID: actorID,
+                name: "Verify Rx",
+                dose: "10mg",
+                pillsPerDose: 1,
+                foodRule: "either",
+                notes: "Debug verification med",
+                currentSupply: 30,
+                pillPhotoData: nil,
+                schedules: [ScheduleInput(timeOfDay: hhmm, daysOfWeek: 127)]
+            )
+        } catch {
+            print("[NOTIF-DEBUG] scheduleVerifyRx failed: \(error)")
+            return
+        }
         ReminderScheduler.scheduleReminders(for: med)
 
         let medIDString = med.id?.uuidString ?? "?"

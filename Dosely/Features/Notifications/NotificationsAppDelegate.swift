@@ -39,6 +39,8 @@ final class NotificationsAppDelegate: NSObject, UIApplicationDelegate, UNUserNot
                 print("[NOTIF-DEBUG] TOOK_IT: missing or invalid medID in userInfo")
                 completionHandler(); return
             }
+            let personID: UUID = (info["personID"] as? String).flatMap(UUID.init(uuidString:))
+                ?? medID  // legacy fallback for pre-migration scheduled requests
             let scheduledToday = Self.scheduledDate(from: info)
             let actualTime = Date()
             #if DEBUG
@@ -50,7 +52,8 @@ final class NotificationsAppDelegate: NSObject, UIApplicationDelegate, UNUserNot
                     medicationID: medID,
                     scheduledTime: scheduledToday,
                     actualTime: actualTime,
-                    status: "taken"
+                    status: "taken",
+                    loggedByPersonID: personID
                 )
                 await MainActor.run { completionHandler() }
             }

@@ -236,3 +236,7 @@
 "languagepicker.english" = "English";
 "languagepicker.punjabi" = "ਪੰਜਾਬੀ (Punjabi)";
 "languagepicker.cancel" = "Cancel";
+
+// MARK: - Care Circle
+"circle.default.name" = "My Family";
+"circle.default.foundername" = "Me";

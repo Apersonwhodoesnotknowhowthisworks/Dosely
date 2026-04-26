@@ -83,6 +83,7 @@ final class HistoryViewModel: ObservableObject {
     @Published private(set) var isLoaded = false
 
     private let repository: MedicationRepository
+    private var personID: UUID?
     let calendar: Calendar
 
     init(repository: MedicationRepository = MedicationRepository(), now: Date = Date()) {
@@ -109,19 +110,20 @@ final class HistoryViewModel: ObservableObject {
     var canGoForward: Bool { !isCurrentWeek }
 
     func goBack() {
-        guard canGoBack else { return }
+        guard canGoBack, let personID else { return }
         weekStart = calendar.date(byAdding: .day, value: -7, to: weekStart) ?? weekStart
-        Task { await load() }
+        Task { await load(personID: personID) }
     }
 
     func goForward() {
-        guard canGoForward else { return }
+        guard canGoForward, let personID else { return }
         weekStart = calendar.date(byAdding: .day, value: 7, to: weekStart) ?? weekStart
-        Task { await load() }
+        Task { await load(personID: personID) }
     }
 
-    func load(now: Date = Date()) async {
-        let meds = await repository.fetchAllMedications()
+    func load(personID: UUID, now: Date = Date()) async {
+        self.personID = personID
+        let meds = await repository.fetchAllMedications(for: personID)
         if let oldest = meds.compactMap({ $0.dateAdded }).min() {
             oldestWeekStart = Self.weekStart(for: oldest, calendar: calendar)
         } else {
@@ -130,7 +132,8 @@ final class HistoryViewModel: ObservableObject {
 
         let start = weekStart
         let end = weekEnd
-        let logs = await repository.fetchDoseLogs(for: nil, from: start, to: end)
+        let logs = await repository.fetchDoseLogs(for: nil, personID: personID,
+                                                  from: start, to: end)
 
         // Fetch scheduled doses per weekday in this week.
         var dailyScheduled: [[(Medication, DoseSchedule)]] = []
@@ -138,7 +141,7 @@ final class HistoryViewModel: ObservableObject {
             guard let date = calendar.date(byAdding: .day, value: day, to: start) else {
                 dailyScheduled.append([]); continue
             }
-            let doses = await repository.fetchScheduledDoses(on: date)
+            let doses = await repository.fetchScheduledDoses(for: personID, on: date)
             dailyScheduled.append(doses)
         }
 

@@ -2,11 +2,17 @@
 import Foundation
 
 enum SeedData {
-    static func seedIfEmpty(using repository: MedicationRepository) async {
-        let existing = await repository.fetchAllMedications()
+    static func seedIfEmpty(
+        using repository: MedicationRepository,
+        personID: UUID,
+        actorPersonID: UUID
+    ) async {
+        let existing = await repository.fetchAllMedications(for: personID)
         guard existing.isEmpty else { return }
 
-        _ = await repository.saveMedication(
+        _ = try? await repository.saveMedication(
+            personID: personID,
+            actorPersonID: actorPersonID,
             name: "Metformin",
             dose: "500mg",
             pillsPerDose: 1,
@@ -20,7 +26,9 @@ enum SeedData {
             ]
         )
 
-        _ = await repository.saveMedication(
+        _ = try? await repository.saveMedication(
+            personID: personID,
+            actorPersonID: actorPersonID,
             name: "Lisinopril",
             dose: "10mg",
             pillsPerDose: 1,

@@ -8,14 +8,19 @@ struct MissedDoseChecker {
     static let lateThreshold: TimeInterval   = 30 * 60
     static let missedThreshold: TimeInterval = 2 * 60 * 60
 
-    func run(now: Date = Date()) async {
-        let scheduled = await repository.fetchScheduledDoses(on: now)
+    /// Runs the late/missed sweep for one Person. The system itself is the
+    /// "logger" for late/missed entries — `loggedByPersonID` is set to
+    /// `personID` because no actual user marked it; the row is a marker
+    /// that nobody acted in time.
+    func run(for personID: UUID, now: Date = Date()) async {
+        let scheduled = await repository.fetchScheduledDoses(for: personID, on: now)
 
         let calendar = Calendar.current
         let dayStart = calendar.startOfDay(for: now)
         let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)
             ?? dayStart.addingTimeInterval(86_400)
-        let logs = await repository.fetchDoseLogs(for: nil, from: dayStart, to: dayEnd)
+        let logs = await repository.fetchDoseLogs(for: nil, personID: personID,
+                                                  from: dayStart, to: dayEnd)
 
         for (med, schedule) in scheduled {
             guard let medID = med.id,
@@ -36,7 +41,8 @@ struct MissedDoseChecker {
                 medicationID: medID,
                 scheduledTime: scheduledTime,
                 actualTime: nil,
-                status: status
+                status: status,
+                loggedByPersonID: personID
             )
         }
     }

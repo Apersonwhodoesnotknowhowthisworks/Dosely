@@ -29,11 +29,16 @@ final class TodayViewModel: ObservableObject {
         self.repository = repository
     }
 
-    func load(now: Date = Date()) async {
-        let scheduled = await repository.fetchScheduledDoses(on: now)
+    /// Loads today's scheduled doses for `personID`, joined with the
+    /// person's logs for the day. `loggedByPersonID` is recorded against
+    /// any new logs the user creates from this screen (the actor doing
+    /// the logging — typically the same as `personID` for a device client,
+    /// or the supervisor when logging on behalf of a managed client).
+    func load(personID: UUID, now: Date = Date()) async {
+        let scheduled = await repository.fetchScheduledDoses(for: personID, on: now)
 
         let (dayStart, dayEnd) = Self.dayBounds(for: now)
-        let logs = await repository.fetchDoseLogs(for: nil, from: dayStart, to: dayEnd)
+        let logs = await repository.fetchDoseLogs(for: nil, personID: personID, from: dayStart, to: dayEnd)
 
         let items: [TodayDose] = scheduled.compactMap { (med, schedule) in
             guard
@@ -60,26 +65,37 @@ final class TodayViewModel: ObservableObject {
         self.isLoaded = true
     }
 
-    func markTaken(_ dose: TodayDose, at actualTime: Date = Date()) async {
+    func markTaken(
+        _ dose: TodayDose,
+        loggedByPersonID: UUID,
+        personID: UUID,
+        at actualTime: Date = Date()
+    ) async {
         guard let medID = dose.medication.id else { return }
         _ = await repository.logDose(
             medicationID: medID,
             scheduledTime: dose.scheduledDate,
             actualTime: actualTime,
-            status: DoseStatus.taken.rawValue
+            status: DoseStatus.taken.rawValue,
+            loggedByPersonID: loggedByPersonID
         )
-        await load()
+        await load(personID: personID)
     }
 
-    func skip(_ dose: TodayDose) async {
+    func skip(
+        _ dose: TodayDose,
+        loggedByPersonID: UUID,
+        personID: UUID
+    ) async {
         guard let medID = dose.medication.id else { return }
         _ = await repository.logDose(
             medicationID: medID,
             scheduledTime: dose.scheduledDate,
             actualTime: nil,
-            status: DoseStatus.skipped.rawValue
+            status: DoseStatus.skipped.rawValue,
+            loggedByPersonID: loggedByPersonID
         )
-        await load()
+        await load(personID: personID)
     }
 
     // MARK: - Helpers
