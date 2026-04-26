@@ -7,6 +7,7 @@ struct LoginView: View {
     @State private var password = ""
     @State private var showingReset = false
     @State private var showingSignUp = false
+    @State private var biometricHint: String?
     @FocusState private var focusedField: Field?
 
     enum Field { case email, password }
@@ -49,17 +50,27 @@ struct LoginView: View {
                         .accessibilityLabel(Text("auth.signin"))
 
                         if showFaceIDButton {
-                            Button(action: { Task { await biometric() } }) {
-                                Label("auth.signin.faceid", systemImage: "faceid")
-                                    .dsBodyLarge()
-                                    .foregroundColor(.dsPrimary)
-                                    .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: DSSpacing.rMd)
-                                            .stroke(Color.dsPrimary, lineWidth: 1.5)
-                                    )
+                            VStack(spacing: DSSpacing.sm) {
+                                Button(action: { Task { await biometric() } }) {
+                                    Label("auth.signin.faceid", systemImage: "faceid")
+                                        .dsBodyLarge()
+                                        .foregroundColor(.dsPrimary)
+                                        .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: DSSpacing.rMd)
+                                                .stroke(Color.dsPrimary, lineWidth: 1.5)
+                                        )
+                                }
+                                .accessibilityLabel(Text("auth.signin.faceid"))
+
+                                if let biometricHint {
+                                    Text(biometricHint)
+                                        .dsCaption()
+                                        .foregroundColor(.dsTextSecondary)
+                                        .multilineTextAlignment(.center)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
-                            .accessibilityLabel(Text("auth.signin.faceid"))
                         }
 
                         Button(L("auth.forgotpassword")) { showingReset = true }
@@ -147,8 +158,19 @@ struct LoginView: View {
     }
 
     private func biometric() async {
-        do { try await authService.biometricLogin() }
-        catch { /* error surfaces via localized error through service if thrown before */ }
+        biometricHint = nil
+        do {
+            try await authService.biometricLogin()
+            // The unlock succeeded. If Firebase has no session — rare, only
+            // happens if the user signed out completely a while back but the
+            // biometric flag is still set — show a friendly hint instead of
+            // a "session expired" error.
+            if authService.currentUser == nil {
+                biometricHint = L("auth.faceid.signinwithpassword")
+            }
+        } catch {
+            // errorMessage is set by the service
+        }
     }
 }
 

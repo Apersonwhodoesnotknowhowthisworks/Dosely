@@ -24,16 +24,24 @@ final class AuthService: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var needsDisclaimer: Bool = false
-    /// True after a successful sign-up *only* when the device supports
-    /// biometrics and the user hasn't already enabled them. AuthGate
-    /// presents the enrollment alert on TodayView when this flips true —
-    /// SignUpView itself can't host the alert because it gets torn down
-    /// the instant `currentUser` becomes non-nil.
     @Published var needsBiometricEnrollmentPrompt: Bool = false
 
+    /// Local lock that gates AuthGate even when Firebase has a live session.
+    /// "Firebase signed-in" and "Dosely unlocked" are intentionally separate
+    /// concepts, like 1Password / Wallet / banking apps. Persists across
+    /// relaunches via UserDefaults; defaults to `true` on first install.
+    @Published var isLocallyLocked: Bool {
+        didSet {
+            UserDefaults.standard.set(isLocallyLocked, forKey: Self.lockedKey)
+        }
+    }
+
+    private static let lockedKey = "is_locally_locked"
     private var authHandle: AuthStateDidChangeListenerHandle?
 
     init() {
+        UserDefaults.standard.register(defaults: [Self.lockedKey: true])
+        self.isLocallyLocked = UserDefaults.standard.bool(forKey: Self.lockedKey)
         self.currentUser = Auth.auth().currentUser
         self.authHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in self?.currentUser = user }
@@ -53,6 +61,7 @@ final class AuthService: ObservableObject {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             Keychain.set(email, for: .lastEmail)
             await refreshAndStoreToken(for: result.user)
+            unlock()  // brand-new account is unlocked by definition
             // Post-signup state machine: biometric prompt FIRST (if the
             // device can do it and the user hasn't already enabled it),
             // disclaimer SECOND. `completeBiometricEnrollmentPrompt(...)`
@@ -84,19 +93,39 @@ final class AuthService: ObservableObject {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             Keychain.set(email, for: .lastEmail)
             await refreshAndStoreToken(for: result.user)
+            unlock()
         } catch {
             errorMessage = Self.friendly(error)
             throw error
         }
     }
 
+    // MARK: - Lock / sign-out
+
+    func lock() { isLocallyLocked = true }
+
+    func unlock() { isLocallyLocked = false }
+
+    /// Default sign-out: locks Dosely but keeps the Firebase session and
+    /// the Keychain biometric flag alive. The user can re-enter via Face ID
+    /// or by re-typing their password without losing their session.
     func signOut() {
+        lock()
+    }
+
+    /// Forget-me sign-out: ends the Firebase session and wipes every
+    /// Keychain entry tied to this user. Forces a full email + password
+    /// sign-in to come back. Used by the destructive Settings option.
+    func signOutCompletely() {
         do {
             try Auth.auth().signOut()
-            Keychain.delete(.idToken)
         } catch {
             errorMessage = Self.friendly(error)
         }
+        Keychain.delete(.idToken)
+        Keychain.delete(.lastEmail)
+        Keychain.delete(.biometricEnabled)
+        lock()
     }
 
     func sendPasswordReset(email: String) async throws {
@@ -170,16 +199,16 @@ final class AuthService: ObservableObject {
             throw AuthError.biometricFailed
         }
 
-        // Firebase persists its own session across app launches. If it's still
-        // here, biometric is effectively a local gate — refresh the token and go.
+        // Successful biometric check. We deliberately do NOT touch Firebase —
+        // unlocking is purely a local concern. If `currentUser` is non-nil,
+        // AuthGate will show TodayView. If it isn't (Firebase session went
+        // away independently), the unlock is harmless and LoginView remains;
+        // the view surfaces a "sign in with your password" hint.
         if let user = Auth.auth().currentUser {
             await refreshAndStoreToken(for: user)
             self.currentUser = user
-            return
         }
-        // If the user explicitly signed out, we can't recover without a password.
-        errorMessage = AuthError.sessionExpired.localizedDescription
-        throw AuthError.sessionExpired
+        unlock()
     }
 
     private func evaluate(context: LAContext, reason: String) async throws -> Bool {

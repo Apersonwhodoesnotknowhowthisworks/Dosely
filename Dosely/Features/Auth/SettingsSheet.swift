@@ -7,29 +7,28 @@ struct SettingsSheet: View {
     @AppStorage("force_light_mode") private var forceLightMode: Bool = false
     @State private var biometricOn: Bool = false
     @State private var showingLanguagePicker = false
+    @State private var confirmingLockSignOut = false
+    @State private var confirmingFullSignOut = false
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.dsBackground.ignoresSafeArea()
 
-                VStack(alignment: .leading, spacing: DSSpacing.lg) {
-                    accountSection
-                    languageSection
-                    lightModeSection
-                    if authService.biometricAvailable { biometricSection }
-                    Spacer()
-                    Button(action: signOut) {
-                        Text("settings.signout")
-                            .dsBodyLarge()
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
-                            .background(Color.dsDanger)
-                            .cornerRadius(DSSpacing.rMd)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: DSSpacing.lg) {
+                        accountSection
+                        languageSection
+                        lightModeSection
+                        if authService.biometricAvailable { biometricSection }
+                        VStack(spacing: DSSpacing.md) {
+                            lockSignOutButton
+                            fullSignOutButton
+                        }
+                        .padding(.top, DSSpacing.lg)
                     }
-                    .accessibilityLabel(Text("settings.signout"))
+                    .padding(DSSpacing.lg)
                 }
-                .padding(DSSpacing.lg)
             }
             .navigationTitle(Text("settings.title"))
             .navigationBarTitleDisplayMode(.inline)
@@ -52,7 +51,63 @@ struct SettingsSheet: View {
                     onCancel: { showingLanguagePicker = false }
                 )
             }
+            .alert(L("settings.signout.confirm.lock.title"),
+                   isPresented: $confirmingLockSignOut) {
+                Button(L("settings.signout.lock.title"), role: .destructive) {
+                    authService.signOut()
+                    dismiss()
+                }
+                Button(L("common.cancel"), role: .cancel) {}
+            } message: {
+                Text("settings.signout.lock.subtitle")
+            }
+            .alert(L("settings.signout.confirm.complete.title"),
+                   isPresented: $confirmingFullSignOut) {
+                Button(L("settings.signout.complete.title"), role: .destructive) {
+                    authService.signOutCompletely()
+                    dismiss()
+                }
+                Button(L("common.cancel"), role: .cancel) {}
+            } message: {
+                Text("settings.signout.complete.subtitle")
+            }
         }
+    }
+
+    private var lockSignOutButton: some View {
+        Button(action: { confirmingLockSignOut = true }) {
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                Text("settings.signout.lock.title")
+                    .dsBodyLarge()
+                    .foregroundColor(.white)
+                Text("settings.signout.lock.subtitle")
+                    .dsCaption()
+                    .foregroundColor(.white.opacity(0.9))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(DSSpacing.md)
+            .background(Color.dsWarning)
+            .cornerRadius(DSSpacing.rMd)
+        }
+        .accessibilityLabel(Text("settings.signout.lock.title"))
+    }
+
+    private var fullSignOutButton: some View {
+        Button(action: { confirmingFullSignOut = true }) {
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                Text("settings.signout.complete.title")
+                    .dsBodyLarge()
+                    .foregroundColor(.white)
+                Text("settings.signout.complete.subtitle")
+                    .dsCaption()
+                    .foregroundColor(.white.opacity(0.9))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(DSSpacing.md)
+            .background(Color.dsDanger)
+            .cornerRadius(DSSpacing.rMd)
+        }
+        .accessibilityLabel(Text("settings.signout.complete.title"))
     }
 
     private var accountSection: some View {
@@ -148,8 +203,4 @@ struct SettingsSheet: View {
         .accessibilityLabel(Text("settings.faceid.title"))
     }
 
-    private func signOut() {
-        authService.signOut()
-        dismiss()
-    }
 }

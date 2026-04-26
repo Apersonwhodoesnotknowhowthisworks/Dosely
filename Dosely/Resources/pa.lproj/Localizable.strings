@@ -148,6 +148,13 @@
 "settings.title" = "ਖਾਤਾ";
 "settings.signedinas" = "ਇਸ ਨਾਮ ਨਾਲ ਸਾਈਨ ਇਨ";
 "settings.signout" = "ਸਾਈਨ ਆਊਟ";
+"settings.signout.lock.title" = "ਸਾਈਨ ਆਊਟ";
+"settings.signout.lock.subtitle" = "ਸਾਈਨ ਇਨ ਰੱਖੋ ਪਰ ਐਪ ਨੂੰ ਲਾਕ ਕਰੋ";
+"settings.signout.complete.title" = "ਪੂਰੀ ਤਰ੍ਹਾਂ ਸਾਈਨ ਆਊਟ";
+"settings.signout.complete.subtitle" = "ਇਸ ਡਿਵਾਈਸ ਤੋਂ ਮੇਰਾ ਖਾਤਾ ਹਟਾ ਦਿਓ";
+"settings.signout.confirm.lock.title" = "ਸਾਈਨ ਆਊਟ ਅਤੇ ਲਾਕ ਕਰੋ?";
+"settings.signout.confirm.complete.title" = "ਪੂਰੀ ਤਰ੍ਹਾਂ ਸਾਈਨ ਆਊਟ ਕਰੋ?";
+"auth.faceid.signinwithpassword" = "ਆਪਣੀ ਈਮੇਲ ਅਤੇ ਪਾਸਵਰਡ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।";
 "settings.faceid.title" = "Face ID ਵਰਤੋ";
 "settings.faceid.subtitle" = "ਅਗਲੀ ਵਾਰ Dosely ਖੋਲ੍ਹਣ ਵੇਲੇ ਜਲਦੀ ਸਾਈਨ ਇਨ ਹੋਣ ਲਈ।";
 "settings.language.row" = "ਭਾਸ਼ਾ / Language";

@@ -145,6 +145,13 @@
 "settings.title" = "Account";
 "settings.signedinas" = "Signed in as";
 "settings.signout" = "Sign out";
+"settings.signout.lock.title" = "Sign out";
+"settings.signout.lock.subtitle" = "Stay signed in but lock the app";
+"settings.signout.complete.title" = "Sign out completely";
+"settings.signout.complete.subtitle" = "Forget my account on this device";
+"settings.signout.confirm.lock.title" = "Sign out and lock?";
+"settings.signout.confirm.complete.title" = "Sign out completely?";
+"auth.faceid.signinwithpassword" = "Please sign in with your email and password.";
 "settings.faceid.title" = "Use Face ID";
 "settings.faceid.subtitle" = "Quick sign-in next time you open Dosely.";
 "settings.language.row" = "Language / ਭਾਸ਼ਾ";

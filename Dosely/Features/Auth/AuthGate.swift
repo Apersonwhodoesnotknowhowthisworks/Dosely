@@ -5,7 +5,9 @@ struct AuthGate: View {
 
     var body: some View {
         Group {
-            if authService.currentUser == nil {
+            // The lock is local; it gates AuthGate even when Firebase still
+            // has a live session. See AuthService.isLocallyLocked.
+            if authService.currentUser == nil || authService.isLocallyLocked {
                 LoginView()
             } else {
                 TodayView()
