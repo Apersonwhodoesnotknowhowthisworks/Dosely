@@ -31,6 +31,13 @@ final class AuthService: ObservableObject {
     /// this and let the device user switch between Persons in the circle.
     @Published var currentPerson: Person?
 
+    /// True when Firebase has authenticated this user but no `Person`
+    /// row exists for them yet — the gate between "successful sign-up"
+    /// and "ready to use the dashboard." AuthGate routes this state to
+    /// `CircleSetupView` so the user picks between creating a new
+    /// circle and joining an existing one.
+    @Published var needsCircleSetup: Bool = false
+
     /// Local lock that gates AuthGate even when Firebase has a live session.
     /// "Firebase signed-in" and "Dosely unlocked" are intentionally separate
     /// concepts, like 1Password / Wallet / banking apps. Persists across
@@ -139,6 +146,7 @@ final class AuthService: ObservableObject {
         Keychain.delete(.lastEmail)
         Keychain.delete(.biometricEnabled)
         currentPerson = nil
+        needsCircleSetup = false
         lock()
     }
 
@@ -152,6 +160,7 @@ final class AuthService: ObservableObject {
     func resolveCurrentPerson() async {
         guard let user = currentUser else {
             currentPerson = nil
+            needsCircleSetup = false
             return
         }
         let displayName = user.displayName?.isEmpty == false
@@ -159,13 +168,25 @@ final class AuthService: ObservableObject {
             : (user.email ?? "Me")
         let lang = UserDefaults.standard.string(forKey: "app_language") ?? "en"
 
-        // Migration runs only on the first call after the refactor; on
-        // subsequent calls it just resolves the existing supervisor.
-        currentPerson = await CareCircleMigration.runIfNeeded(
+        // The migration only auto-bootstraps a circle for legacy data
+        // (Medications/DoseLogs without a personID). For brand-new
+        // accounts it returns nil and we route to CircleSetupView.
+        let resolved = await CareCircleMigration.runIfNeeded(
             firebaseUID: user.uid,
             displayName: displayName,
             languagePreference: lang
         )
+        currentPerson = resolved
+        needsCircleSetup = (resolved == nil)
+    }
+
+    /// Called by `CircleSetupView` once the user has created or joined a
+    /// care circle. Refreshes `currentPerson` from the local store and
+    /// clears the setup gate so AuthGate routes to the dashboard.
+    @MainActor
+    func completeCircleSetup() async {
+        await resolveCurrentPerson()
+        needsCircleSetup = (currentPerson == nil)
     }
 
     func sendPasswordReset(email: String) async throws {

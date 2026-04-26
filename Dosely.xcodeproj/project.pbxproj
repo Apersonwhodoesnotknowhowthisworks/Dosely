@@ -97,6 +97,9 @@
 		BFD00000000000000000000F7 /* PeopleManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F7 /* PeopleManagementView.swift */; };
 		BFD00000000000000000000F8 /* PersonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F8 /* PersonDetailView.swift */; };
 		BFD00000000000000000000F9 /* AddPersonFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F9 /* AddPersonFlow.swift */; };
+		BFD0000000000000000000100 /* CircleSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000100 /* CircleSetupView.swift */; };
+		BFD0000000000000000000101 /* CreateCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000101 /* CreateCircleView.swift */; };
+		BFD0000000000000000000102 /* JoinCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000102 /* JoinCircleView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -202,6 +205,9 @@
 		FRD00000000000000000000F7 /* PeopleManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeopleManagementView.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000F8 /* PersonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonDetailView.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000F9 /* AddPersonFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPersonFlow.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000100 /* CircleSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleSetupView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000101 /* CreateCircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateCircleView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000102 /* JoinCircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinCircleView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -460,6 +466,9 @@
 				FRD0000000000000000000076 /* MedicalDisclaimerView.swift */,
 				FRD0000000000000000000077 /* SettingsSheet.swift */,
 				FRD00000000000000000000B2 /* LanguagePickerView.swift */,
+				FRD0000000000000000000100 /* CircleSetupView.swift */,
+				FRD0000000000000000000101 /* CreateCircleView.swift */,
+				FRD0000000000000000000102 /* JoinCircleView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -685,6 +694,9 @@
 				BFD00000000000000000000F7 /* PeopleManagementView.swift in Sources */,
 				BFD00000000000000000000F8 /* PersonDetailView.swift in Sources */,
 				BFD00000000000000000000F9 /* AddPersonFlow.swift in Sources */,
+				BFD0000000000000000000100 /* CircleSetupView.swift in Sources */,
+				BFD0000000000000000000101 /* CreateCircleView.swift in Sources */,
+				BFD0000000000000000000102 /* JoinCircleView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -241,6 +241,35 @@
 "circle.default.name" = "My Family";
 "circle.default.foundername" = "Me";
 
+// MARK: - Circle setup (first-run for new supervisors)
+"circle.setup.title" = "Welcome to Dosely";
+"circle.setup.subtitle" = "Are you setting up Dosely for your family, or joining one?";
+"circle.setup.create.title" = "I'm setting up for my family";
+"circle.setup.create.blurb" = "You'll add your family members and their medications.";
+"circle.setup.join.title" = "I'm joining a family";
+"circle.setup.join.blurb" = "A family member sent you a 6-digit code.";
+
+// MARK: - Create circle
+"circle.create.title" = "Set up your family";
+"circle.create.subtitle" = "Give your family a name and tell us what to call you.";
+"circle.create.name.label" = "Family name";
+"circle.create.name.placeholder" = "The Smiths";
+"circle.create.founder.label" = "Your name";
+"circle.create.founder.placeholder" = "Aunt Priya";
+"circle.create.submit" = "Create family";
+
+// MARK: - Join circle
+"circle.join.title" = "Enter your family's join code";
+"circle.join.subtitle" = "A family member should have shared a 6-digit code with you.";
+"circle.join.code.label" = "Join code";
+"circle.join.name.label" = "Display name";
+"circle.join.name.placeholder" = "Aunt Priya";
+"circle.join.submit" = "Join family";
+"circle.join.nocode" = "Don't have a code? Set up a new family instead";
+"circle.join.error.notfound" = "That code didn't match a family. Double-check with whoever sent it to you.";
+"circle.join.error.alreadymember" = "You're already part of this family. Sign in normally.";
+"circle.join.error.invalidname" = "Please enter the name your family will see.";
+
 // MARK: - Supervisor dashboard
 "supervisor.tab.people" = "People";
 "supervisor.selector.title" = "Choose who to view";

@@ -17,14 +17,34 @@ final class CareCircleMigrationTests: XCTestCase {
         super.tearDown()
     }
 
-    func testMigrationCreatesCircleAndSupervisorOnFirstRun() async {
+    func testMigrationReturnsNilForBrandNewAccountWithNoOrphans() async {
+        // Brand-new account on a clean install has no orphan rows. The
+        // migration must return nil so AuthGate routes the user to
+        // CircleSetupView instead of auto-bootstrapping a circle.
         let supervisor = await CareCircleMigration.runIfNeeded(
             firebaseUID: "fb-1", displayName: "Joe",
             languagePreference: "en", stack: stack
         )
+        XCTAssertNil(supervisor)
+        XCTAssertFalse(CareCircleMigration.isComplete,
+                       "flag must stay unset so a later sign-in can still migrate orphans")
+    }
+
+    func testMigrationAutoBootstrapsWhenLegacyOrphansExist() async throws {
+        // Pre-Prompt-13 orphan: a Medication without personID.
+        let context = stack.viewContext
+        let med = Medication(context: context)
+        med.id = UUID()
+        med.name = "Legacy"
+        med.dose = "10mg"
+        med.dateAdded = Date()
+        try context.save()
+
+        let supervisor = await CareCircleMigration.runIfNeeded(
+            firebaseUID: "fb-legacy", displayName: "Joe",
+            languagePreference: "en", stack: stack
+        )
         XCTAssertNotNil(supervisor)
-        XCTAssertEqual(supervisor?.role, "supervisor")
-        XCTAssertEqual(supervisor?.firebaseUID, "fb-1")
         XCTAssertEqual(supervisor?.careCircle?.name, "My Family")
         XCTAssertTrue(CareCircleMigration.isComplete)
     }
@@ -61,7 +81,16 @@ final class CareCircleMigrationTests: XCTestCase {
         XCTAssertEqual(allLogs.first?.loggedByPersonID, supervisor?.id)
     }
 
-    func testMigrationIsIdempotent() async {
+    func testMigrationIsIdempotentForLegacyData() async throws {
+        // Seed orphan data so the first call triggers auto-bootstrap.
+        let context = stack.viewContext
+        let med = Medication(context: context)
+        med.id = UUID()
+        med.name = "Legacy"
+        med.dose = "10mg"
+        med.dateAdded = Date()
+        try context.save()
+
         _ = await CareCircleMigration.runIfNeeded(
             firebaseUID: "fb-3", displayName: "X",
             languagePreference: "en", stack: stack
@@ -79,5 +108,25 @@ final class CareCircleMigrationTests: XCTestCase {
         let circleRequest = NSFetchRequest<CareCircle>(entityName: "CareCircle")
         let circles = (try? stack.viewContext.fetch(circleRequest)) ?? []
         XCTAssertEqual(circles.count, 1)
+    }
+
+    func testMigrationFindsExistingSupervisorEvenWithoutOrphans() async {
+        // Simulate a user who completed CircleSetupView (Person row already
+        // exists) but the migration flag hasn't been set yet (e.g. they
+        // signed up on a build with no orphan data anywhere). Migration
+        // should find them and set the flag, no extra circles.
+        let careRepo = CareCircleRepository(stack: stack)
+        _ = await careRepo.createCareCircle(
+            name: "Existing", foundingSupervisorFirebaseUID: "fb-existing",
+            founderName: "User"
+        )
+
+        let supervisor = await CareCircleMigration.runIfNeeded(
+            firebaseUID: "fb-existing", displayName: "User",
+            languagePreference: "en", stack: stack
+        )
+        XCTAssertNotNil(supervisor)
+        XCTAssertEqual(supervisor?.careCircle?.name, "Existing")
+        XCTAssertTrue(CareCircleMigration.isComplete)
     }
 }

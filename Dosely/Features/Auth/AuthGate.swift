@@ -39,15 +39,17 @@ struct AuthGate: View {
         .environmentObject(authService)
     }
 
-    /// Routes the unlocked user. Supervisors land on the multi-person
-    /// dashboard; clients keep using the single-person TodayView (full
-    /// device-client mode lands in Prompt 15). While the Person row is
-    /// still resolving (Firebase signed in but Core Data fetch in flight)
-    /// we show TodayView — it has its own loading state and is harmless
-    /// for either role.
+    /// Routes the unlocked user. New supervisor accounts land on
+    /// `CircleSetupView` until they create or join a circle. Existing
+    /// supervisors get the multi-person dashboard; clients keep using
+    /// the single-person TodayView (full device-client mode lands in
+    /// Prompt 15). The biometric / disclaimer overlays are layered above
+    /// whichever underlying view is active.
     @ViewBuilder
     private var authedRoot: some View {
-        if authService.currentPerson?.role == "supervisor" {
+        if authService.needsCircleSetup {
+            CircleSetupView()
+        } else if authService.currentPerson?.role == "supervisor" {
             SupervisorDashboardView()
         } else {
             TodayView()

@@ -244,6 +244,35 @@
 "circle.default.name" = "ਮੇਰਾ ਪਰਿਵਾਰ";
 "circle.default.foundername" = "ਮੈਂ";
 
+// MARK: - Circle setup (first-run for new supervisors) — REVIEW NEEDED
+"circle.setup.title" = "Dosely ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ";
+"circle.setup.subtitle" = "ਕੀ ਤੁਸੀਂ ਆਪਣੇ ਪਰਿਵਾਰ ਲਈ Dosely ਸੈੱਟ ਅੱਪ ਕਰ ਰਹੇ ਹੋ, ਜਾਂ ਕਿਸੇ ਪਰਿਵਾਰ ਵਿੱਚ ਜੁੜ ਰਹੇ ਹੋ?";
+"circle.setup.create.title" = "ਮੈਂ ਆਪਣੇ ਪਰਿਵਾਰ ਲਈ ਸੈੱਟ ਅੱਪ ਕਰ ਰਿਹਾਂ";
+"circle.setup.create.blurb" = "ਤੁਸੀਂ ਆਪਣੇ ਪਰਿਵਾਰਕ ਮੈਂਬਰਾਂ ਅਤੇ ਉਨ੍ਹਾਂ ਦੀਆਂ ਦਵਾਈਆਂ ਜੋੜੋਗੇ।";
+"circle.setup.join.title" = "ਮੈਂ ਪਰਿਵਾਰ ਵਿੱਚ ਜੁੜ ਰਿਹਾਂ";
+"circle.setup.join.blurb" = "ਪਰਿਵਾਰ ਦੇ ਕਿਸੇ ਮੈਂਬਰ ਨੇ ਤੁਹਾਨੂੰ 6-ਅੰਕ ਕੋਡ ਭੇਜਿਆ ਹੈ।";
+
+// MARK: - Create circle — REVIEW NEEDED
+"circle.create.title" = "ਆਪਣਾ ਪਰਿਵਾਰ ਸੈੱਟ ਅੱਪ ਕਰੋ";
+"circle.create.subtitle" = "ਆਪਣੇ ਪਰਿਵਾਰ ਨੂੰ ਨਾਮ ਦਿਉ ਅਤੇ ਦੱਸੋ ਅਸੀਂ ਤੁਹਾਨੂੰ ਕੀ ਕਹੀਏ।";
+"circle.create.name.label" = "ਪਰਿਵਾਰ ਦਾ ਨਾਮ";
+"circle.create.name.placeholder" = "ਸਿੰਘ ਪਰਿਵਾਰ";
+"circle.create.founder.label" = "ਤੁਹਾਡਾ ਨਾਮ";
+"circle.create.founder.placeholder" = "ਮਾਸੀ ਪ੍ਰੀਆ";
+"circle.create.submit" = "ਪਰਿਵਾਰ ਬਣਾਓ";
+
+// MARK: - Join circle — REVIEW NEEDED
+"circle.join.title" = "ਆਪਣੇ ਪਰਿਵਾਰ ਦਾ ਜੁਆਇਨ ਕੋਡ ਪਾਉ";
+"circle.join.subtitle" = "ਪਰਿਵਾਰ ਦੇ ਕਿਸੇ ਮੈਂਬਰ ਨੇ ਤੁਹਾਨੂੰ 6-ਅੰਕ ਕੋਡ ਸਾਂਝਾ ਕੀਤਾ ਹੋਵੇਗਾ।";
+"circle.join.code.label" = "ਜੁਆਇਨ ਕੋਡ";
+"circle.join.name.label" = "ਦਿਖਾਈ ਜਾਣ ਵਾਲਾ ਨਾਮ";
+"circle.join.name.placeholder" = "ਮਾਸੀ ਪ੍ਰੀਆ";
+"circle.join.submit" = "ਪਰਿਵਾਰ ਵਿੱਚ ਜੁੜੋ";
+"circle.join.nocode" = "ਕੋਡ ਨਹੀਂ ਹੈ? ਨਵਾਂ ਪਰਿਵਾਰ ਸੈੱਟ ਅੱਪ ਕਰੋ";
+"circle.join.error.notfound" = "ਇਹ ਕੋਡ ਕਿਸੇ ਪਰਿਵਾਰ ਨਾਲ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ। ਜਿਸਨੇ ਭੇਜਿਆ ਉਸ ਤੋਂ ਪੁੱਛੋ।";
+"circle.join.error.alreadymember" = "ਤੁਸੀਂ ਪਹਿਲਾਂ ਹੀ ਇਸ ਪਰਿਵਾਰ ਦਾ ਹਿੱਸਾ ਹੋ। ਆਮ ਤਰੀਕੇ ਨਾਲ ਸਾਈਨ-ਇਨ ਕਰੋ।";
+"circle.join.error.invalidname" = "ਉਹ ਨਾਮ ਪਾਉ ਜੋ ਤੁਹਾਡੇ ਪਰਿਵਾਰ ਨੂੰ ਦਿਖੇਗਾ।";
+
 // MARK: - Supervisor dashboard
 "supervisor.tab.people" = "ਪਰਿਵਾਰ";
 "supervisor.selector.title" = "ਚੁਣੋ ਕਿਸਨੂੰ ਦੇਖਣਾ ਹੈ";
