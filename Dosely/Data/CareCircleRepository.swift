@@ -71,12 +71,16 @@ final class CareCircleRepository {
         language: String = "en"
     ) async -> Result<CareCircle, CareCircleJoinError> {
         await context.perform { [context] in
-            let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalizedInput = Self.normalizeJoinCode(code)
             let nameTrim = name.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !nameTrim.isEmpty else { return .failure(.invalidName) }
 
+            // Case-insensitive compare against the stored value. Codes are
+            // digit-only today (`uniqueJoinCode` uses %06d), but folding
+            // both sides lets us tolerate any future generator that mixes
+            // letters without re-introducing this bug class.
             let request = NSFetchRequest<CareCircle>(entityName: "CareCircle")
-            request.predicate = NSPredicate(format: "joinCode == %@", trimmed)
+            request.predicate = NSPredicate(format: "joinCode ==[c] %@", normalizedInput)
             request.fetchLimit = 1
             guard let circle = (try? context.fetch(request))?.first else {
                 return .failure(.codeNotFound)
@@ -150,6 +154,17 @@ final class CareCircleRepository {
         var rng = SystemRandomNumberGenerator()
         let n = UInt32.random(in: 0..<1_000_000, using: &rng)
         return String(format: "%06d", n)
+    }
+
+    /// Trim, drop interior whitespace (a real code is contiguous), and
+    /// uppercase-fold so the comparison is symmetric. The Core Data
+    /// predicate uses `==[c]` for the case-insensitive match, but
+    /// trimming has to happen here — a predicate can't strip whitespace.
+    static func normalizeJoinCode(_ raw: String) -> String {
+        raw.trimmingCharacters(in: .whitespacesAndNewlines)
+           .components(separatedBy: .whitespacesAndNewlines)
+           .joined()
+           .uppercased()
     }
 
     private static func find(id: UUID, in context: NSManagedObjectContext) -> CareCircle? {

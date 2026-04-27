@@ -70,6 +70,70 @@ final class CareCircleRepositoryTests: XCTestCase {
         XCTAssertEqual(people.count, 2)
     }
 
+    /// Mirrors the prompt's repro scenario verbatim: TestPerson 1 creates
+    /// a circle, the test reads back the joinCode, TestPerson 2 calls
+    /// joinCareCircle with the *exact* same string. Catches any latent
+    /// encoding / casing / whitespace bug at the data layer.
+    func testRoundTrippedJoinCodeMatchesByteForByte() async {
+        let circle = await repo.createCareCircle(
+            name: "Roundtrip", foundingSupervisorFirebaseUID: "p1", founderName: "P1"
+        )
+        let asWritten = circle.joinCode ?? ""
+        XCTAssertEqual(asWritten.count, 6, "joinCode must be 6 digits")
+        XCTAssertTrue(asWritten.allSatisfy { $0.isNumber })
+
+        let result = await repo.joinCareCircle(
+            code: asWritten, asSupervisorWithFirebaseUID: "p2",
+            name: "P2", language: "en"
+        )
+        if case .failure(let error) = result {
+            XCTFail("Round-trip lookup failed with \(error)")
+        }
+    }
+
+    /// Real-world copy-paste variant: a user pastes the code with
+    /// surrounding whitespace from a text message. The data layer must
+    /// trim before comparison so the obvious case still works.
+    func testJoinCareCircleAcceptsCodeWithSurroundingWhitespace() async {
+        let circle = await repo.createCareCircle(
+            name: "WS", foundingSupervisorFirebaseUID: "p1", founderName: "P1"
+        )
+        let code = circle.joinCode ?? ""
+        let pasted = "  \(code)\n"
+        let result = await repo.joinCareCircle(
+            code: pasted, asSupervisorWithFirebaseUID: "p2",
+            name: "P2", language: "en"
+        )
+        if case .failure(let error) = result {
+            XCTFail("Whitespace-padded code should succeed, got \(error)")
+        }
+    }
+
+    /// Forward-looking insurance: codes are digit-only today, but if a
+    /// future generator ever produces letters, the comparison should be
+    /// case-insensitive on both sides.
+    func testJoinCareCircleAcceptsAlternateCasingDefensively() async {
+        // We can't easily seed a circle with letters in joinCode through
+        // the public API (uniqueJoinCode is digit-only), so we exercise
+        // the normalization by mutating the stored value directly. This
+        // proves the *comparison* is case-insensitive — the generator's
+        // alphabet is a separate concern.
+        let circle = await repo.createCareCircle(
+            name: "Case", foundingSupervisorFirebaseUID: "p1", founderName: "P1"
+        )
+        await stack.viewContext.perform {
+            circle.joinCode = "abc123"
+            try? self.stack.viewContext.save()
+        }
+        let result = await repo.joinCareCircle(
+            code: "ABC123", asSupervisorWithFirebaseUID: "p2",
+            name: "P2", language: "en"
+        )
+        if case .failure(let error) = result {
+            XCTFail("Mixed-case code should succeed, got \(error)")
+        }
+    }
+
     func testJoinCareCircleFailsWithBadCode() async {
         let result = await repo.joinCareCircle(
             code: "999999", asSupervisorWithFirebaseUID: "x",
