@@ -272,6 +272,7 @@
 "circle.join.error.notfound" = "ਇਹ ਕੋਡ ਕਿਸੇ ਪਰਿਵਾਰ ਨਾਲ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ। ਜਿਸਨੇ ਭੇਜਿਆ ਉਸ ਤੋਂ ਪੁੱਛੋ।";
 "circle.join.error.alreadymember" = "ਤੁਸੀਂ ਪਹਿਲਾਂ ਹੀ ਇਸ ਪਰਿਵਾਰ ਦਾ ਹਿੱਸਾ ਹੋ। ਆਮ ਤਰੀਕੇ ਨਾਲ ਸਾਈਨ-ਇਨ ਕਰੋ।";
 "circle.join.error.invalidname" = "ਉਹ ਨਾਮ ਪਾਉ ਜੋ ਤੁਹਾਡੇ ਪਰਿਵਾਰ ਨੂੰ ਦਿਖੇਗਾ।";
+"circle.join.error.offline" = "ਨੈੱਟਵਰਕ ਨਾਲ ਜੁੜ ਨਹੀਂ ਸਕੇ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
 
 // MARK: - Circle setup mistake escape hatch — REVIEW NEEDED
 "circle.setup.mistake" = "ਗ਼ਲਤੀ ਨਾਲ ਪਰਿਵਾਰ ਬਣਾ ਲਿਆ? ਇੱਥੇ ਟੈਪ ਕਰ ਕੇ ਉਸਨੂੰ ਛੱਡੋ ਅਤੇ ਕਿਸੇ ਹੋਰ ਵਿੱਚ ਜੁੜੋ।";

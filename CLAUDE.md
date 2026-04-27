@@ -7,9 +7,10 @@ Dosely is a native iOS medication tracker aimed at elderly users. The primary cl
 ## Tech stack
 
 - **UI:** SwiftUI, iOS 16.0 minimum
-- **Persistence:** Core Data (offline-first; the app must be fully functional without network)
+- **Source of truth (shared family data):** Cloud Firestore — care circles, people, medications, dose schedules, dose logs, and reserved subcollections (medical profiles, alerts, family contacts) all live here.
+- **Local cache + offline-first:** Core Data, populated by Firestore listeners. Reads stay synchronous from Core Data so the UI is instant; writes go to Firestore first and mirror to Core Data on success.
 - **Reminders:** UNUserNotificationCenter with local notifications
-- **Auth (optional sign-in for caregivers / cross-device sync):** Firebase Auth
+- **Auth:** Firebase Auth
 - **Label scanning:** Vision framework (on-device OCR)
 - **Accessibility / voice readout:** AVSpeechSynthesizer
 - **Language:** Swift 5+
@@ -74,6 +75,28 @@ Located in `Dosely/DesignSystem/`. Use these tokens everywhere — do not hardco
 - Every change commits to git with a descriptive message
 - The app is tested on a real iPhone, not just the simulator — simulator passes are not proof of correctness for this audience (touch targets, Dynamic Type, VoiceOver, haptics all behave differently on device)
 
+## Architecture: Firestore + Core Data hybrid
+
+- **Firestore is the source of truth** for everything shared across a care circle: the `CareCircle` doc itself, plus `people/`, `medications/`, `doseSchedules/`, `doseLogs/`, and the reserved `medicalProfiles/`, `alerts/`, `familyContacts/` subcollections under `/careCircles/{careCircleID}`. Document ids match the Core Data UUIDs so an id is meaningful in either layer.
+- **Top-level `/joinCodes/{code}`** documents are a reverse-lookup index — joining a circle by code is one direct document fetch, not a collection scan, so it works for circles never seen on the joining device.
+- **Core Data is a local cache.** Repository reads return Core Data objects synchronously (instant UI). Repository writes go to Firestore first; on success they mirror the change into Core Data immediately. The `SyncCoordinator` (started by `AuthService.resolveCurrentPerson`) attaches Firestore listeners that keep Core Data in sync with remote changes from another supervisor's device.
+- **Atomic multi-document writes use Firestore transactions or batches.** `regenerateJoinCode` runs in a single transaction across `/careCircles/{id}.joinCode`, `/joinCodes/{old}` (delete), `/joinCodes/{new}` (create); `createCareCircle` writes both `/careCircles/{id}` and `/joinCodes/{code}` in a batch; `deleteMedication` cascades schedules + logs in a batch.
+- **Offline behaviour.** The Firestore SDK queues writes locally and replays them when the network returns. Adding a med while offline succeeds locally and syncs on reconnect; logging a dose while offline does the same. Listener resubscription is automatic. The "All scheduled doses today" view continues working from Core Data with no network at all — that's the key promise of the architecture.
+- **No FCM push notifications.** Free Apple Developer signing does not support Firebase Cloud Messaging push, so cross-device updates only land while a supervisor's app is foreground or recently active (Firestore listener while open). A second supervisor whose app is backgrounded will see the latest state on next foreground. Documented as a known limitation; addressed only if/when a paid signing certificate becomes available.
+- **One-shot upload migration (`FirestoreUploadMigration.runIfNeeded`)** runs the first Firestore-aware launch on a device with pre-existing local-only data. It detects "local CareCircle exists but `/careCircles/{id}` does not" and uploads the entire local snapshot in one batch. Idempotent via `UserDefaults["firestore_upload_v1_complete"]`. Auto-runs from `AuthService.resolveCurrentPerson`.
+- **Security rules.** Currently the dev default in `firestore.rules` (any authenticated user can read/write anything). They are locked down in Prompt 17 before any real medical data goes near a device — do not test against production Firestore until that ships.
+
+### Firebase emulator (for local tests)
+
+The Firestore-backed tests run against the local emulator, not against the real Firebase project. To run them:
+
+```
+brew install firebase-cli           # one-time
+firebase emulators:start            # in a terminal, leave running
+```
+
+Configuration lives in `firebase.json`, `firestore.rules`, and `firestore.indexes.json` at the repo root. `FirestoreService.useEmulator(host:port:)` points the SDK at `127.0.0.1:8080` for the test target. Tests that need the emulator log a clear skip and pass when the emulator is unreachable, so CI without the emulator does not break the suite.
+
 ## Account model
 
 Dosely organises users into **CareCircles**: small groups (a family, a household) that share a roster of `Person` rows. Every Medication and DoseLog belongs to exactly one Person. This shape is in the codebase from day one even though the supervisor dashboard and profile picker UI ship later.
@@ -103,7 +126,7 @@ Dosely organises users into **CareCircles**: small groups (a family, a household
 
 - **Leaving and rejoining a circle (`CareCircleRepository.leaveCircle`):** deletes the supervisor's `Person` row from the circle. The Firebase account stays alive; on the next sign-in (or after the active flow finishes its join step) `resolveCurrentPerson` returns nil and AuthGate routes back to `CircleSetupView`. **Known limitation:** rejoining the same circle with the same Firebase account creates a *new* `Person` row — historical dose logs that referenced the old `Person.id` are not re-attributed. Settings → Family ▸ "Leave family and join another" is the user-visible entry point; rejoin-the-same-family is an edge case the MVP does not optimise for.
 
-- **Cross-device sync:** there is none. Care circles, people, medications and dose logs all live in Core Data on one device. The 6-digit join code only works for a second supervisor whose device has previously seen the circle row (e.g. handed-down iPad scenarios). Cross-device join — Aunt 1 on her iPhone, Aunt 2 on hers — requires a backend (Firestore or CloudKit). Not in scope for the current MVP; tracked separately.
+- **Cross-device sync:** real, via Firestore. `joinCareCircle` resolves the 6-digit code through `/joinCodes/{code}` so a second supervisor on a different device joins the same circle without ever having seen it before. While both supervisors' apps are open, changes propagate within ~5 seconds via Firestore listeners. Backgrounded apps see the latest state on next foreground (no FCM push — see the architecture section). The previous handed-down-iPad fallback (a Core Data-only join when Firestore is unreachable) is preserved in `joinCareCircle` for true offline scenarios.
 
 ## Localization
 

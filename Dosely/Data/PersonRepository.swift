@@ -6,20 +6,24 @@ enum PersonRepositoryError: Error, Equatable {
     case permissionDenied
     case alreadyExists
     case invalidPin
-    /// Refusing to leave a circle with no remaining supervisor — every
-    /// circle must keep at least one supervisor row so the join code,
-    /// medications, and dose logs still have an owner.
     case lastSupervisor
     case invalidRoleTransition
 }
 
+/// Person reads stay synchronous from Core Data. Writes hit Firestore
+/// first; we mirror to Core Data on completion. PIN verification is
+/// purely local — the hash and salt are already in Core Data — but
+/// `failedPinAttempts` updates do propagate so a supervisor on another
+/// device sees the lockout state.
 final class PersonRepository {
     static let pinFailureThreshold: Int16 = 3
 
     private let stack: CoreDataStack
+    private let firestore: FirestoreService
 
-    init(stack: CoreDataStack = .shared) {
+    init(stack: CoreDataStack = .shared, firestore: FirestoreService = .shared) {
         self.stack = stack
+        self.firestore = firestore
     }
 
     private var context: NSManagedObjectContext { stack.viewContext }
@@ -63,10 +67,27 @@ final class PersonRepository {
     ) async -> Person {
         let salt = PinHasher.generateSalt()
         let hash = PinHasher.hash(pin: pinPlaintext, salt: salt) ?? Data()
+        let personID = UUID()
+        let circleID = careCircle.id ?? UUID()
+
+        let fperson = FirestoreModels.FPerson(
+            id: personID.uuidString,
+            careCircleID: circleID.uuidString,
+            name: name,
+            role: "device_client",
+            languagePreference: language,
+            firebaseUID: nil,
+            photoData: photoData,
+            pinHash: hash.base64EncodedString(),
+            pinSalt: salt.base64EncodedString(),
+            failedPinAttempts: 0,
+            lastModified: nil
+        )
+        try? await firestore.upsertPerson(fperson)
 
         return await context.perform { [context] in
             let person = Person(context: context)
-            person.id = UUID()
+            person.id = personID
             person.name = name
             person.photoData = photoData
             person.role = "device_client"
@@ -87,9 +108,27 @@ final class PersonRepository {
         language: String,
         in careCircle: CareCircle
     ) async -> Person {
-        await context.perform { [context] in
+        let personID = UUID()
+        let circleID = careCircle.id ?? UUID()
+
+        let fperson = FirestoreModels.FPerson(
+            id: personID.uuidString,
+            careCircleID: circleID.uuidString,
+            name: name,
+            role: "managed_client",
+            languagePreference: language,
+            firebaseUID: nil,
+            photoData: photoData,
+            pinHash: nil,
+            pinSalt: nil,
+            failedPinAttempts: 0,
+            lastModified: nil
+        )
+        try? await firestore.upsertPerson(fperson)
+
+        return await context.perform { [context] in
             let person = Person(context: context)
-            person.id = UUID()
+            person.id = personID
             person.name = name
             person.photoData = photoData
             person.role = "managed_client"
@@ -108,9 +147,27 @@ final class PersonRepository {
         language: String,
         in careCircle: CareCircle
     ) async -> Person {
-        await context.perform { [context] in
+        let personID = UUID()
+        let circleID = careCircle.id ?? UUID()
+
+        let fperson = FirestoreModels.FPerson(
+            id: personID.uuidString,
+            careCircleID: circleID.uuidString,
+            name: name,
+            role: "supervisor",
+            languagePreference: language,
+            firebaseUID: firebaseUID,
+            photoData: nil,
+            pinHash: nil,
+            pinSalt: nil,
+            failedPinAttempts: 0,
+            lastModified: nil
+        )
+        try? await firestore.upsertPerson(fperson)
+
+        return await context.perform { [context] in
             let person = Person(context: context)
-            person.id = UUID()
+            person.id = personID
             person.name = name
             person.role = "supervisor"
             person.languagePreference = language
@@ -126,45 +183,52 @@ final class PersonRepository {
                       name: String? = nil,
                       photoData: Data? = nil,
                       language: String? = nil) async {
-        await context.perform { [context] in
-            guard let person = Self.find(id: id, in: context) else { return }
+        let snapshot = await context.perform { [context] -> FirestoreModels.FPerson? in
+            guard let person = Self.find(id: id, in: context),
+                  let circleID = person.careCircle?.id else { return nil }
             if let name { person.name = name }
             if let photoData { person.photoData = photoData }
             if let language { person.languagePreference = language }
             try? context.save()
+            return FirestoreModels.FPerson(from: person, careCircleID: circleID)
         }
+        if let snapshot { try? await firestore.upsertPerson(snapshot) }
     }
 
     // MARK: - PIN
 
-    /// Verifies a PIN, increments `failedPinAttempts` on failure, resets on
-    /// success. Returns `(verified: Bool, lockoutTriggered: Bool)`.
-    /// Lockout fires when failures cross `pinFailureThreshold` — the
-    /// caller (Prompt 15) wires this to a supervisor notification.
     @discardableResult
     func verifyPin(personID: UUID, pinPlaintext: String) async -> (verified: Bool, lockoutTriggered: Bool) {
-        await context.perform { [context] in
+        let result: (verified: Bool, lockoutTriggered: Bool, snapshot: FirestoreModels.FPerson?) = await context.perform { [context] in
             guard let person = Self.find(id: personID, in: context),
                   let saltStr = person.pinSalt, let saltData = Data(base64Encoded: saltStr),
                   let hashStr = person.pinHash, let hashData = Data(base64Encoded: hashStr)
-            else { return (false, false) }
+            else { return (false, false, nil) }
 
             if PinHasher.verify(pin: pinPlaintext, hash: hashData, salt: saltData) {
                 person.failedPinAttempts = 0
                 try? context.save()
-                return (true, false)
+                let snapshot = person.careCircle?.id.map {
+                    FirestoreModels.FPerson(from: person, careCircleID: $0)
+                }
+                return (true, false, snapshot)
             }
 
             person.failedPinAttempts &+= 1
             let triggered = person.failedPinAttempts >= Self.pinFailureThreshold
             try? context.save()
-            return (false, triggered)
+            let snapshot = person.careCircle?.id.map {
+                FirestoreModels.FPerson(from: person, careCircleID: $0)
+            }
+            return (false, triggered, snapshot)
         }
+
+        if let snapshot = result.snapshot {
+            try? await firestore.upsertPerson(snapshot)
+        }
+        return (result.verified, result.lockoutTriggered)
     }
 
-    /// Sets a new PIN for a device client. Permission: only a supervisor
-    /// in the same care circle may call this; the call site must pass the
-    /// acting supervisor's id and the repository validates.
     func resetPin(
         personID: UUID,
         newPinPlaintext: String,
@@ -175,7 +239,7 @@ final class PersonRepository {
             throw PersonRepositoryError.invalidPin
         }
 
-        try await context.perform { [context] in
+        let snapshot: FirestoreModels.FPerson = try await context.perform { [context] in
             guard let target = Self.find(id: personID, in: context) else {
                 throw PersonRepositoryError.notFound
             }
@@ -190,13 +254,15 @@ final class PersonRepository {
             target.pinHash = hash.base64EncodedString()
             target.failedPinAttempts = 0
             try? context.save()
+            guard let circleID = target.careCircle?.id else {
+                throw PersonRepositoryError.notFound
+            }
+            return FirestoreModels.FPerson(from: target, careCircleID: circleID)
         }
+
+        try? await firestore.upsertPerson(snapshot)
     }
 
-    /// Promote a managed client to a device client (sets a PIN) or demote a
-    /// device client back to a managed client (clears the PIN and lockout).
-    /// Refuses to touch supervisor rows — a circle's supervisors are
-    /// managed via signup / join code, not role flips.
     func updatePersonRole(
         personID: UUID,
         newRole: String,
@@ -216,7 +282,7 @@ final class PersonRepository {
             salt = nil; hash = nil
         }
 
-        try await context.perform { [context] in
+        let snapshot: FirestoreModels.FPerson = try await context.perform { [context] in
             guard let target = Self.find(id: personID, in: context) else {
                 throw PersonRepositoryError.notFound
             }
@@ -227,7 +293,6 @@ final class PersonRepository {
                   actor.careCircle?.id == target.careCircle?.id else {
                 throw PersonRepositoryError.permissionDenied
             }
-            // Only client↔client transitions are allowed here.
             let allowed: Set<String> = ["device_client", "managed_client"]
             guard allowed.contains(target.role ?? ""), allowed.contains(newRole) else {
                 throw PersonRepositoryError.invalidRoleTransition
@@ -243,17 +308,24 @@ final class PersonRepository {
                 target.pinHash = nil
             }
             try? context.save()
+            guard let circleID = target.careCircle?.id else {
+                throw PersonRepositoryError.notFound
+            }
+            return FirestoreModels.FPerson(from: target, careCircleID: circleID)
         }
+
+        try? await firestore.upsertPerson(snapshot)
     }
 
-    /// Removes a Person from their care circle and cascades to every
-    /// Medication and DoseLog that referenced them. The destructive
-    /// confirmation lives in the UI; this method enforces:
-    /// - the actor is a supervisor in the same circle
-    /// - the target is not the last supervisor (a circle without a
-    ///   supervisor is a soft-bricked state and we refuse to create one).
     func removePersonFromCircle(personID: UUID, actingSupervisorID: UUID) async throws {
-        try await context.perform { [context] in
+        let context = self.context
+        struct CascadeIDs {
+            let personID: UUID
+            let circleID: UUID
+            let medicationIDs: [UUID]
+        }
+
+        let cascade: CascadeIDs = try await context.perform {
             guard let target = Self.find(id: personID, in: context) else {
                 throw PersonRepositoryError.notFound
             }
@@ -275,23 +347,40 @@ final class PersonRepository {
                 }
             }
 
-            // Medications and DoseLogs reference the person via UUID, not
-            // via Core Data relationship — so cascade has to be manual.
-            if let targetID = target.id {
-                let medRequest = NSFetchRequest<Medication>(entityName: "Medication")
-                medRequest.predicate = NSPredicate(format: "personID == %@", targetID as CVarArg)
-                for med in (try? context.fetch(medRequest)) ?? [] {
-                    context.delete(med)
-                }
-                let logRequest = NSFetchRequest<DoseLog>(entityName: "DoseLog")
-                logRequest.predicate = NSPredicate(format: "loggedByPersonID == %@", targetID as CVarArg)
-                for log in (try? context.fetch(logRequest)) ?? [] {
-                    context.delete(log)
-                }
+            guard let targetID = target.id, let circleID = target.careCircle?.id else {
+                throw PersonRepositoryError.notFound
             }
 
+            // Collect Medication ids that reference this person so the
+            // remote cascade can hit Firestore subcollections too.
+            var medIDs: [UUID] = []
+            let medRequest = NSFetchRequest<Medication>(entityName: "Medication")
+            medRequest.predicate = NSPredicate(format: "personID == %@", targetID as CVarArg)
+            for med in (try? context.fetch(medRequest)) ?? [] {
+                if let medID = med.id { medIDs.append(medID) }
+                context.delete(med)
+            }
+            let logRequest = NSFetchRequest<DoseLog>(entityName: "DoseLog")
+            logRequest.predicate = NSPredicate(format: "loggedByPersonID == %@", targetID as CVarArg)
+            for log in (try? context.fetch(logRequest)) ?? [] {
+                context.delete(log)
+            }
             context.delete(target)
             try? context.save()
+            return CascadeIDs(personID: targetID, circleID: circleID, medicationIDs: medIDs)
+        }
+
+        // Firestore cascade: delete the person doc and every medication
+        // (which itself cascades schedules + logs in FirestoreService).
+        try? await firestore.deletePerson(
+            circleID: cascade.circleID.uuidString,
+            personID: cascade.personID.uuidString
+        )
+        for medID in cascade.medicationIDs {
+            try? await firestore.deleteMedication(
+                circleID: cascade.circleID.uuidString,
+                medicationID: medID.uuidString
+            )
         }
     }
 

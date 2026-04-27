@@ -221,6 +221,7 @@ struct JoinCircleView: View {
         case .codeNotFound:  return L("circle.join.error.notfound")
         case .alreadyMember: return L("circle.join.error.alreadymember")
         case .invalidName:   return L("circle.join.error.invalidname")
+        case .offline:       return L("circle.join.error.offline")
         }
     }
 }

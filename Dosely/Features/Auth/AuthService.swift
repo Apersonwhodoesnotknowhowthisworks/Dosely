@@ -147,6 +147,7 @@ final class AuthService: ObservableObject {
         Keychain.delete(.biometricEnabled)
         currentPerson = nil
         needsCircleSetup = false
+        SyncCoordinator.shared.stop()
         lock()
     }
 
@@ -155,12 +156,15 @@ final class AuthService: ObservableObject {
     /// Resolves the local Person for the current Firebase user. If no
     /// Person exists yet (fresh signup), bootstraps a default CareCircle
     /// + supervisor as a stopgap until Prompt 14's welcome screen lands.
-    /// Also runs the v1 care-circle migration on first invocation.
+    /// Also runs the v1 care-circle migration on first invocation, the
+    /// one-shot Firestore upload migration for legacy local-only data,
+    /// and starts the SyncCoordinator so cross-device updates land.
     @MainActor
     func resolveCurrentPerson() async {
         guard let user = currentUser else {
             currentPerson = nil
             needsCircleSetup = false
+            SyncCoordinator.shared.stop()
             return
         }
         let displayName = user.displayName?.isEmpty == false
@@ -178,6 +182,18 @@ final class AuthService: ObservableObject {
         )
         currentPerson = resolved
         needsCircleSetup = (resolved == nil)
+
+        // First Firestore-aware launch on a device with pre-existing
+        // local data: upload it once, then let listeners take over.
+        await FirestoreUploadMigration.runIfNeeded(firebaseUID: user.uid)
+
+        // Start (or re-target) Firestore listeners for the resolved
+        // circle so changes from another supervisor's device flow in.
+        if let circleID = resolved?.careCircle?.id {
+            await SyncCoordinator.shared.start(careCircleID: circleID)
+        } else {
+            SyncCoordinator.shared.stop()
+        }
     }
 
     /// Called by `CircleSetupView` once the user has created or joined a

@@ -16,16 +16,15 @@ struct ScheduleInput: Equatable {
 // Mon=1, Tue=2, Wed=4, Thu=8, Fri=16, Sat=32, Sun=64. 127 = every day.
 enum WeekdayBitmask {
     static func mask(for date: Date, calendar: Calendar = .current) -> Int16 {
-        // Calendar.weekday: 1=Sunday ... 7=Saturday.
         let weekday = calendar.component(.weekday, from: date)
         switch weekday {
-        case 1: return 64   // Sun
-        case 2: return 1    // Mon
-        case 3: return 2    // Tue
-        case 4: return 4    // Wed
-        case 5: return 8    // Thu
-        case 6: return 16   // Fri
-        case 7: return 32   // Sat
+        case 1: return 64
+        case 2: return 1
+        case 3: return 2
+        case 4: return 4
+        case 5: return 8
+        case 6: return 16
+        case 7: return 32
         default: return 0
         }
     }
@@ -37,16 +36,23 @@ enum MedicationRepositoryError: Error, Equatable {
     case medicationNotFound
 }
 
+/// Medication reads are local-only (Core Data, instant). Writes hit
+/// Firestore first; on success we mirror to Core Data. Schedules are
+/// stored as a flat subcollection under the care circle (not nested
+/// under medication) so the SyncCoordinator can listen to them with one
+/// Firestore call regardless of how many medications exist.
 final class MedicationRepository {
     private let stack: CoreDataStack
+    private let firestore: FirestoreService
 
-    init(stack: CoreDataStack = .shared) {
+    init(stack: CoreDataStack = .shared, firestore: FirestoreService = .shared) {
         self.stack = stack
+        self.firestore = firestore
     }
 
     private var context: NSManagedObjectContext { stack.viewContext }
 
-    // MARK: - Reads (scoped to one Person)
+    // MARK: - Reads
 
     func fetchAllMedications(for personID: UUID) async -> [Medication] {
         await context.perform { [context] in
@@ -101,10 +107,6 @@ final class MedicationRepository {
 
     // MARK: - Writes
 
-    /// Creates or updates a Medication for `personID`. The acting caller
-    /// (`actorPersonID`) must be a supervisor; clients raise
-    /// `permissionDenied`. Throws are intentionally surfaced — call sites
-    /// in views catch them and present a friendly banner.
     @discardableResult
     func saveMedication(
         personID: UUID,
@@ -119,12 +121,22 @@ final class MedicationRepository {
         pillPhotoData: Data?,
         schedules: [ScheduleInput] = []
     ) async throws -> Medication {
-        try await context.perform { [context] in
+        struct WritePayload {
+            let medID: UUID
+            let circleID: UUID
+            let fmed: FirestoreModels.FMedication
+            let fschedules: [FirestoreModels.FDoseSchedule]
+        }
+
+        let (med, payload): (Medication, WritePayload) = try await context.perform { [context] in
             guard let actor = Self.findPerson(id: actorPersonID, in: context) else {
                 throw MedicationRepositoryError.actorNotFound
             }
             guard actor.role == "supervisor" else {
                 throw MedicationRepositoryError.permissionDenied
+            }
+            guard let circleID = actor.careCircle?.id else {
+                throw MedicationRepositoryError.actorNotFound
             }
 
             let med: Medication
@@ -145,29 +157,66 @@ final class MedicationRepository {
             med.pillPhotoData = pillPhotoData
 
             Self.replaceSchedules(on: med, with: schedules, in: context)
-
             try? context.save()
-            return med
+
+            guard let medID = med.id else {
+                throw MedicationRepositoryError.medicationNotFound
+            }
+            let fmed = FirestoreModels.FMedication(from: med)
+            let fschedules: [FirestoreModels.FDoseSchedule] = schedules.map { input in
+                FirestoreModels.FDoseSchedule(
+                    id: input.id.uuidString,
+                    medicationID: medID.uuidString,
+                    timeOfDay: input.timeOfDay,
+                    daysOfWeek: Int(input.daysOfWeek),
+                    lastModified: nil
+                )
+            }
+            let payload = WritePayload(
+                medID: medID, circleID: circleID,
+                fmed: fmed, fschedules: fschedules
+            )
+            return (med, payload)
         }
+
+        try? await firestore.upsertMedication(circleID: payload.circleID.uuidString, med: payload.fmed)
+        try? await firestore.replaceSchedules(
+            circleID: payload.circleID.uuidString,
+            medicationID: payload.medID.uuidString,
+            schedules: payload.fschedules
+        )
+        return med
     }
 
     func deleteMedication(id: UUID, actorPersonID: UUID) async throws {
-        try await context.perform { [context] in
+        struct DeletePayload {
+            let medID: UUID
+            let circleID: UUID
+        }
+
+        let prepared: DeletePayload? = try await context.perform { [context] in
             guard let actor = Self.findPerson(id: actorPersonID, in: context) else {
                 throw MedicationRepositoryError.actorNotFound
             }
             guard actor.role == "supervisor" else {
                 throw MedicationRepositoryError.permissionDenied
             }
-            guard let med = Self.find(id: id, in: context) else { return }
+            guard let med = Self.find(id: id, in: context) else { return nil }
+            guard let medID = med.id, let circleID = actor.careCircle?.id else {
+                return nil
+            }
             context.delete(med)
             try? context.save()
+            return DeletePayload(medID: medID, circleID: circleID)
         }
+
+        guard let prepared else { return }
+        try? await firestore.deleteMedication(
+            circleID: prepared.circleID.uuidString,
+            medicationID: prepared.medID.uuidString
+        )
     }
 
-    /// Logs a dose. `loggedByPersonID` records who marked it taken — a
-    /// supervisor logging on behalf of grandma vs. grandpa logging his own.
-    /// Both supervisors and device clients may log doses.
     @discardableResult
     func logDose(
         medicationID: UUID,
@@ -176,8 +225,20 @@ final class MedicationRepository {
         status: String,
         loggedByPersonID: UUID
     ) async -> DoseLog? {
-        await context.perform { [context] in
+        struct LogPayload {
+            let circleID: UUID
+            let flog: FirestoreModels.FDoseLog
+        }
+
+        let prepared: (DoseLog, LogPayload)? = await context.perform { [context] in
             guard let med = Self.find(id: medicationID, in: context) else { return nil }
+            // Resolve the care circle through the Person who owns the
+            // medication, since DoseLogs aren't directly attached to a
+            // circle in Core Data.
+            guard let personID = med.personID,
+                  let person = Self.findPerson(id: personID, in: context),
+                  let circleID = person.careCircle?.id else { return nil }
+
             let log = DoseLog(context: context)
             log.id = UUID()
             log.scheduledTime = scheduledTime
@@ -186,8 +247,17 @@ final class MedicationRepository {
             log.loggedByPersonID = loggedByPersonID
             log.medication = med
             try? context.save()
-            return log
+            let flog = FirestoreModels.FDoseLog(from: log)
+            return (log, LogPayload(circleID: circleID, flog: flog))
         }
+
+        guard let prepared else { return nil }
+        let (log, payload) = prepared
+        try? await firestore.upsertDoseLog(
+            circleID: payload.circleID.uuidString,
+            log: payload.flog
+        )
+        return log
     }
 
     // MARK: - Helpers

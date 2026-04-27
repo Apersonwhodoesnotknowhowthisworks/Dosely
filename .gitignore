@@ -54,6 +54,12 @@ fastlane/test_output
 .env.*
 GoogleService-Info.plist.local
 
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
 # Misc
 *.log
 *.swp

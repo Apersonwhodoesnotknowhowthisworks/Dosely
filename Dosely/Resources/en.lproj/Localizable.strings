@@ -269,6 +269,7 @@
 "circle.join.error.notfound" = "That code didn't match a family. Double-check with whoever sent it to you.";
 "circle.join.error.alreadymember" = "You're already part of this family. Sign in normally.";
 "circle.join.error.invalidname" = "Please enter the name your family will see.";
+"circle.join.error.offline" = "Couldn't reach the network. Please check your connection and try again.";
 
 // MARK: - Circle setup mistake escape hatch
 "circle.setup.mistake" = "Already created a family by mistake? Tap here to leave it and join another.";
