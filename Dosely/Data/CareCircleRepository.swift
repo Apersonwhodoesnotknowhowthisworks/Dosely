@@ -7,6 +7,17 @@ enum CareCircleJoinError: Error, Equatable {
     case invalidName
 }
 
+enum CareCircleLeaveError: Error, Equatable {
+    /// Refusing to leave a circle that would be left supervisorless.
+    /// Managed clients depend on a supervisor; leaving them orphaned
+    /// would soft-brick the circle.
+    case lastSupervisor
+    /// Acting Person isn't a supervisor in the target circle.
+    case notMember
+    /// Acting Person row not found in the store.
+    case notFound
+}
+
 final class CareCircleRepository {
     private let stack: CoreDataStack
 
@@ -106,6 +117,49 @@ final class CareCircleRepository {
         }
     }
 
+    /// Removes a supervisor from their circle. Used by Settings → Family →
+    /// "Leave family and join another" and the LeaveAndJoinFlow.
+    ///
+    /// Refuses when the leaving supervisor is the only one in the circle —
+    /// managed clients have no other authority and would be orphaned.
+    /// Returns `.lastSupervisor` whether or not the circle has clients;
+    /// even an empty circle keeps its founding supervisor by design.
+    ///
+    /// On success the supervisor's `Person` row is deleted. Their Firebase
+    /// account stays alive, so on the next sign-in `resolveCurrentPerson`
+    /// returns nil and AuthGate routes them back to `CircleSetupView`.
+    /// They can then create a new circle or join another with a code.
+    ///
+    /// **Known limitation:** rejoining the same circle with the same
+    /// Firebase account creates a fresh `Person` row — historical dose
+    /// logs that referenced the old `Person.id` are not re-attributed.
+    /// Documented in CLAUDE.md.
+    func leaveCircle(supervisorPersonID: UUID) async -> Result<Void, CareCircleLeaveError> {
+        await context.perform { [context] in
+            guard let actor = Self.findPerson(id: supervisorPersonID, in: context) else {
+                return .failure(.notFound)
+            }
+            guard actor.role == "supervisor", let circle = actor.careCircle else {
+                return .failure(.notMember)
+            }
+
+            let people = (circle.people as? Set<Person>) ?? []
+            let otherSupervisors = people.filter {
+                $0.role == "supervisor" && $0.id != actor.id
+            }
+            if otherSupervisors.isEmpty {
+                return .failure(.lastSupervisor)
+            }
+
+            // We delete the supervisor's Person row only. Other people in
+            // the circle keep their data; medications and dose logs are
+            // keyed by their own personIDs, not the leaving supervisor's.
+            context.delete(actor)
+            try? context.save()
+            return .success(())
+        }
+    }
+
     /// Renames an existing circle. Supervisor permission is enforced at
     /// the call site (only the supervisor screen exposes this control).
     @discardableResult
@@ -169,6 +223,13 @@ final class CareCircleRepository {
 
     private static func find(id: UUID, in context: NSManagedObjectContext) -> CareCircle? {
         let request = NSFetchRequest<CareCircle>(entityName: "CareCircle")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        request.fetchLimit = 1
+        return (try? context.fetch(request))?.first
+    }
+
+    private static func findPerson(id: UUID, in context: NSManagedObjectContext) -> Person? {
+        let request = NSFetchRequest<Person>(entityName: "Person")
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         request.fetchLimit = 1
         return (try? context.fetch(request))?.first

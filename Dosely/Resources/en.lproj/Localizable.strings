@@ -270,6 +270,31 @@
 "circle.join.error.alreadymember" = "You're already part of this family. Sign in normally.";
 "circle.join.error.invalidname" = "Please enter the name your family will see.";
 
+// MARK: - Circle setup mistake escape hatch
+"circle.setup.mistake" = "Already created a family by mistake? Tap here to leave it and join another.";
+
+// MARK: - Leave-and-join flow
+"circle.leave.title" = "Leave this family";
+"circle.leave.body" = "Leaving %@ will sign you out of their care circle. You'll lose access to their schedules and history. Continue?";
+"circle.leave.confirm" = "Yes, leave";
+"circle.leave.error.lastsupervisor" = "You are the only supervisor. To leave, you must first invite another supervisor to take over.";
+"circle.leave.error.generic" = "We couldn't leave the family. Please try again.";
+
+// MARK: - Settings → Family
+"settings.family.title" = "Family";
+"settings.family.copy" = "Copy";
+"settings.family.copied" = "Copied!";
+"settings.family.regenerate.title" = "Regenerate join code?";
+"settings.family.leave.andjoin" = "Leave family and join another";
+"settings.family.leave.andjoin.subtitle" = "Switch to a different family using their 6-digit code.";
+"settings.family.leave.permanently" = "Leave family permanently";
+"settings.family.leave.permanently.subtitle" = "Sign out of this care circle without joining another.";
+"settings.family.leave.permanently.title" = "Leave this family permanently?";
+"settings.family.leave.permanently.body" = "You'll lose access to their schedules and history. You can join another family afterwards if you want.";
+"settings.family.leave.permanently.action" = "Leave family";
+"settings.family.lastsupervisor.title" = "You're the only supervisor";
+"settings.family.lastsupervisor.body" = "This family relies on you. To leave, first invite another supervisor to take over, or delete the family entirely.";
+
 // MARK: - Supervisor dashboard
 "supervisor.tab.people" = "People";
 "supervisor.selector.title" = "Choose who to view";

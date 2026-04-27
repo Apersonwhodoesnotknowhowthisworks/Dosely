@@ -273,6 +273,31 @@
 "circle.join.error.alreadymember" = "ਤੁਸੀਂ ਪਹਿਲਾਂ ਹੀ ਇਸ ਪਰਿਵਾਰ ਦਾ ਹਿੱਸਾ ਹੋ। ਆਮ ਤਰੀਕੇ ਨਾਲ ਸਾਈਨ-ਇਨ ਕਰੋ।";
 "circle.join.error.invalidname" = "ਉਹ ਨਾਮ ਪਾਉ ਜੋ ਤੁਹਾਡੇ ਪਰਿਵਾਰ ਨੂੰ ਦਿਖੇਗਾ।";
 
+// MARK: - Circle setup mistake escape hatch — REVIEW NEEDED
+"circle.setup.mistake" = "ਗ਼ਲਤੀ ਨਾਲ ਪਰਿਵਾਰ ਬਣਾ ਲਿਆ? ਇੱਥੇ ਟੈਪ ਕਰ ਕੇ ਉਸਨੂੰ ਛੱਡੋ ਅਤੇ ਕਿਸੇ ਹੋਰ ਵਿੱਚ ਜੁੜੋ।";
+
+// MARK: - Leave-and-join flow — REVIEW NEEDED
+"circle.leave.title" = "ਇਸ ਪਰਿਵਾਰ ਨੂੰ ਛੱਡੋ";
+"circle.leave.body" = "%@ ਨੂੰ ਛੱਡਣ ਨਾਲ ਤੁਸੀਂ ਉਨ੍ਹਾਂ ਦੇ ਪਰਿਵਾਰ ਤੋਂ ਬਾਹਰ ਹੋ ਜਾਉਗੇ। ਤੁਹਾਡੀ ਉਨ੍ਹਾਂ ਦੇ ਸ਼ਡਿਊਲ ਅਤੇ ਇਤਿਹਾਸ ਤੱਕ ਪਹੁੰਚ ਨਹੀਂ ਰਹੇਗੀ। ਜਾਰੀ ਰੱਖਣਾ?";
+"circle.leave.confirm" = "ਹਾਂ, ਛੱਡੋ";
+"circle.leave.error.lastsupervisor" = "ਤੁਸੀਂ ਇਕੱਲੇ ਨਿਗਰਾਨ ਹੋ। ਛੱਡਣ ਲਈ, ਪਹਿਲਾਂ ਕਿਸੇ ਹੋਰ ਨਿਗਰਾਨ ਨੂੰ ਜੋੜੋ।";
+"circle.leave.error.generic" = "ਅਸੀਂ ਪਰਿਵਾਰ ਛੱਡ ਨਹੀਂ ਸਕੇ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
+
+// MARK: - Settings → Family — REVIEW NEEDED
+"settings.family.title" = "ਪਰਿਵਾਰ";
+"settings.family.copy" = "ਕਾਪੀ";
+"settings.family.copied" = "ਕਾਪੀ ਹੋ ਗਿਆ!";
+"settings.family.regenerate.title" = "ਜੁਆਇਨ ਕੋਡ ਨਵਾਂ ਕਰਨਾ?";
+"settings.family.leave.andjoin" = "ਪਰਿਵਾਰ ਛੱਡੋ ਅਤੇ ਕਿਸੇ ਹੋਰ ਵਿੱਚ ਜੁੜੋ";
+"settings.family.leave.andjoin.subtitle" = "6-ਅੰਕ ਕੋਡ ਨਾਲ ਕਿਸੇ ਹੋਰ ਪਰਿਵਾਰ ਵਿੱਚ ਜਾਉ।";
+"settings.family.leave.permanently" = "ਪਰਿਵਾਰ ਪੱਕੇ ਤੌਰ ਤੇ ਛੱਡੋ";
+"settings.family.leave.permanently.subtitle" = "ਕਿਸੇ ਹੋਰ ਪਰਿਵਾਰ ਵਿੱਚ ਜੁੜੇ ਬਿਨਾਂ ਇਸ ਪਰਿਵਾਰ ਤੋਂ ਬਾਹਰ ਹੋ ਜਾਉ।";
+"settings.family.leave.permanently.title" = "ਇਸ ਪਰਿਵਾਰ ਨੂੰ ਪੱਕੇ ਤੌਰ ਤੇ ਛੱਡਣਾ?";
+"settings.family.leave.permanently.body" = "ਤੁਹਾਡੀ ਉਨ੍ਹਾਂ ਦੇ ਸ਼ਡਿਊਲ ਅਤੇ ਇਤਿਹਾਸ ਤੱਕ ਪਹੁੰਚ ਨਹੀਂ ਰਹੇਗੀ। ਬਾਅਦ ਵਿੱਚ ਚਾਹੋ ਤਾਂ ਕਿਸੇ ਹੋਰ ਪਰਿਵਾਰ ਵਿੱਚ ਜੁੜ ਸਕਦੇ ਹੋ।";
+"settings.family.leave.permanently.action" = "ਪਰਿਵਾਰ ਛੱਡੋ";
+"settings.family.lastsupervisor.title" = "ਤੁਸੀਂ ਇਕੱਲੇ ਨਿਗਰਾਨ ਹੋ";
+"settings.family.lastsupervisor.body" = "ਇਹ ਪਰਿਵਾਰ ਤੁਹਾਡੇ ਉੱਤੇ ਨਿਰਭਰ ਹੈ। ਛੱਡਣ ਲਈ, ਪਹਿਲਾਂ ਕਿਸੇ ਹੋਰ ਨਿਗਰਾਨ ਨੂੰ ਜੋੜੋ ਜਾਂ ਪਰਿਵਾਰ ਨੂੰ ਪੂਰੀ ਤਰ੍ਹਾਂ ਮਿਟਾਉ।";
+
 // MARK: - Supervisor dashboard
 "supervisor.tab.people" = "ਪਰਿਵਾਰ";
 "supervisor.selector.title" = "ਚੁਣੋ ਕਿਸਨੂੰ ਦੇਖਣਾ ਹੈ";

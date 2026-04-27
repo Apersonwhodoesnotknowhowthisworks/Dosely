@@ -13,6 +13,7 @@ import SwiftUI
 /// even then, only until a circle is created or joined).
 struct CircleSetupView: View {
     @EnvironmentObject var authService: AuthService
+    @State private var showingMistakeFlow = false
 
     let careCircleRepo: CareCircleRepository
     let personRepo: PersonRepository
@@ -59,11 +60,26 @@ struct CircleSetupView: View {
                             }
                             .accessibilityLabel(Text("circle.setup.join.title"))
                         }
+
+                        Button(action: { showingMistakeFlow = true }) {
+                            Text("circle.setup.mistake")
+                                .dsBodyRegular()
+                                .foregroundColor(.dsPrimary)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, DSSpacing.sm)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .accessibilityLabel(Text("circle.setup.mistake"))
                     }
                     .padding(DSSpacing.lg)
                 }
             }
             .navigationBarHidden(true)
+            .fullScreenCover(isPresented: $showingMistakeFlow) {
+                LeaveAndJoinFlow(careCircleRepo: careCircleRepo)
+                    .environmentObject(authService)
+            }
         }
     }
 

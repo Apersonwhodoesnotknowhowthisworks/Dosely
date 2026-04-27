@@ -101,6 +101,10 @@ Dosely organises users into **CareCircles**: small groups (a family, a household
 
 - **One-shot migration (`CareCircleMigration.runIfNeeded`):** runs the first time a Firebase user signs in after the refactor. Creates a default "My Family" circle, inserts the user as the founding supervisor, and stamps every existing Medication and DoseLog (which lack `personID` / `loggedByPersonID`) with that supervisor's id. Idempotent via `UserDefaults["circle_migration_v1_complete"]`. Auto-runs from `AuthService.resolveCurrentPerson` so users land on a working `currentPerson` without any UI bootstrap. The supervisor dashboard and profile picker (Prompts 14 and 15) replace the auto-bootstrap with proper UX.
 
+- **Leaving and rejoining a circle (`CareCircleRepository.leaveCircle`):** deletes the supervisor's `Person` row from the circle. The Firebase account stays alive; on the next sign-in (or after the active flow finishes its join step) `resolveCurrentPerson` returns nil and AuthGate routes back to `CircleSetupView`. **Known limitation:** rejoining the same circle with the same Firebase account creates a *new* `Person` row — historical dose logs that referenced the old `Person.id` are not re-attributed. Settings → Family ▸ "Leave family and join another" is the user-visible entry point; rejoin-the-same-family is an edge case the MVP does not optimise for.
+
+- **Cross-device sync:** there is none. Care circles, people, medications and dose logs all live in Core Data on one device. The 6-digit join code only works for a second supervisor whose device has previously seen the circle row (e.g. handed-down iPad scenarios). Cross-device join — Aunt 1 on her iPhone, Aunt 2 on hers — requires a backend (Firestore or CloudKit). Not in scope for the current MVP; tracked separately.
+
 ## Localization
 
 - **Languages shipped:** English (`en`), Punjabi/Gurmukhi (`pa`). `pa` is a must-have because the primary client's first language is Punjabi.

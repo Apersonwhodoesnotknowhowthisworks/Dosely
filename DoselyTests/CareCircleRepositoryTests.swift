@@ -182,4 +182,98 @@ final class CareCircleRepositoryTests: XCTestCase {
         let refreshed = await repo.fetchCareCircle(id: circle.id!)
         XCTAssertEqual(refreshed?.name, "Original")
     }
+
+    // MARK: - Leave circle
+
+    func testLeaveCircleAsLastSupervisorReturnsLastSupervisor() async {
+        let circle = await repo.createCareCircle(
+            name: "Solo", foundingSupervisorFirebaseUID: "only", founderName: "Only"
+        )
+        let supervisor = await personRepo.fetchSupervisor(firebaseUID: "only")!
+        let result = await repo.leaveCircle(supervisorPersonID: supervisor.id!)
+        if case .failure(let error) = result {
+            XCTAssertEqual(error, .lastSupervisor)
+        } else {
+            XCTFail("expected lastSupervisor failure")
+        }
+
+        let stillThere = await personRepo.fetchSupervisor(firebaseUID: "only")
+        XCTAssertNotNil(stillThere, "supervisor row must not be deleted on a refused leave")
+        _ = circle
+    }
+
+    func testLeaveCircleSucceedsWhenAnotherSupervisorRemains() async {
+        let circle = await repo.createCareCircle(
+            name: "Pair", foundingSupervisorFirebaseUID: "founder", founderName: "Founder"
+        )
+        let joinResult = await repo.joinCareCircle(
+            code: circle.joinCode!,
+            asSupervisorWithFirebaseUID: "second",
+            name: "Second"
+        )
+        guard case .success = joinResult else {
+            XCTFail("setup join failed"); return
+        }
+        let founder = await personRepo.fetchSupervisor(firebaseUID: "founder")!
+        let founderID = founder.id!
+
+        let leave = await repo.leaveCircle(supervisorPersonID: founderID)
+        if case .failure(let error) = leave {
+            XCTFail("Expected success, got \(error)")
+        }
+
+        // Founder is gone; second supervisor remains.
+        let goneFounder = await personRepo.fetchSupervisor(firebaseUID: "founder")
+        XCTAssertNil(goneFounder)
+        let second = await personRepo.fetchSupervisor(firebaseUID: "second")
+        XCTAssertNotNil(second)
+        XCTAssertEqual(second?.careCircle?.id, circle.id)
+    }
+
+    func testLeaveThenJoinAnotherCircleCreatesFreshSupervisorRow() async {
+        // Two distinct circles; same Firebase UID jumps between them.
+        let circleA = await repo.createCareCircle(
+            name: "A", foundingSupervisorFirebaseUID: "A1", founderName: "A1"
+        )
+        // Add a second supervisor to A so the jumper isn't the last one.
+        _ = await repo.joinCareCircle(
+            code: circleA.joinCode!,
+            asSupervisorWithFirebaseUID: "switcher",
+            name: "Jumper"
+        )
+        let switcherInA = await personRepo.fetchSupervisor(firebaseUID: "switcher")!
+        let switcherInAID = switcherInA.id!
+
+        let circleB = await repo.createCareCircle(
+            name: "B", foundingSupervisorFirebaseUID: "B1", founderName: "B1"
+        )
+
+        // Leave A
+        let leave = await repo.leaveCircle(supervisorPersonID: switcherInAID)
+        if case .failure = leave { XCTFail("leave A failed") }
+
+        // Join B
+        let join = await repo.joinCareCircle(
+            code: circleB.joinCode!,
+            asSupervisorWithFirebaseUID: "switcher",
+            name: "Jumper"
+        )
+        guard case .success = join else { XCTFail("join B failed"); return }
+
+        // Fresh Person row in B; old id is gone.
+        let switcherInB = await personRepo.fetchSupervisor(firebaseUID: "switcher")
+        XCTAssertNotNil(switcherInB)
+        XCTAssertEqual(switcherInB?.careCircle?.id, circleB.id)
+        XCTAssertNotEqual(switcherInB?.id, switcherInAID,
+                          "rejoining must produce a new Person row, by design")
+    }
+
+    func testLeaveCircleFromUnknownPersonReturnsNotFound() async {
+        let result = await repo.leaveCircle(supervisorPersonID: UUID())
+        if case .failure(let error) = result {
+            XCTAssertEqual(error, .notFound)
+        } else {
+            XCTFail("expected notFound failure")
+        }
+    }
 }
