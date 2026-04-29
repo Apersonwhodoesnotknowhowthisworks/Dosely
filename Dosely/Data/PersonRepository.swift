@@ -183,7 +183,7 @@ final class PersonRepository {
                       name: String? = nil,
                       photoData: Data? = nil,
                       language: String? = nil) async {
-        let snapshot = await context.perform { [context] -> FirestoreModels.FPerson? in
+        let snapshot = await context.perform { [context] () -> FirestoreModels.FPerson? in
             guard let person = Self.find(id: id, in: context),
                   let circleID = person.careCircle?.id else { return nil }
             if let name { person.name = name }

@@ -245,7 +245,7 @@ final class CareCircleRepository {
     // MARK: - Leave
 
     func leaveCircle(supervisorPersonID: UUID) async -> Result<Void, CareCircleLeaveError> {
-        let resolution = await context.perform { [context] -> Result<(circleID: UUID, personID: UUID), CareCircleLeaveError> in
+        let resolution = await context.perform { [context] () -> Result<(circleID: UUID, personID: UUID), CareCircleLeaveError> in
             guard let actor = Self.findPerson(id: supervisorPersonID, in: context) else {
                 return .failure(.notFound)
             }
