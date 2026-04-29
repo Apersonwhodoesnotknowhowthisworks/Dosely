@@ -1,0 +1,20 @@
+{
+  "name": "dosely-firestore-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Unit tests for /firestore.rules. Runs against the local Firestore emulator via @firebase/rules-unit-testing. Kept out of the iOS test target so a Xcode build does not require Node — see CLAUDE.md.",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore 'tsc --noEmit false --module commonjs --outDir build firestore_rules.test.ts && mocha build/firestore_rules.test.js --timeout 20000'",
+    "test:ci": "tsc --noEmit false --module commonjs --outDir build firestore_rules.test.ts && mocha build/firestore_rules.test.js --timeout 20000"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.5",
+    "firebase": "^10.7.2",
+    "mocha": "^10.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

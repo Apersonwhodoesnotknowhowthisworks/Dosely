@@ -55,12 +55,30 @@ final class CareCircleRepository {
             name: resolvedName,
             joinCode: joinCode,
             createdAt: Date(),
+            supervisorCount: 0,
             lastModified: nil
         )
 
         // Firestore write first — failures don't block the local
         // create because the SDK queues writes while offline.
+        // Bootstrap order matters for the security rules: the careCircle
+        // is born with supervisorCount==0 (which the founder-bootstrap
+        // path on /userMemberships verifies), then the founder's
+        // membership and Person doc are written, then supervisorCount is
+        // bumped to 1.
         try? await firestore.createCareCircle(fcircle)
+
+        let founderMembership = FirestoreModels.FUserMembership(
+            careCircleID: circleID.uuidString,
+            personID: supervisorID.uuidString,
+            role: "supervisor",
+            joinedAt: Date(),
+            joinCode: nil
+        )
+        try? await firestore.upsertMembership(
+            firebaseUID: foundingSupervisorFirebaseUID,
+            membership: founderMembership
+        )
 
         let supervisor = FirestoreModels.FPerson(
             id: supervisorID.uuidString,
@@ -76,6 +94,11 @@ final class CareCircleRepository {
             lastModified: nil
         )
         try? await firestore.upsertPerson(supervisor)
+
+        try? await firestore.adjustSupervisorCount(
+            circleID: circleID.uuidString,
+            delta: 1
+        )
 
         return await context.perform { [context] in
             let circle = CareCircle(context: context)
@@ -174,6 +197,23 @@ final class CareCircleRepository {
         }
 
         let supervisorID = UUID()
+
+        // Joiner bootstrap: write /userMemberships first (with the
+        // joinCode that proves authority at the rules layer), then the
+        // Person doc (whose self-bootstrap rule validates against the
+        // membership), then bump supervisorCount.
+        let joinerMembership = FirestoreModels.FUserMembership(
+            careCircleID: fcircle.id,
+            personID: supervisorID.uuidString,
+            role: "supervisor",
+            joinedAt: Date(),
+            joinCode: normalized
+        )
+        try? await firestore.upsertMembership(
+            firebaseUID: firebaseUID,
+            membership: joinerMembership
+        )
+
         let fperson = FirestoreModels.FPerson(
             id: supervisorID.uuidString,
             careCircleID: fcircle.id,
@@ -188,6 +228,11 @@ final class CareCircleRepository {
             lastModified: nil
         )
         try? await firestore.upsertPerson(fperson)
+
+        try? await firestore.adjustSupervisorCount(
+            circleID: fcircle.id,
+            delta: 1
+        )
 
         return await context.perform { [context] in
             guard let circle = Self.find(id: circleUUID, in: context) else {
@@ -245,7 +290,7 @@ final class CareCircleRepository {
     // MARK: - Leave
 
     func leaveCircle(supervisorPersonID: UUID) async -> Result<Void, CareCircleLeaveError> {
-        let resolution = await context.perform { [context] () -> Result<(circleID: UUID, personID: UUID), CareCircleLeaveError> in
+        let resolution = await context.perform { [context] () -> Result<(circleID: UUID, personID: UUID, firebaseUID: String?), CareCircleLeaveError> in
             guard let actor = Self.findPerson(id: supervisorPersonID, in: context) else {
                 return .failure(.notFound)
             }
@@ -262,7 +307,7 @@ final class CareCircleRepository {
             guard let circleID = circle.id, let actorID = actor.id else {
                 return .failure(.notFound)
             }
-            return .success((circleID, actorID))
+            return .success((circleID, actorID, actor.firebaseUID))
         }
 
         guard case let .success(ids) = resolution else {
@@ -270,9 +315,13 @@ final class CareCircleRepository {
             return .failure(.notFound)
         }
 
-        try? await firestore.deletePerson(
+        // One atomic batch: delete Person, decrement supervisorCount,
+        // delete /userMemberships. The rules require the count change
+        // and Person delete to land together (last-supervisor backstop).
+        try? await firestore.removeSupervisorAtomically(
             circleID: ids.circleID.uuidString,
-            personID: ids.personID.uuidString
+            personID: ids.personID.uuidString,
+            firebaseUID: ids.firebaseUID
         )
 
         return await context.perform { [context] in

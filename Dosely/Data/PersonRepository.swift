@@ -150,6 +150,23 @@ final class PersonRepository {
         let personID = UUID()
         let circleID = careCircle.id ?? UUID()
 
+        // The /userMemberships index doc must be written before the
+        // Person doc — the Person doc create rule's self-bootstrap
+        // branch validates the membership claim. supervisorCount is
+        // bumped after both writes so the rules see a consistent
+        // before/after.
+        let membership = FirestoreModels.FUserMembership(
+            careCircleID: circleID.uuidString,
+            personID: personID.uuidString,
+            role: "supervisor",
+            joinedAt: Date(),
+            joinCode: nil
+        )
+        try? await firestore.upsertMembership(
+            firebaseUID: firebaseUID,
+            membership: membership
+        )
+
         let fperson = FirestoreModels.FPerson(
             id: personID.uuidString,
             careCircleID: circleID.uuidString,
@@ -164,6 +181,11 @@ final class PersonRepository {
             lastModified: nil
         )
         try? await firestore.upsertPerson(fperson)
+
+        try? await firestore.adjustSupervisorCount(
+            circleID: circleID.uuidString,
+            delta: 1
+        )
 
         return await context.perform { [context] in
             let person = Person(context: context)
@@ -323,6 +345,8 @@ final class PersonRepository {
             let personID: UUID
             let circleID: UUID
             let medicationIDs: [UUID]
+            let wasSupervisor: Bool
+            let firebaseUID: String?
         }
 
         let cascade: CascadeIDs = try await context.perform {
@@ -350,6 +374,8 @@ final class PersonRepository {
             guard let targetID = target.id, let circleID = target.careCircle?.id else {
                 throw PersonRepositoryError.notFound
             }
+            let wasSupervisor = target.role == "supervisor"
+            let targetUID = target.firebaseUID
 
             // Collect Medication ids that reference this person so the
             // remote cascade can hit Firestore subcollections too.
@@ -367,15 +393,36 @@ final class PersonRepository {
             }
             context.delete(target)
             try? context.save()
-            return CascadeIDs(personID: targetID, circleID: circleID, medicationIDs: medIDs)
+            return CascadeIDs(
+                personID: targetID,
+                circleID: circleID,
+                medicationIDs: medIDs,
+                wasSupervisor: wasSupervisor,
+                firebaseUID: targetUID
+            )
         }
 
-        // Firestore cascade: delete the person doc and every medication
-        // (which itself cascades schedules + logs in FirestoreService).
-        try? await firestore.deletePerson(
-            circleID: cascade.circleID.uuidString,
-            personID: cascade.personID.uuidString
-        )
+        // Firestore cascade. For supervisor removal we batch
+        // (person delete + supervisorCount-- + membership delete) so the
+        // rules-layer last-supervisor backstop sees a consistent state.
+        // For non-supervisor removal the Person doc delete is the only
+        // doc to touch under /careCircles, plus a membership delete if
+        // the target had a Firebase UID.
+        if cascade.wasSupervisor {
+            try? await firestore.removeSupervisorAtomically(
+                circleID: cascade.circleID.uuidString,
+                personID: cascade.personID.uuidString,
+                firebaseUID: cascade.firebaseUID
+            )
+        } else {
+            try? await firestore.deletePerson(
+                circleID: cascade.circleID.uuidString,
+                personID: cascade.personID.uuidString
+            )
+            if let uid = cascade.firebaseUID {
+                try? await firestore.deleteMembership(firebaseUID: uid)
+            }
+        }
         for medID in cascade.medicationIDs {
             try? await firestore.deleteMedication(
                 circleID: cascade.circleID.uuidString,

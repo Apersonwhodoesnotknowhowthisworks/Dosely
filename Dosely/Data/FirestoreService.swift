@@ -78,6 +78,7 @@ final class FirestoreService {
     enum Path {
         static let careCircles = "careCircles"
         static let joinCodes = "joinCodes"
+        static let userMemberships = "userMemberships"
 
         static func careCircle(_ id: String) -> String { "\(careCircles)/\(id)" }
         static func people(_ circleID: String) -> String { "\(careCircle(circleID))/people" }
@@ -87,6 +88,7 @@ final class FirestoreService {
         static func medicalProfiles(_ circleID: String) -> String { "\(careCircle(circleID))/medicalProfiles" }
         static func alerts(_ circleID: String) -> String { "\(careCircle(circleID))/alerts" }
         static func familyContacts(_ circleID: String) -> String { "\(careCircle(circleID))/familyContacts" }
+        static func userMembership(_ firebaseUID: String) -> String { "\(userMemberships)/\(firebaseUID)" }
     }
 
     // MARK: - Generic helpers
@@ -101,19 +103,99 @@ final class FirestoreService {
 
     // MARK: - Care circle / join code
 
-    /// Creates `/careCircles/{id}` and `/joinCodes/{code}` in a single
-    /// batch so the reverse lookup never points at a missing circle.
+    /// Creates `/careCircles/{id}` (with supervisorCount=0) and
+    /// `/joinCodes/{code}` in a single batch so the reverse lookup never
+    /// points at a missing circle. The caller is expected to write the
+    /// founding supervisor's `/userMemberships` and `/people` docs next,
+    /// then call `incrementSupervisorCount` to flip the count to 1 — the
+    /// rules layer requires count==0 during /userMemberships founder
+    /// bootstrap.
     func createCareCircle(_ circle: FirestoreModels.FCareCircle) async throws {
         guard let db else { return }
+        var seed = circle
+        seed.supervisorCount = 0
         let batch = db.batch()
-        let circleRef = db.document(Path.careCircle(circle.id))
-        let codeRef = db.document("\(Path.joinCodes)/\(circle.joinCode)")
+        let circleRef = db.document(Path.careCircle(seed.id))
+        let codeRef = db.document("\(Path.joinCodes)/\(seed.joinCode)")
         do {
-            var payload = try encode(circle)
+            var payload = try encode(seed)
             payload["lastModified"] = FieldValue.serverTimestamp()
             batch.setData(payload, forDocument: circleRef)
-            let index = FirestoreModels.FJoinCodeIndex(careCircleID: circle.id, regeneratedAt: Date())
+            let index = FirestoreModels.FJoinCodeIndex(careCircleID: seed.id, regeneratedAt: Date())
             batch.setData(try encode(index), forDocument: codeRef)
+            try await batch.commit()
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    // MARK: - User membership index
+
+    /// Writes `/userMemberships/{firebaseUID}`. Used at create-circle
+    /// (founder), join-circle (joiner — pass joinCode), and supervisor-
+    /// adds-client paths.
+    func upsertMembership(
+        firebaseUID: String,
+        membership: FirestoreModels.FUserMembership
+    ) async throws {
+        guard let db else { return }
+        do {
+            let payload = try encode(membership)
+            try await db.document(Path.userMembership(firebaseUID)).setData(payload)
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    func deleteMembership(firebaseUID: String) async throws {
+        guard let db else { return }
+        do {
+            try await db.document(Path.userMembership(firebaseUID)).delete()
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    /// Bumps `careCircles/{id}.supervisorCount` by `delta`. Pass +1 when a
+    /// supervisor is added (createCareCircle / joinCareCircle), -1 when a
+    /// supervisor leaves or is removed. Decrement is the second half of
+    /// the leave-batch — see `removeSupervisorAtomically`.
+    func adjustSupervisorCount(circleID: String, delta: Int) async throws {
+        guard let db else { return }
+        do {
+            try await db.document(Path.careCircle(circleID)).updateData([
+                "supervisorCount": FieldValue.increment(Int64(delta)),
+                "lastModified": FieldValue.serverTimestamp()
+            ])
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    /// Atomically removes a supervisor: deletes their Person doc,
+    /// decrements `supervisorCount` on the parent circle, and (if a
+    /// Firebase UID is provided) deletes their `/userMemberships` doc.
+    /// All three writes commit together so the rules-layer
+    /// last-supervisor protection (post-batch supervisorCount >= 1) sees
+    /// a consistent state.
+    func removeSupervisorAtomically(
+        circleID: String,
+        personID: String,
+        firebaseUID: String?
+    ) async throws {
+        guard let db else { return }
+        do {
+            let batch = db.batch()
+            let personRef = db.document("\(Path.people(circleID))/\(personID)")
+            let circleRef = db.document(Path.careCircle(circleID))
+            batch.deleteDocument(personRef)
+            batch.updateData([
+                "supervisorCount": FieldValue.increment(Int64(-1)),
+                "lastModified": FieldValue.serverTimestamp()
+            ], forDocument: circleRef)
+            if let uid = firebaseUID {
+                batch.deleteDocument(db.document(Path.userMembership(uid)))
+            }
             try await batch.commit()
         } catch {
             throw FirestoreServiceError.map(error)

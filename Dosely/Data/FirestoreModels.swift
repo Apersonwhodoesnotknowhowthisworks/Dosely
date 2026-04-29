@@ -24,6 +24,12 @@ extension FirestoreModels {
         var name: String
         var joinCode: String
         var createdAt: Date
+        /// Denormalized count of `Person` rows in this circle whose
+        /// role == "supervisor". Maintained by the app via
+        /// FieldValue.increment(±1) on supervisor add/remove. Drives the
+        /// last-supervisor protection at the rules layer (see
+        /// firestore.rules — Person delete requires post-batch count >= 1).
+        var supervisorCount: Int
         /// Server timestamp for last write. Omitted on encode (Firestore
         /// fills it in via FieldValue.serverTimestamp() at the call site).
         var lastModified: Date?
@@ -35,6 +41,24 @@ extension FirestoreModels {
         /// and one here) must be transactional.
         var careCircleID: String
         var regeneratedAt: Date
+    }
+
+    /// Top-level /userMemberships/{firebaseUID} index doc. Binds a
+    /// Firebase UID to the (careCircleID, personID, role) tuple so that
+    /// Firestore security rules — which can `get()` documents by full
+    /// path but cannot run queries — can resolve the current user's
+    /// role in O(1).
+    ///
+    /// `joinCode` is set at create time by joiners only (founders set
+    /// nil) and is the rules-layer proof of authority for joining an
+    /// existing circle. After create the field is dead weight; we keep
+    /// it because there's no rules-layer way to ignore it on read.
+    struct FUserMembership: Codable {
+        var careCircleID: String
+        var personID: String
+        var role: String
+        var joinedAt: Date
+        var joinCode: String?
     }
 }
 
@@ -138,11 +162,12 @@ extension FirestoreModels {
 // MARK: - Core Data ↔ Firestore conversion
 
 extension FirestoreModels.FCareCircle {
-    init(from circle: CareCircle) {
+    init(from circle: CareCircle, supervisorCount: Int) {
         self.id = (circle.id ?? UUID()).uuidString
         self.name = circle.name ?? ""
         self.joinCode = circle.joinCode ?? ""
         self.createdAt = circle.createdAt ?? Date()
+        self.supervisorCount = supervisorCount
         self.lastModified = nil
     }
 

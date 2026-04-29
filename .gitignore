@@ -63,3 +63,8 @@ ui-debug.log
 # Misc
 *.log
 *.swp
+
+# Firestore rules tests (Node)
+tests/node_modules/
+tests/build/
+tests/package-lock.json

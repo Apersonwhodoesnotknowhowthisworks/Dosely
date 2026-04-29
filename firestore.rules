@@ -1,11 +1,369 @@
 rules_version = '2';
 
-// DEVELOPMENT-ONLY rules. Locked down in Prompt 17 before any real
-// medical data goes near a device.
+// Dosely Firestore security rules.
+//
+// Trust model
+// -----------
+// A top-level /userMemberships/{firebaseUID} index doc binds a Firebase
+// UID to a (careCircleID, personID, role) tuple. The Person doc at
+// /careCircles/{circleID}/people/{personID} remains the canonical
+// authority on roles; /userMemberships is the lookup index that turns
+// a uid into a personID so the rules can find the Person doc by full
+// path. (Firestore rules cannot run queries, so this index is required
+// to perform any role-based gating at the security layer.)
+//
+// All role checks verify CONSISTENCY: the membership doc and the Person
+// doc must agree, and the Person doc's firebaseUID must equal the
+// requester's auth.uid. Either alone is insufficient — an attacker who
+// poisons their own /userMemberships with someone else's personID will
+// fail the firebaseUID check on the Person doc.
+//
+// Bootstrap
+// ---------
+// Founder createCareCircle is a sequence of writes (the careCircle is
+// created with supervisorCount=0; its supervisorCount is bumped to 1 in
+// a separate write after the founder's Person + membership exist).
+// Joiner joinCareCircle proves authority by including a `joinCode`
+// field on its membership doc that the rules validate against the
+// existing /joinCodes/{code} doc.
+//
+// Last-supervisor protection
+// --------------------------
+// Deleting a supervisor's Person doc requires the careCircle's
+// supervisorCount to be atomically decremented in the same batch (or
+// transaction), with the post-batch count >= 1. Rules verify via
+// getAfter() that the count was reduced by exactly 1 and that at least
+// one supervisor remains.
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // ---------- Helpers ----------
+
+    function isSignedIn() {
+      return request.auth != null;
     }
+
+    function membershipPath() {
+      return /databases/$(database)/documents/userMemberships/$(request.auth.uid);
+    }
+
+    function hasMembership() {
+      return isSignedIn() && exists(membershipPath());
+    }
+
+    function membership() {
+      return get(membershipPath()).data;
+    }
+
+    function memberOf(circleID) {
+      return hasMembership() && membership().careCircleID == circleID;
+    }
+
+    function memberPersonPath(circleID) {
+      return /databases/$(database)/documents/careCircles/$(circleID)/people/$(membership().personID);
+    }
+
+    function authedAsClaimedPerson(circleID) {
+      return memberOf(circleID) &&
+             exists(memberPersonPath(circleID)) &&
+             get(memberPersonPath(circleID)).data.firebaseUID == request.auth.uid;
+    }
+
+    function roleIn(circleID) {
+      return authedAsClaimedPerson(circleID)
+        ? get(memberPersonPath(circleID)).data.role
+        : '';
+    }
+
+    function isSupervisor(circleID) {
+      return roleIn(circleID) == 'supervisor';
+    }
+
+    function isDeviceClient(circleID) {
+      return roleIn(circleID) == 'device_client';
+    }
+
+    function myPersonID(circleID) {
+      return memberOf(circleID) ? membership().personID : '';
+    }
+
+    // Same as isSupervisor, but using getAfter/existsAfter so a supervisor
+    // who is being established in the *same* batch (founder bootstrap's
+    // count update, or a joiner's count increment) passes the check.
+    function membershipPathAfter() {
+      return /databases/$(database)/documents/userMemberships/$(request.auth.uid);
+    }
+
+    function hasMembershipAfter() {
+      return isSignedIn() && existsAfter(membershipPathAfter());
+    }
+
+    function membershipAfter() {
+      return getAfter(membershipPathAfter()).data;
+    }
+
+    function memberPersonPathAfter(circleID) {
+      return /databases/$(database)/documents/careCircles/$(circleID)/people/$(membershipAfter().personID);
+    }
+
+    function isSupervisorAfter(circleID) {
+      return hasMembershipAfter() &&
+             membershipAfter().careCircleID == circleID &&
+             existsAfter(memberPersonPathAfter(circleID)) &&
+             getAfter(memberPersonPathAfter(circleID)).data.firebaseUID == request.auth.uid &&
+             getAfter(memberPersonPathAfter(circleID)).data.role == 'supervisor';
+    }
+
+    function validRole(role) {
+      return role in ['supervisor', 'device_client', 'managed_client', 'family_contact'];
+    }
+
+    // ---------- /userMemberships/{firebaseUID} ----------
+
+    match /userMemberships/{uid} {
+      // Read: self only, OR a supervisor of the claimed circle.
+      allow read: if isSignedIn() && (
+        request.auth.uid == uid ||
+        (resource != null && isSupervisor(resource.data.careCircleID))
+      );
+
+      // Create: self-bootstrap with proof of authority. Either:
+      //   (a) Founder of a fresh circle (careCircle.supervisorCount == 0), or
+      //   (b) Joiner with a valid joinCode that resolves to the named circle, or
+      //   (c) An existing supervisor of the circle adding someone else's
+      //       membership (e.g. a future device_client with a Firebase UID).
+      // Roles allowed in /userMemberships: supervisor, device_client.
+      // (managed_clients and family_contacts have no Firebase UID and so
+      // do not appear here.)
+      allow create: if isSignedIn() &&
+                    request.resource.data.careCircleID is string &&
+                    request.resource.data.personID is string &&
+                    request.resource.data.role in ['supervisor', 'device_client'] &&
+                    request.resource.data.joinedAt is timestamp &&
+                    exists(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)) &&
+                    (
+                      // (a) self-create as founder
+                      (request.auth.uid == uid &&
+                       request.resource.data.role == 'supervisor' &&
+                       get(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)).data.supervisorCount == 0) ||
+                      // (b) self-create as joiner with valid join code
+                      (request.auth.uid == uid &&
+                       request.resource.data.joinCode is string &&
+                       exists(/databases/$(database)/documents/joinCodes/$(request.resource.data.joinCode)) &&
+                       get(/databases/$(database)/documents/joinCodes/$(request.resource.data.joinCode)).data.careCircleID == request.resource.data.careCircleID) ||
+                      // (c) supervisor onboarding another member
+                      isSupervisor(request.resource.data.careCircleID)
+                    );
+
+      // Update: self only. careCircleID and personID are immutable; role
+      // can change (e.g. supervisor demotes themselves) but must remain valid.
+      allow update: if request.auth.uid == uid &&
+                    request.resource.data.careCircleID == resource.data.careCircleID &&
+                    request.resource.data.personID == resource.data.personID &&
+                    request.resource.data.role in ['supervisor', 'device_client'];
+
+      // Delete: self, OR a supervisor of the circle.
+      allow delete: if request.auth.uid == uid ||
+                    (resource != null && isSupervisor(resource.data.careCircleID));
+    }
+
+    // ---------- /joinCodes/{code} ----------
+
+    match /joinCodes/{code} {
+      // Read: anyone signed in (this is how new aunts find a circle to join).
+      allow read: if isSignedIn();
+
+      // Create: the careCircle's joinCode field must already match `code`,
+      // AND the writer must be either bootstrapping a fresh circle (count==0)
+      // or already a supervisor (regenerate flow). The careCircle.joinCode
+      // check uses getAfter() so regenerateJoinCode (a transaction that
+      // updates careCircle.joinCode and creates the new /joinCodes doc in
+      // one shot) is permitted.
+      allow create: if isSignedIn() &&
+                    request.resource.data.careCircleID is string &&
+                    getAfter(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)).data.joinCode == code &&
+                    (
+                      get(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)).data.supervisorCount == 0 ||
+                      isSupervisor(request.resource.data.careCircleID)
+                    );
+
+      // Update: forbidden — regenerate is delete-old + create-new.
+      allow update: if false;
+
+      // Delete: only supervisors of the circle the code points at.
+      allow delete: if isSignedIn() &&
+                    resource != null &&
+                    isSupervisor(resource.data.careCircleID);
+    }
+
+    // ---------- /careCircles/{circleID} ----------
+
+    match /careCircles/{circleID} {
+      // Read: any member of the circle.
+      allow read: if memberOf(circleID);
+
+      // Create: any signed-in user can mint a fresh circle. They must
+      // initialize supervisorCount = 0 and set the doc id consistently.
+      allow create: if isSignedIn() &&
+                    request.resource.data.id == circleID &&
+                    request.resource.data.supervisorCount == 0 &&
+                    request.resource.data.joinCode is string;
+
+      // Update: existing supervisor OR a supervisor who is being established
+      // in this same batch (founder count++ during bootstrap, joiner count++
+      // during join). id and createdAt are immutable.
+      allow update: if (isSupervisor(circleID) || isSupervisorAfter(circleID)) &&
+                    request.resource.data.id == resource.data.id &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+
+      // Delete: supervisor only.
+      allow delete: if isSupervisor(circleID);
+
+      // ---------- /careCircles/{circleID}/people/{personID} ----------
+
+      match /people/{personID} {
+        allow read: if memberOf(circleID);
+
+        // Create paths:
+        //   (a) Existing supervisor adding any Person doc.
+        //   (b) Self-bootstrap: a /userMemberships doc claims this exact
+        //       (circleID, personID), the new Person doc references the
+        //       requester's auth UID as firebaseUID, and the role is
+        //       supervisor (only supervisors self-bootstrap; clients are
+        //       added by a supervisor via path (a)).
+        // The self-bootstrap branch uses existsAfter/getAfter so the
+        // /userMemberships create + Person create can happen in the same
+        // batch.
+        allow create: if (
+          isSupervisor(circleID) &&
+          validRole(request.resource.data.role) &&
+          request.resource.data.id == personID
+        ) || (
+          isSignedIn() &&
+          existsAfter(/databases/$(database)/documents/userMemberships/$(request.auth.uid)) &&
+          getAfter(/databases/$(database)/documents/userMemberships/$(request.auth.uid)).data.careCircleID == circleID &&
+          getAfter(/databases/$(database)/documents/userMemberships/$(request.auth.uid)).data.personID == personID &&
+          request.resource.data.firebaseUID == request.auth.uid &&
+          request.resource.data.id == personID &&
+          request.resource.data.role == 'supervisor'
+        );
+
+        // Update:
+        //   (a) Supervisor of circle (id immutable).
+        //   (b) Self-edit of own languagePreference / pinHash / pinSalt only.
+        allow update: if (
+          isSupervisor(circleID) &&
+          request.resource.data.id == resource.data.id
+        ) || (
+          memberOf(circleID) &&
+          myPersonID(circleID) == personID &&
+          request.resource.data.diff(resource.data).changedKeys().hasOnly(['languagePreference', 'pinHash', 'pinSalt', 'lastModified'])
+        );
+
+        // Delete: supervisor only. If deleting a supervisor Person doc,
+        // the careCircle's supervisorCount must be decremented in the
+        // same batch and the post-batch count must be >= 1 (defense in
+        // depth against orphaning the circle).
+        allow delete: if isSupervisor(circleID) && (
+          resource.data.role != 'supervisor' ||
+          (
+            getAfter(/databases/$(database)/documents/careCircles/$(circleID)).data.supervisorCount ==
+              get(/databases/$(database)/documents/careCircles/$(circleID)).data.supervisorCount - 1 &&
+            getAfter(/databases/$(database)/documents/careCircles/$(circleID)).data.supervisorCount >= 1
+          )
+        );
+      }
+
+      // ---------- /careCircles/{circleID}/medications/{medicationID} ----------
+
+      match /medications/{medicationID} {
+        allow read: if memberOf(circleID);
+        allow create: if isSupervisor(circleID) &&
+                      request.resource.data.id == medicationID &&
+                      request.resource.data.personID is string &&
+                      exists(/databases/$(database)/documents/careCircles/$(circleID)/people/$(request.resource.data.personID));
+        allow update: if isSupervisor(circleID) &&
+                      request.resource.data.id == resource.data.id &&
+                      request.resource.data.personID == resource.data.personID;
+        allow delete: if isSupervisor(circleID);
+      }
+
+      // ---------- /careCircles/{circleID}/doseSchedules/{scheduleID} ----------
+
+      match /doseSchedules/{scheduleID} {
+        allow read: if memberOf(circleID);
+        allow create: if isSupervisor(circleID) &&
+                      request.resource.data.id == scheduleID &&
+                      request.resource.data.medicationID is string;
+        allow update: if isSupervisor(circleID) &&
+                      request.resource.data.id == resource.data.id;
+        allow delete: if isSupervisor(circleID);
+      }
+
+      // ---------- /careCircles/{circleID}/doseLogs/{logID} ----------
+
+      match /doseLogs/{logID} {
+        allow read: if memberOf(circleID);
+
+        // Create:
+        //   (a) Supervisor logs any dose.
+        //   (b) Device client logs their OWN dose for THEIR OWN medication.
+        //       (medication.personID == client's personID; loggedByPersonID == client's personID.)
+        allow create: if (
+          isSupervisor(circleID) &&
+          request.resource.data.id == logID &&
+          request.resource.data.medicationID is string &&
+          exists(/databases/$(database)/documents/careCircles/$(circleID)/medications/$(request.resource.data.medicationID))
+        ) || (
+          isDeviceClient(circleID) &&
+          request.resource.data.id == logID &&
+          request.resource.data.medicationID is string &&
+          request.resource.data.loggedByPersonID == myPersonID(circleID) &&
+          exists(/databases/$(database)/documents/careCircles/$(circleID)/medications/$(request.resource.data.medicationID)) &&
+          get(/databases/$(database)/documents/careCircles/$(circleID)/medications/$(request.resource.data.medicationID)).data.personID == myPersonID(circleID)
+        );
+
+        // Update / delete: supervisor only.
+        allow update, delete: if isSupervisor(circleID);
+      }
+
+      // ---------- /careCircles/{circleID}/medicalProfiles/{profileID} ----------
+
+      match /medicalProfiles/{profileID} {
+        allow read: if memberOf(circleID);
+        allow create, update: if isSupervisor(circleID) &&
+                              request.resource.data.id == profileID;
+        allow delete: if isSupervisor(circleID);
+      }
+
+      // ---------- /careCircles/{circleID}/alerts/{alertID} ----------
+
+      match /alerts/{alertID} {
+        allow read: if memberOf(circleID);
+
+        // Create: any member (clients fire emergency alerts, supervisors
+        // fire missed-dose alerts).
+        allow create: if memberOf(circleID) &&
+                      request.resource.data.id == alertID;
+
+        // Update: supervisor, OR a member acknowledging an alert that's
+        // about them.
+        allow update: if isSupervisor(circleID) ||
+                      (memberOf(circleID) && resource.data.personID == myPersonID(circleID));
+
+        allow delete: if isSupervisor(circleID);
+      }
+
+      // ---------- /careCircles/{circleID}/familyContacts/{contactID} ----------
+
+      match /familyContacts/{contactID} {
+        // Privacy: external phone numbers / emails — supervisors only.
+        allow read, create, update, delete: if isSupervisor(circleID);
+      }
+    }
+
+    // No catch-all `match /{document=**}` — anything not matched above
+    // is denied by default.
   }
 }

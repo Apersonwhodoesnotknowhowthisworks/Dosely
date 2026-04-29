@@ -46,8 +46,12 @@ final class FirestoreServiceTests: XCTestCase {
     /// write locally even when no server is up, so we explicitly wait
     /// for a server ack via a transaction (which fails fast).
     private func emulatorAvailable() async -> Bool {
+        guard let db = service.db else {
+            print("[EMULATOR-SKIP] FirestoreService not configured")
+            return false
+        }
         do {
-            let docRef = service.db
+            let docRef = db
                 .collection("_emulator_probes")
                 .document(UUID().uuidString)
             try await docRef.setData(["ts": FieldValue.serverTimestamp()])
@@ -71,6 +75,7 @@ final class FirestoreServiceTests: XCTestCase {
             name: "Test Family",
             joinCode: code,
             createdAt: Date(),
+            supervisorCount: 0,
             lastModified: nil
         )
 
@@ -98,6 +103,7 @@ final class FirestoreServiceTests: XCTestCase {
             name: "Atomic Family",
             joinCode: oldCode,
             createdAt: Date(),
+            supervisorCount: 0,
             lastModified: nil
         )
         try await service.createCareCircle(circle)
@@ -126,6 +132,7 @@ final class FirestoreServiceTests: XCTestCase {
             name: "Two-device Family",
             joinCode: code,
             createdAt: Date(),
+            supervisorCount: 0,
             lastModified: nil
         )
         try await service.createCareCircle(circle)
