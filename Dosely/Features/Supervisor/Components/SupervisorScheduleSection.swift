@@ -12,6 +12,9 @@ struct SupervisorScheduleSection: View {
     var onTake: (TodayDose) -> Void
     var onSkip: (TodayDose) -> Void
     var onLearnMore: (TodayDose) -> Void
+    /// When false, secondary-supervisor mode: the per-card take / skip
+    /// buttons are hidden. Learn-more stays visible.
+    var showActions: Bool = true
 
     var body: some View {
         if doses.isEmpty {
@@ -31,7 +34,8 @@ struct SupervisorScheduleSection: View {
                             onTake: { onTake(dose) },
                             onSkip: { onSkip(dose) },
                             onSnooze: {},
-                            onLearnMore: { onLearnMore(dose) }
+                            onLearnMore: { onLearnMore(dose) },
+                            showActions: showActions
                         )
                     }
                 }

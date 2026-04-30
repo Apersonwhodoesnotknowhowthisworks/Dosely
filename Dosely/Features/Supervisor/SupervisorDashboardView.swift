@@ -42,6 +42,33 @@ struct SupervisorDashboardView: View {
         .tint(.dsPrimary)
     }
 
+    // MARK: - Role gates
+
+    /// True iff `authService.currentPerson` is the primary supervisor of
+    /// their care circle. Drives the read-only-mode hide rules across
+    /// the dashboard.
+    private var isPrimary: Bool {
+        guard let person = authService.currentPerson,
+              let circle = person.careCircle,
+              let me = person.id else { return false }
+        if let primaryID = circle.primarySupervisorPersonID {
+            return primaryID == me
+        }
+        // Pre-`PrimaryRoleMigration` data — legacy `supervisor` is primary.
+        return Roles.isPrimarySupervisor(person.role)
+    }
+
+    /// Display name of the current primary supervisor (for the
+    /// "Only X can change this" inline notice). Looks them up among
+    /// the people in the local CareCircle. Returns nil for the
+    /// pre-migration race where the field hasn't propagated yet.
+    private var primaryName: String? {
+        guard let circle = authService.currentPerson?.careCircle,
+              let primaryID = circle.primarySupervisorPersonID,
+              let people = circle.people as? Set<Person> else { return nil }
+        return people.first(where: { $0.id == primaryID })?.name
+    }
+
     // MARK: - Today tab
 
     private var todayTab: some View {
@@ -72,6 +99,9 @@ struct SupervisorDashboardView: View {
                             .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
                     }
                     .accessibilityLabel(Text("today.account"))
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    RoleBadge(isPrimary: isPrimary, primaryName: primaryName)
                 }
             }
         }
@@ -137,7 +167,8 @@ struct SupervisorDashboardView: View {
                     people: viewModel.clients,
                     onTake: { dose in Task { await markTaken(dose) } },
                     onSkip: { dose in Task { await skip(dose) } },
-                    onLearnMore: { dose in detailDose = dose }
+                    onLearnMore: { dose in detailDose = dose },
+                    showActions: isPrimary
                 )
 
                 if let adherence = viewModel.adherence {
@@ -148,21 +179,25 @@ struct SupervisorDashboardView: View {
 
                 AlertsCard(alerts: viewModel.alerts)
 
-                if activePersonID != nil {
-                    QuickActionsCard(
-                        onAddMedication: {
-                            pendingAddTargetPersonID = activePersonID
-                            showingAdd = true
-                        },
-                        onEditMedicalID: { showingMedicalIDPlaceholder = true },
-                        onSettings: { showingSettings = true }
-                    )
+                if isPrimary {
+                    if activePersonID != nil {
+                        QuickActionsCard(
+                            onAddMedication: {
+                                pendingAddTargetPersonID = activePersonID
+                                showingAdd = true
+                            },
+                            onEditMedicalID: { showingMedicalIDPlaceholder = true },
+                            onSettings: { showingSettings = true }
+                        )
+                    } else {
+                        QuickActionsCard(
+                            onAddMedication: { promptAddTargetPicker = true },
+                            onEditMedicalID: { showingMedicalIDPlaceholder = true },
+                            onSettings: { showingSettings = true }
+                        )
+                    }
                 } else {
-                    QuickActionsCard(
-                        onAddMedication: { promptAddTargetPicker = true },
-                        onEditMedicalID: { showingMedicalIDPlaceholder = true },
-                        onSettings: { showingSettings = true }
-                    )
+                    SecondaryReadOnlyNotice(primaryName: primaryName)
                 }
             }
         }
@@ -252,6 +287,73 @@ struct SupervisorDashboardView: View {
                              supervisorID: supervisorID,
                              activePersonID: activePersonID,
                              circleID: circleID)
+    }
+}
+
+// MARK: - Role badge (top-right of dashboard)
+
+/// Compact pill in the navbar showing whether the current supervisor is
+/// primary or secondary. Doubles as an accessibility hint about who
+/// holds write authority in the circle.
+private struct RoleBadge: View {
+    let isPrimary: Bool
+    let primaryName: String?
+
+    var body: some View {
+        Text(isPrimary ? L("supervisor.badge.primary") : L("supervisor.badge.viewonly"))
+            .dsCaption()
+            .foregroundColor(isPrimary ? .white : .dsTextSecondary)
+            .padding(.horizontal, DSSpacing.sm)
+            .padding(.vertical, 4)
+            .background(isPrimary ? Color.dsPrimary : Color.dsBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: DSSpacing.rSm)
+                    .stroke(isPrimary ? Color.clear : Color.dsTextSecondary.opacity(0.4), lineWidth: 1)
+            )
+            .cornerRadius(DSSpacing.rSm)
+            .accessibilityLabel(Text(a11yLabel))
+    }
+
+    private var a11yLabel: String {
+        if isPrimary {
+            return L("supervisor.badge.primary.a11y")
+        }
+        if let name = primaryName {
+            return L("supervisor.badge.viewonly.a11y", name as NSString)
+        }
+        return L("supervisor.badge.viewonly")
+    }
+}
+
+// MARK: - Read-only notice for secondaries
+
+/// Inline card explaining that write actions are disabled for the
+/// current user, with a pointer at who can perform them.
+private struct SecondaryReadOnlyNotice: View {
+    let primaryName: String?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: DSSpacing.sm) {
+            Image(systemName: "lock.fill")
+                .foregroundColor(.dsTextSecondary)
+                .accessibilityHidden(true)
+            Text(message)
+                .dsBodyRegular()
+                .foregroundColor(.dsTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
+        }
+        .padding(DSSpacing.md)
+        .background(Color.dsSurface)
+        .cornerRadius(DSSpacing.rLg)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var message: String {
+        if let name = primaryName {
+            return L("supervisor.readonly.notice", name as NSString)
+        }
+        return L("supervisor.readonly.notice.unknown")
     }
 }
 

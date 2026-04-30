@@ -6,6 +6,10 @@ struct DoseCardView: View {
     var onSkip: () -> Void
     var onSnooze: () -> Void
     var onLearnMore: () -> Void = {}
+    /// When false, the take / skip / snooze buttons are hidden — used
+    /// by the secondary-supervisor view to render the schedule
+    /// read-only. The status dot and "Learn more" stay visible.
+    var showActions: Bool = true
 
     @State private var isExpanded = false
 
@@ -84,16 +88,20 @@ struct DoseCardView: View {
     private var actionArea: some View {
         switch dose.status {
         case .upcoming:
-            Button(action: onTake) {
-                Text("today.itookit")
-                    .dsBodyLarge()
-                    .foregroundColor(.white)
-                    .padding(.horizontal, DSSpacing.md)
-                    .frame(minHeight: DSSpacing.minTapTarget)
-                    .background(Color.dsPrimary)
-                    .cornerRadius(DSSpacing.rMd)
+            if showActions {
+                Button(action: onTake) {
+                    Text("today.itookit")
+                        .dsBodyLarge()
+                        .foregroundColor(.white)
+                        .padding(.horizontal, DSSpacing.md)
+                        .frame(minHeight: DSSpacing.minTapTarget)
+                        .background(Color.dsPrimary)
+                        .cornerRadius(DSSpacing.rMd)
+                }
+                .accessibilityLabel(Text("today.itookit"))
+            } else {
+                EmptyView()
             }
-            .accessibilityLabel(Text("today.itookit"))
 
         case .taken:
             Text(takenAtText)
@@ -133,10 +141,12 @@ struct DoseCardView: View {
                     .foregroundColor(.dsTextPrimary)
             }
 
-            HStack(spacing: DSSpacing.sm) {
-                expandedButton(L("today.tookit"),    background: .dsPrimary,       action: onTake)
-                expandedButton(L("today.skipdose"),  background: .dsTextSecondary, action: onSkip)
-                expandedButton(L("today.snooze10"),  background: .dsWarning,       action: onSnooze)
+            if showActions {
+                HStack(spacing: DSSpacing.sm) {
+                    expandedButton(L("today.tookit"),    background: .dsPrimary,       action: onTake)
+                    expandedButton(L("today.skipdose"),  background: .dsTextSecondary, action: onSkip)
+                    expandedButton(L("today.snooze10"),  background: .dsWarning,       action: onSnooze)
+                }
             }
 
             Button(action: onLearnMore) {
