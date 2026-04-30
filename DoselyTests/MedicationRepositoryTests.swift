@@ -12,9 +12,12 @@ final class MedicationRepositoryTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         stack = CoreDataStack(inMemory: true)
-        repo = MedicationRepository(stack: stack)
-        personRepo = PersonRepository(stack: stack)
-        careCircleRepo = CareCircleRepository(stack: stack)
+        // See `CareCircleRepositoryTests.setUp` for why a no-op
+        // FirestoreService is wired in explicitly.
+        let noFirestore = FirestoreService()
+        repo = MedicationRepository(stack: stack, firestore: noFirestore)
+        personRepo = PersonRepository(stack: stack, firestore: noFirestore)
+        careCircleRepo = CareCircleRepository(stack: stack, firestore: noFirestore)
 
         let circle = await careCircleRepo.createCareCircle(
             name: "Test Family",
@@ -106,10 +109,11 @@ final class MedicationRepositoryTests: XCTestCase {
                                           currentSupply: 1, pillPhotoData: nil)
         // Add a managed-client Person and one med for them
         let circle = supervisor.careCircle!
-        let client = await personRepo.createManagedClient(name: "Grandma",
-                                                          photoData: nil,
-                                                          language: "pa",
-                                                          in: circle)
+        let client = try await personRepo.createManagedClient(name: "Grandma",
+                                                              photoData: nil,
+                                                              language: "pa",
+                                                              in: circle,
+                                                              actorPersonID: supervisor.id!)
         _ = try await repo.saveMedication(personID: client.id!, actorPersonID: personID,
                                           name: "C", dose: "1mg", pillsPerDose: 1,
                                           foodRule: "either", notes: nil,
@@ -125,11 +129,11 @@ final class MedicationRepositoryTests: XCTestCase {
 
     // MARK: - permissions
 
-    func testClientCannotSaveMedication() async {
+    func testClientCannotSaveMedication() async throws {
         let circle = supervisor.careCircle!
-        let client = await personRepo.createDeviceClient(
+        let client = try await personRepo.createDeviceClient(
             name: "Bibi", photoData: nil, pinPlaintext: "1234",
-            language: "pa", in: circle
+            language: "pa", in: circle, actorPersonID: supervisor.id!
         )
         do {
             _ = try await repo.saveMedication(
@@ -146,10 +150,10 @@ final class MedicationRepositoryTests: XCTestCase {
         }
     }
 
-    func testManagedClientCannotSaveMedication() async {
+    func testManagedClientCannotSaveMedication() async throws {
         let circle = supervisor.careCircle!
-        let client = await personRepo.createManagedClient(
-            name: "Grandma", photoData: nil, language: "pa", in: circle
+        let client = try await personRepo.createManagedClient(
+            name: "Grandma", photoData: nil, language: "pa", in: circle, actorPersonID: supervisor.id!
         )
         do {
             _ = try await repo.saveMedication(

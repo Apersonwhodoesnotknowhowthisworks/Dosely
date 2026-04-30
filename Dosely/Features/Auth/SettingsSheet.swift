@@ -15,6 +15,7 @@ struct SettingsSheet: View {
     @State private var showingLeaveAndJoin = false
     @State private var confirmingLeavePermanently = false
     @State private var lastSupervisorAlertVisible = false
+    @State private var primaryPromoteFirstAlertVisible = false
     @State private var familyName: String = ""
     @State private var joinCode: String = ""
     private let careCircleRepo = CareCircleRepository()
@@ -85,6 +86,12 @@ struct SettingsSheet: View {
                 Button(L("common.ok"), role: .cancel) {}
             } message: {
                 Text("settings.family.lastsupervisor.body")
+            }
+            .alert(L("settings.family.lastsupervisor.title"),
+                   isPresented: $primaryPromoteFirstAlertVisible) {
+                Button(L("common.ok"), role: .cancel) {}
+            } message: {
+                Text("circle.leave.error.primarypromotefirst")
             }
             .sheet(isPresented: $showingLanguagePicker) {
                 LanguagePickerView(
@@ -235,11 +242,13 @@ struct SettingsSheet: View {
 
             joinCodeRow
 
-            Button(action: { confirmingRegenerate = true }) {
-                actionRow(label: L("supervisor.circle.regenerate"),
-                          tint: .dsWarning)
+            if isPrimary {
+                Button(action: { confirmingRegenerate = true }) {
+                    actionRow(label: L("supervisor.circle.regenerate"),
+                              tint: .dsWarning)
+                }
+                .accessibilityLabel(Text("supervisor.circle.regenerate"))
             }
-            .accessibilityLabel(Text("supervisor.circle.regenerate"))
 
             Divider().padding(.vertical, DSSpacing.xs)
 
@@ -330,7 +339,11 @@ struct SettingsSheet: View {
     // MARK: - Family — actions
 
     private var isSupervisor: Bool {
-        authService.currentPerson?.role == "supervisor"
+        Roles.isAnySupervisor(authService.currentPerson?.role)
+    }
+
+    private var isPrimary: Bool {
+        Roles.isPrimary(authService.currentPerson)
     }
 
     private func refreshFamilyState() {
@@ -356,9 +369,17 @@ struct SettingsSheet: View {
     }
 
     private func regenerateJoinCode() async {
-        guard let circleID = authService.currentPerson?.careCircle?.id else { return }
-        if let newCode = await careCircleRepo.regenerateJoinCode(careCircleID: circleID) {
+        guard let circleID = authService.currentPerson?.careCircle?.id,
+              let actorID = authService.currentPerson?.id else { return }
+        do {
+            let newCode = try await careCircleRepo.regenerateJoinCode(
+                careCircleID: circleID, actorPersonID: actorID
+            )
             await MainActor.run { joinCode = newCode }
+        } catch {
+            // The settings → family section is hidden for secondaries
+            // via the `isPrimary` check in `familySection`. If we get
+            // here, it's a network error — keep the existing code shown.
         }
     }
 
@@ -383,7 +404,7 @@ struct SettingsSheet: View {
               let circle = person.careCircle else { return false }
         let people = (circle.people as? Set<Person>) ?? []
         let otherSupervisors = people.filter {
-            $0.role == "supervisor" && $0.id != person.id
+            Roles.isAnySupervisor($0.role) && $0.id != person.id
         }
         return otherSupervisors.isEmpty
     }
@@ -397,6 +418,8 @@ struct SettingsSheet: View {
             dismiss()
         case .failure(.lastSupervisor):
             lastSupervisorAlertVisible = true
+        case .failure(.primaryMustPromoteFirst):
+            primaryPromoteFirstAlertVisible = true
         case .failure:
             // notFound / notMember are pathological here; ignore silently.
             break

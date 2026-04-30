@@ -80,6 +80,11 @@ interface SeededCircle {
  * Seeds a fully-bootstrapped care circle: careCircle doc with
  * supervisorCount=1, /joinCodes index, founder's /userMemberships and
  * Person doc, optionally a device_client.
+ *
+ * `primarySupervisor` (default true) controls whether the founder is
+ * stamped as `primary_supervisor` (post-split data) or `supervisor`
+ * (legacy alias — exercises the transitional read path). `extraSupervisors`
+ * are seeded as `secondary_supervisor` by default.
  */
 async function seedCircle(opts: {
   circleID: string;
@@ -88,17 +93,28 @@ async function seedCircle(opts: {
   deviceClient?: SeedDeviceClient;
   supervisorCount?: number;
   extraSupervisors?: SeedSupervisor[];
+  primarySupervisor?: boolean;
+  legacyRoles?: boolean;
 }): Promise<SeededCircle> {
   const supervisorCount = opts.supervisorCount ?? 1;
+  const founderRole = opts.legacyRoles ? "supervisor" : "primary_supervisor";
+  const extraRole = opts.legacyRoles ? "supervisor" : "secondary_supervisor";
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
-    await setDoc(doc(db, `careCircles/${opts.circleID}`), {
+    const circleData: Record<string, unknown> = {
       id: opts.circleID,
       name: "Test Family",
       joinCode: opts.joinCode,
       createdAt: new Date(),
       supervisorCount,
-    });
+    };
+    if (!opts.legacyRoles) {
+      // Pre-migration data has no primarySupervisorPersonID — leave the
+      // field absent so `.get('primarySupervisorPersonID', '')` in the
+      // rules returns the empty default for legacy-mode tests.
+      circleData.primarySupervisorPersonID = opts.supervisor.personID;
+    }
+    await setDoc(doc(db, `careCircles/${opts.circleID}`), circleData);
     await setDoc(doc(db, `joinCodes/${opts.joinCode}`), {
       careCircleID: opts.circleID,
       regeneratedAt: new Date(),
@@ -109,7 +125,7 @@ async function seedCircle(opts: {
         id: opts.supervisor.personID,
         careCircleID: opts.circleID,
         name: "Founder Aunt",
-        role: "supervisor",
+        role: founderRole,
         languagePreference: "en",
         firebaseUID: opts.supervisor.uid,
         failedPinAttempts: 0,
@@ -118,7 +134,7 @@ async function seedCircle(opts: {
     await setDoc(doc(db, `userMemberships/${opts.supervisor.uid}`), {
       careCircleID: opts.circleID,
       personID: opts.supervisor.personID,
-      role: "supervisor",
+      role: founderRole,
       joinedAt: new Date(),
     });
 
@@ -127,7 +143,7 @@ async function seedCircle(opts: {
         id: sup.personID,
         careCircleID: opts.circleID,
         name: "Co-Supervisor",
-        role: "supervisor",
+        role: extraRole,
         languagePreference: "en",
         firebaseUID: sup.uid,
         failedPinAttempts: 0,
@@ -135,7 +151,7 @@ async function seedCircle(opts: {
       await setDoc(doc(db, `userMemberships/${sup.uid}`), {
         careCircleID: opts.circleID,
         personID: sup.personID,
-        role: "supervisor",
+        role: extraRole,
         joinedAt: new Date(),
       });
     }
@@ -456,24 +472,47 @@ describe("Firestore security rules", () => {
       await assertFails(batch.commit());
     });
 
-    it("allows a supervisor to leave when at least one other remains", async () => {
-      const supervisor = { uid: "aunt1-uid", personID: "person-aunt1" };
-      const coSup = { uid: "aunt2-uid", personID: "person-aunt2" };
+    it("allows a secondary supervisor to leave when the primary remains", async () => {
+      const primary = { uid: "aunt1-uid", personID: "person-aunt1" };
+      const secondary = { uid: "aunt2-uid", personID: "person-aunt2" };
       const seeded = await seedCircle({
         circleID: "circle-pair",
         joinCode: "500002",
-        supervisor,
-        extraSupervisors: [coSup],
+        supervisor: primary,
+        extraSupervisors: [secondary],
         supervisorCount: 2,
       });
 
-      // Aunt 1 leaves: batch { delete Person, decrement count, delete /userMemberships }.
-      const db = authedDb(supervisor.uid);
+      // Aunt 2 (secondary) leaves: batch { delete Person, decrement count, delete /userMemberships }.
+      // primarySupervisorPersonID stays pointed at aunt 1, so the
+      // primary-orphan rule is satisfied.
+      const db = authedDb(secondary.uid);
       const batch = writeBatch(db);
-      batch.delete(doc(db, `careCircles/${seeded.circleID}/people/${supervisor.personID}`));
+      batch.delete(doc(db, `careCircles/${seeded.circleID}/people/${secondary.personID}`));
       batch.update(doc(db, `careCircles/${seeded.circleID}`), { supervisorCount: 1 });
-      batch.delete(doc(db, `userMemberships/${supervisor.uid}`));
+      batch.delete(doc(db, `userMemberships/${secondary.uid}`));
       await assertSucceeds(batch.commit());
+    });
+
+    it("denies the primary from leaving without atomically promoting a secondary", async () => {
+      const primary = { uid: "aunt1-uid", personID: "person-aunt1" };
+      const secondary = { uid: "aunt2-uid", personID: "person-aunt2" };
+      const seeded = await seedCircle({
+        circleID: "circle-pair2",
+        joinCode: "500003",
+        supervisor: primary,
+        extraSupervisors: [secondary],
+        supervisorCount: 2,
+      });
+
+      // Primary tries to leave without promoting — count drops fine but
+      // primarySupervisorPersonID would still point at the deleted Person.
+      const db = authedDb(primary.uid);
+      const batch = writeBatch(db);
+      batch.delete(doc(db, `careCircles/${seeded.circleID}/people/${primary.personID}`));
+      batch.update(doc(db, `careCircles/${seeded.circleID}`), { supervisorCount: 1 });
+      batch.delete(doc(db, `userMemberships/${primary.uid}`));
+      await assertFails(batch.commit());
     });
   });
 
@@ -610,9 +649,374 @@ describe("Firestore security rules", () => {
         setDoc(doc(db, `userMemberships/${attacker}`), {
           careCircleID: "circle-B",
           personID: "attacker-person",
-          role: "supervisor",
+          role: "secondary_supervisor",
           joinedAt: new Date(),
           joinCode: "900001",
+        })
+      );
+    });
+  });
+
+  // -- 9. Secondary supervisor: read access ------------------------------
+
+  describe("secondary supervisor reads", () => {
+    const circleID = "circle-secondary-read";
+    const primary = { uid: "primary-uid", personID: "person-primary" };
+    const secondary = { uid: "secondary-uid", personID: "person-secondary" };
+    const grandpaMedID = "med-grandpa-secondary";
+
+    beforeEach(async () => {
+      await seedCircle({
+        circleID,
+        joinCode: "910001",
+        supervisor: primary,
+        extraSupervisors: [secondary],
+        supervisorCount: 2,
+      });
+      await seedMedication(circleID, grandpaMedID, primary.personID);
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), `careCircles/${circleID}/familyContacts/dr-secondary`),
+          { id: "dr-secondary", name: "Dr. S", phone: "+1-555-0101" }
+        );
+      });
+    });
+
+    it("can read the careCircle, people, medications, and familyContacts", async () => {
+      const db = authedDb(secondary.uid);
+      await assertSucceeds(getDoc(doc(db, `careCircles/${circleID}`)));
+      await assertSucceeds(
+        getDoc(doc(db, `careCircles/${circleID}/people/${primary.personID}`))
+      );
+      await assertSucceeds(
+        getDoc(doc(db, `careCircles/${circleID}/medications/${grandpaMedID}`))
+      );
+      await assertSucceeds(
+        getDoc(doc(db, `careCircles/${circleID}/familyContacts/dr-secondary`))
+      );
+    });
+  });
+
+  // -- 10. Secondary supervisor: write boundaries ------------------------
+
+  describe("secondary supervisor writes", () => {
+    const circleID = "circle-secondary-write";
+    const primary = { uid: "primary-w-uid", personID: "person-primary-w" };
+    const secondary = { uid: "secondary-w-uid", personID: "person-secondary-w" };
+    const grandpa = { uid: "grandpa-w-uid", personID: "person-grandpa-w" };
+    const grandpaMedID = "med-grandpa-w";
+
+    beforeEach(async () => {
+      await seedCircle({
+        circleID,
+        joinCode: "920001",
+        supervisor: primary,
+        extraSupervisors: [secondary],
+        deviceClient: grandpa,
+        supervisorCount: 2,
+      });
+      await seedMedication(circleID, grandpaMedID, grandpa.personID);
+    });
+
+    it("cannot create a medication", async () => {
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        setDoc(doc(db, `careCircles/${circleID}/medications/sneaky-med`), {
+          id: "sneaky-med",
+          personID: grandpa.personID,
+          name: "Sneaky",
+          dose: "5mg",
+          pillsPerDose: 1,
+          foodRule: "either",
+          currentSupply: 10,
+          dateAdded: new Date(),
+        })
+      );
+    });
+
+    it("cannot update an existing medication", async () => {
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        updateDoc(
+          doc(db, `careCircles/${circleID}/medications/${grandpaMedID}`),
+          { dose: "40mg" }
+        )
+      );
+    });
+
+    it("cannot delete a medication", async () => {
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        deleteDoc(doc(db, `careCircles/${circleID}/medications/${grandpaMedID}`))
+      );
+    });
+
+    it("cannot add a Person to the circle", async () => {
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        setDoc(doc(db, `careCircles/${circleID}/people/sneaky-person`), {
+          id: "sneaky-person",
+          careCircleID: circleID,
+          name: "Sneaky",
+          role: "managed_client",
+          languagePreference: "en",
+          failedPinAttempts: 0,
+        })
+      );
+    });
+
+    it("cannot delete another Person", async () => {
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        deleteDoc(doc(db, `careCircles/${circleID}/people/${grandpa.personID}`))
+      );
+    });
+
+    it("cannot regenerate the join code (delete /joinCodes)", async () => {
+      const db = authedDb(secondary.uid);
+      await assertFails(deleteDoc(doc(db, "joinCodes/920001")));
+    });
+
+    it("cannot rename the circle", async () => {
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        updateDoc(doc(db, `careCircles/${circleID}`), { name: "Renamed Without Permission" })
+      );
+    });
+
+    it("cannot create a doseLog", async () => {
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        setDoc(doc(db, `careCircles/${circleID}/doseLogs/log-secondary-1`), {
+          id: "log-secondary-1",
+          medicationID: grandpaMedID,
+          loggedByPersonID: secondary.personID,
+          scheduledTime: new Date(),
+          actualTime: new Date(),
+          status: "taken",
+        })
+      );
+    });
+  });
+
+  // -- 11. Alerts: secondary supervisor authority ------------------------
+
+  describe("alerts — secondary write authority", () => {
+    const circleID = "circle-alerts";
+    const primary = { uid: "primary-a-uid", personID: "person-primary-a" };
+    const secondary = { uid: "secondary-a-uid", personID: "person-secondary-a" };
+    const grandpa = { uid: "grandpa-a-uid", personID: "person-grandpa-a" };
+
+    beforeEach(async () => {
+      await seedCircle({
+        circleID,
+        joinCode: "930001",
+        supervisor: primary,
+        extraSupervisors: [secondary],
+        deviceClient: grandpa,
+        supervisorCount: 2,
+      });
+    });
+
+    it("a secondary supervisor can create an alert", async () => {
+      const db = authedDb(secondary.uid);
+      const alertID = "alert-from-secondary";
+      await assertSucceeds(
+        setDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID,
+          personID: grandpa.personID,
+          kind: "missed_dose",
+          message: "Grandpa missed morning Lipitor",
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("a secondary supervisor can acknowledge any alert in the circle", async () => {
+      const alertID = "alert-to-ack";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID,
+          personID: grandpa.personID,
+          kind: "missed_dose",
+          message: "test",
+          createdAt: new Date(),
+        });
+      });
+      const db = authedDb(secondary.uid);
+      await assertSucceeds(
+        updateDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
+          resolvedAt: new Date(),
+        })
+      );
+    });
+
+    it("a secondary supervisor cannot delete an alert", async () => {
+      const alertID = "alert-to-delete";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID,
+          personID: grandpa.personID,
+          kind: "missed_dose",
+          message: "test",
+          createdAt: new Date(),
+        });
+      });
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        deleteDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`))
+      );
+    });
+  });
+
+  // -- 12. promoteToPrimary: atomic role swap ----------------------------
+
+  describe("promoteToPrimary atomic batch", () => {
+    const circleID = "circle-promote";
+    const primary = { uid: "primary-p-uid", personID: "person-primary-p" };
+    const secondary = { uid: "secondary-p-uid", personID: "person-secondary-p" };
+
+    beforeEach(async () => {
+      await seedCircle({
+        circleID,
+        joinCode: "940001",
+        supervisor: primary,
+        extraSupervisors: [secondary],
+        supervisorCount: 2,
+      });
+    });
+
+    /**
+     * The exact write shape `applyPrimaryAssignment` produces:
+     *   - update CareCircle.primarySupervisorPersonID
+     *   - update old primary's Person doc role → secondary_supervisor
+     *   - update new primary's Person doc role → primary_supervisor
+     *   - update each /userMemberships/{uid}.role to match
+     */
+    function buildPromotionBatch(
+      db: ReturnType<typeof authedDb>,
+      circle: string,
+      oldPrimary: SeedSupervisor,
+      newPrimary: SeedSupervisor
+    ) {
+      const batch = writeBatch(db);
+      batch.update(doc(db, `careCircles/${circle}`), {
+        primarySupervisorPersonID: newPrimary.personID,
+      });
+      batch.update(doc(db, `careCircles/${circle}/people/${oldPrimary.personID}`), {
+        role: "secondary_supervisor",
+      });
+      batch.update(doc(db, `careCircles/${circle}/people/${newPrimary.personID}`), {
+        role: "primary_supervisor",
+      });
+      batch.update(doc(db, `userMemberships/${oldPrimary.uid}`), {
+        role: "secondary_supervisor",
+      });
+      batch.update(doc(db, `userMemberships/${newPrimary.uid}`), {
+        role: "primary_supervisor",
+      });
+      return batch;
+    }
+
+    it("the current primary can promote a secondary; roles atomically swap", async () => {
+      const db = authedDb(primary.uid);
+      const batch = buildPromotionBatch(db, circleID, primary, secondary);
+      await assertSucceeds(batch.commit());
+
+      // Verify the post-batch state under admin auth.
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        const adb = ctx.firestore();
+        const circle = await getDoc(doc(adb, `careCircles/${circleID}`));
+        const primaryDoc = await getDoc(
+          doc(adb, `careCircles/${circleID}/people/${primary.personID}`)
+        );
+        const secondaryDoc = await getDoc(
+          doc(adb, `careCircles/${circleID}/people/${secondary.personID}`)
+        );
+        if (
+          circle.data()?.primarySupervisorPersonID !== secondary.personID ||
+          primaryDoc.data()?.role !== "secondary_supervisor" ||
+          secondaryDoc.data()?.role !== "primary_supervisor"
+        ) {
+          throw new Error("promotion did not produce expected post-state");
+        }
+      });
+    });
+
+    it("a secondary cannot promote themselves to primary", async () => {
+      const db = authedDb(secondary.uid);
+      const batch = buildPromotionBatch(db, circleID, primary, secondary);
+      await assertFails(batch.commit());
+    });
+
+    it("after promotion, the demoted-to-secondary cannot write a medication", async () => {
+      // First, perform the promotion as the current primary.
+      const promoteDb = authedDb(primary.uid);
+      const promote = buildPromotionBatch(promoteDb, circleID, primary, secondary);
+      await assertSucceeds(promote.commit());
+
+      // Now `primary` is a secondary. Their write must be denied.
+      const demotedDb = authedDb(primary.uid);
+      await assertFails(
+        setDoc(doc(demotedDb, `careCircles/${circleID}/medications/post-demotion`), {
+          id: "post-demotion",
+          personID: primary.personID,
+          name: "Should Fail",
+          dose: "1mg",
+          pillsPerDose: 1,
+          foodRule: "either",
+          currentSupply: 1,
+          dateAdded: new Date(),
+        })
+      );
+    });
+
+    it("the new primary CAN write a medication after promotion", async () => {
+      const promoteDb = authedDb(primary.uid);
+      const promote = buildPromotionBatch(promoteDb, circleID, primary, secondary);
+      await assertSucceeds(promote.commit());
+
+      const newPrimaryDb = authedDb(secondary.uid);
+      await assertSucceeds(
+        setDoc(
+          doc(newPrimaryDb, `careCircles/${circleID}/medications/post-promotion`),
+          {
+            id: "post-promotion",
+            personID: secondary.personID,
+            name: "Allowed",
+            dose: "1mg",
+            pillsPerDose: 1,
+            foodRule: "either",
+            currentSupply: 1,
+            dateAdded: new Date(),
+          }
+        )
+      );
+    });
+  });
+
+  // -- 13. Legacy "supervisor" role is treated as primary -----------------
+
+  describe("legacy supervisor role compatibility", () => {
+    it("pre-migration data with role=supervisor is treated as primary for writes", async () => {
+      const supervisor = { uid: "legacy-uid", personID: "person-legacy" };
+      await seedCircle({
+        circleID: "circle-legacy",
+        joinCode: "950001",
+        supervisor,
+        legacyRoles: true,
+      });
+      const db = authedDb(supervisor.uid);
+      await assertSucceeds(
+        setDoc(doc(db, `careCircles/circle-legacy/medications/legacy-med`), {
+          id: "legacy-med",
+          personID: supervisor.personID,
+          name: "Legacy",
+          dose: "1mg",
+          pillsPerDose: 1,
+          foodRule: "either",
+          currentSupply: 1,
+          dateAdded: new Date(),
         })
       );
     });

@@ -106,29 +106,72 @@ Configuration lives in `firebase.json`, `firestore.rules`, and `firestore.indexe
 - **`CareCircle.supervisorCount`** is a denormalized counter maintained by the app via `FieldValue.increment(±1)`. It powers the rules-layer last-supervisor protection: deleting a Person doc whose `role == "supervisor"` requires the careCircle's `supervisorCount` to be atomically decremented in the same batch (`getAfter` check) and the post-batch count must be `>= 1`. Sole-supervisor leave is impossible at the rules layer — the count cannot drop below 1 without also breaking the rule.
 - **`leaveCircle` and `removePersonFromCircle` (supervisor target)** must use the atomic batch in `FirestoreService.removeSupervisorAtomically(circleID:personID:firebaseUID:)`: it deletes the Person doc, decrements `supervisorCount`, and deletes the `/userMemberships` doc together. Rules see the consistent post-batch state via `getAfter`.
 - **`/joinCodes/{code}` reads** are allowed for any signed-in user (this is how a new aunt finds a circle to join from a code shared out-of-band). Writes (create/delete) require the careCircle's `joinCode` field to match the path's `{code}` AND either `supervisorCount==0` (founder bootstrap) or `isSupervisor` (regenerate). Updates to existing `/joinCodes` docs are forbidden — regenerate is delete-old + create-new in one transaction.
-- **`/familyContacts/*` is supervisor-only** for both reads and writes — the docs hold external phone numbers and emails of doctors/pharmacies that should not be visible to clients.
-- **Person doc self-edit** allows only `languagePreference`, `pinHash`, `pinSalt`, and `lastModified`. Everything else (role, firebaseUID, name, failedPinAttempts) is supervisor-only.
+- **`/familyContacts/*`** — supervisors of either flavour can read; only the primary writes. The docs hold external phone numbers and emails of doctors/pharmacies that should not be visible to clients.
+- **Person doc self-edit** allows only `languagePreference`, `pinHash`, `pinSalt`, and `lastModified`. Everything else (role, firebaseUID, name, failedPinAttempts) is primary-supervisor-only.
 - **Tests live in `/tests/firestore_rules.test.ts`** and run via `cd tests && npm test` (boots the emulator) or `npm run test:ci` (assumes a long-running emulator on `127.0.0.1:8080`). They use `@firebase/rules-unit-testing` and the project id `demo-no-project` to match the no-arg `firebase emulators:start`. Kept out of the iOS test target so an Xcode build does not require Node.
+
+### Primary / secondary supervisor split
+
+The `"supervisor"` role is split into two flavours:
+
+- **`"primary_supervisor"`** — full read/write authority over the circle. Exactly one per circle at all times. The founder of a circle is primary by default; new joiners are secondary.
+- **`"secondary_supervisor"`** — read-only across the circle. Can still create alerts (e.g. emergency button) and acknowledge alerts that involve them. Everything else (medications, schedules, people, join code, family contacts) is denied.
+
+`CareCircle.primarySupervisorPersonID` is the source of truth for who the primary is. The role string on the Person doc must agree (rules verify both). The role on `/userMemberships/{uid}` is informational — the rules read role from the Person doc, not the membership doc — so a brief stale state during promotion or migration is harmless.
+
+The legacy `"supervisor"` value still exists in code as `Roles.legacySupervisor`. Reads (both Swift and the rules' `isPrimary` / `isAnySupervisor` helpers) treat it as `primary_supervisor` so deployed clients keep working through the rolling rollout of `PrimaryRoleMigration`. **Post-split code never writes `"supervisor"`** — `Roles.primarySupervisor` and `Roles.secondarySupervisor` are the only valid write values.
+
+### Promotion (`promoteToPrimary`)
+
+A primary can hand the role off to a secondary in the same circle. `PersonRepository.promoteToPrimary(targetPersonID:actorPersonID:)` calls `FirestoreService.applyPrimaryAssignment`, which writes a single Firestore batch:
+
+1. `careCircles/{id}.primarySupervisorPersonID = newPrimary`
+2. The current primary's Person doc → `role = "secondary_supervisor"`
+3. The target's Person doc → `role = "primary_supervisor"`
+4. The current primary's `/userMemberships/{uid}.role` → `"secondary_supervisor"`
+5. The target's `/userMemberships/{uid}.role` → `"primary_supervisor"`
+
+The rules helper `isPromotionBatch(circleID, personID)` recognizes this exact shape on a Person doc role update — it allows the demote and promote rows when the CareCircle's `primarySupervisorPersonID` is changing in the same batch and the actor is currently primary. The `/userMemberships` update rule has been broadened so a primary can update *any* membership in their circle (not just self-edit) — that's what makes the cross-actor membership writes pass.
+
+A secondary calling `promoteToPrimary` is rejected app-side (`PersonRepositoryError.notCurrentPrimary`) and rules-side (`isPromotionBatch` requires the actor to currently be primary).
+
+### Primary-leave protection
+
+A primary cannot leave the circle directly while secondaries exist — `CareCircleRepository.leaveCircle` returns `.primaryMustPromoteFirst`, and the rules-layer Person-delete rule rejects deleting the current primary unless `primarySupervisorPersonID` changes to someone else in the same batch. The user-visible flow: primary opens People → tap a secondary → "Make primary supervisor" → confirm. They become secondary. They can now leave. (A sole supervisor leaving still hits the existing `lastSupervisor` check.)
+
+### Migration: `PrimaryRoleMigration.runIfNeeded`
+
+Runs once per device, gated by `UserDefaults["primary_role_migration_v1"]`. For every local CareCircle without a `primarySupervisorPersonID`:
+
+- Picks the supervisor whose `Person.id.uuidString` sorts first as primary. Deterministic across devices, so concurrent migrations from two devices converge on the same answer without coordination.
+- Writes a single Firestore batch via `applyPrimaryAssignment`: stamps `primarySupervisorPersonID`, sets the chosen primary's role to `primary_supervisor` and everyone else's to `secondary_supervisor`, mirrors role onto each `/userMemberships`.
+- Mirrors the result into Core Data so the UI updates without waiting on the SyncCoordinator listener.
+
+Runs from `AuthService.resolveCurrentPerson` after `FirestoreUploadMigration`, so the upload migration's "supervisor" rows get fixed up immediately. New circles created post-split set `primarySupervisorPersonID` directly at create time, so the migration is a no-op for them.
 
 ## Account model
 
 Dosely organises users into **CareCircles**: small groups (a family, a household) that share a roster of `Person` rows. Every Medication and DoseLog belongs to exactly one Person. This shape is in the codebase from day one even though the supervisor dashboard and profile picker UI ship later.
 
 - **Entities (Core Data, lightweight migration safe):**
-  - **`CareCircle`** — `id: UUID`, `name: String`, `joinCode: String?` (6-digit numeric, regenerable), `createdAt: Date`. Has-many `Person` via the `members` relationship.
+  - **`CareCircle`** — `id: UUID`, `name: String`, `joinCode: String?` (6-digit numeric, regenerable), `createdAt: Date`, `primarySupervisorPersonID: UUID?` (current primary; nil only on pre-`PrimaryRoleMigration` data). Has-many `Person` via the `members` relationship.
   - **`Person`** — `id: UUID`, `name: String`, `photoData: Data?`, `role: String`, `languagePreference: String`, `pinHash: Data?`, `pinSalt: Data?`, `failedPinAttempts: Int16`, `firebaseUID: String?`, belongs-to `CareCircle`.
   - **`Medication`** gains `personID: UUID?` (the patient who takes it; required at app layer, optional in schema for migration).
   - **`DoseLog`** gains `loggedByPersonID: UUID?` (whoever tapped "I took it" — supervisor, client, or notification action).
 
-- **Roles (`Person.role` is a string; the canonical values are):**
-  - `"supervisor"` — a Firebase-authenticated caregiver. Can create/edit/delete medications for any Person in the same circle, reset PINs, regenerate join codes, and log doses.
-  - `"device_client"` — a non-Firebase user who unlocks the device profile with a 4-digit PIN (e.g. a grandparent who shares the iPad). Can log their own doses; cannot create or edit medications.
-  - `"managed_client"` — a non-Firebase user with no PIN, fully managed by a supervisor (e.g. a bedridden patient). Same permissions as `device_client`: can be the *target* of medications and dose logs, but cannot author them.
+- **Roles (`Person.role` is a string; canonical values defined in `Roles.swift`):**
+  - `"primary_supervisor"` — Firebase-authenticated caregiver with full read/write. Exactly one per circle. Can create/edit/delete medications, reset PINs, regenerate join codes, log doses, and promote a secondary to primary (which atomically demotes the current primary).
+  - `"secondary_supervisor"` — Firebase-authenticated caregiver, read-only across the circle. Can still create alerts and acknowledge alerts about themselves. Cannot edit medications, people, or circle settings.
+  - `"device_client"` — a non-Firebase user who unlocks the device profile with a 4-digit PIN. Can log their own doses; cannot create or edit medications.
+  - `"managed_client"` — a non-Firebase user with no PIN, fully managed by a supervisor. Same permissions as `device_client`: can be the *target* of medications and dose logs, but cannot author them.
+  - `"supervisor"` (legacy) — pre-split data. Treated as `primary_supervisor` on the read side only; never written by post-split code.
 
-- **Permission rules (enforced at the repository layer, not the UI):**
-  - `MedicationRepository.saveMedication / deleteMedication` requires `actor.role == "supervisor"` and throws `MedicationRepositoryError.permissionDenied` otherwise.
-  - `MedicationRepository.logDose` accepts any `loggedByPersonID` — clients log their own doses; the actor identity is captured for audit.
-  - `PersonRepository.resetPin` requires the acting Person to be a supervisor in the **same** care circle as the target; cross-circle resets throw `PersonRepositoryError.permissionDenied`.
+- **Permission rules (enforced at the repository layer + Firestore rules):**
+  - `MedicationRepository.saveMedication / deleteMedication` and `PersonRepository.removePersonFromCircle / resetPin / updatePersonRole / createDeviceClient / createManagedClient` all require `PersonRepository.canWrite(actorPersonID:)` (true only for the primary) and throw `permissionDenied` otherwise.
+  - `MedicationRepository.logDose` rejects secondary supervisors silently (returns nil); device clients logging their own doses and the primary logging on a client's behalf both succeed.
+  - `PersonRepository.promoteToPrimary(targetPersonID:actorPersonID:)` requires the actor to be the current primary (`notCurrentPrimary` otherwise) and the target to be a supervisor in the same circle (`invalidPromotionTarget` otherwise).
+  - `CareCircleRepository.renameCircle / regenerateJoinCode` require the actor to be primary; throw `CareCircleEditError.permissionDenied` otherwise.
+  - `CareCircleRepository.leaveCircle` rejects a primary leaving directly with `.primaryMustPromoteFirst` when secondaries exist; the existing `.lastSupervisor` still applies to a sole supervisor.
   - The repository checks the role by reading the actor's `Person` directly from the Core Data context — it does not depend on `PersonRepository`, so there is no circular dependency.
 
 - **PIN hashing:** PBKDF2-SHA256 via CommonCrypto's `CCKeyDerivationPBKDF`. CryptoKit's PBKDF2 is not in the iOS 16 public API surface, so we use CommonCrypto. Parameters: 100,000 iterations, 32-byte derived key, 16-byte per-Person random salt generated with `SystemRandomNumberGenerator`. Salt is stored on the `Person` row alongside the hash. Verification is constant-time. Plaintext PINs are never persisted, never logged, never round-tripped. Three consecutive wrong PINs flips a lockout flag (`failedPinAttempts >= 3`); a successful verification resets the counter.
@@ -136,6 +179,8 @@ Dosely organises users into **CareCircles**: small groups (a family, a household
 - **Join codes:** 6-digit numeric (`"%06d"` of a `0..<1_000_000` draw). On `createCareCircle` and `regenerateJoinCode` we draw with collision retry against existing circles. Birthday-paradox math: ~39% chance of *any* collision in 1000 draws, so the test threshold is "≥950 unique" rather than "all unique" — a degenerate RNG would produce far more collisions.
 
 - **One-shot migration (`CareCircleMigration.runIfNeeded`):** runs the first time a Firebase user signs in after the refactor. Creates a default "My Family" circle, inserts the user as the founding supervisor, and stamps every existing Medication and DoseLog (which lack `personID` / `loggedByPersonID`) with that supervisor's id. Idempotent via `UserDefaults["circle_migration_v1_complete"]`. Auto-runs from `AuthService.resolveCurrentPerson` so users land on a working `currentPerson` without any UI bootstrap. The supervisor dashboard and profile picker (Prompts 14 and 15) replace the auto-bootstrap with proper UX.
+
+- **One-shot migration (`PrimaryRoleMigration.runIfNeeded`):** runs once per device after the primary/secondary split lands. Sweeps every local CareCircle that has no `primarySupervisorPersonID`, picks the lowest-UUID supervisor as primary (deterministic so concurrent devices converge on the same answer), and writes a single Firestore batch via `FirestoreService.applyPrimaryAssignment` that stamps `primarySupervisorPersonID`, sets the primary's role to `primary_supervisor` and everyone else's to `secondary_supervisor`, and mirrors role onto each `/userMemberships`. Gated by `UserDefaults["primary_role_migration_v1"]`. Auto-runs from `AuthService.resolveCurrentPerson` after `FirestoreUploadMigration`. See the "Primary / secondary supervisor split" section under "Firestore security model" for the rules-layer details.
 
 - **Leaving and rejoining a circle (`CareCircleRepository.leaveCircle`):** deletes the supervisor's `Person` row from the circle. The Firebase account stays alive; on the next sign-in (or after the active flow finishes its join step) `resolveCurrentPerson` returns nil and AuthGate routes back to `CircleSetupView`. **Known limitation:** rejoining the same circle with the same Firebase account creates a *new* `Person` row — historical dose logs that referenced the old `Person.id` are not re-attributed. Settings → Family ▸ "Leave family and join another" is the user-visible entry point; rejoin-the-same-family is an edge case the MVP does not optimise for.
 

@@ -10,8 +10,16 @@ final class CareCircleRepositoryTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         stack = CoreDataStack(inMemory: true)
-        repo = CareCircleRepository(stack: stack)
-        personRepo = PersonRepository(stack: stack)
+        // Explicit no-op FirestoreService isolates the test from the
+        // shared singleton: when DoselyApp has already configured Firebase
+        // (which happens whenever the host app launches under Xcode), the
+        // shared service points at production Firestore and unauthenticated
+        // writes fail with permission_denied — leaving Core Data in sync
+        // but the Firestore lookup path empty. Wiring a no-op service makes
+        // the join + regenerate paths exercise the Core Data fallback.
+        let noFirestore = FirestoreService()
+        repo = CareCircleRepository(stack: stack, firestore: noFirestore)
+        personRepo = PersonRepository(stack: stack, firestore: noFirestore)
     }
 
     override func tearDown() {
@@ -28,8 +36,29 @@ final class CareCircleRepositoryTests: XCTestCase {
 
         let supervisor = await personRepo.fetchSupervisor(firebaseUID: "abc")
         XCTAssertNotNil(supervisor)
-        XCTAssertEqual(supervisor?.role, "supervisor")
+        XCTAssertEqual(supervisor?.role, Roles.primarySupervisor,
+                       "founder of a fresh circle is the primary supervisor")
         XCTAssertEqual(supervisor?.careCircle?.id, circle.id)
+        XCTAssertEqual(circle.primarySupervisorPersonID, supervisor?.id,
+                       "CareCircle.primarySupervisorPersonID must point at the founder")
+    }
+
+    func testJoinCareCircleMakesJoinerSecondary() async {
+        let circle = await repo.createCareCircle(
+            name: "Family", foundingSupervisorFirebaseUID: "founder", founderName: "F"
+        )
+        let result = await repo.joinCareCircle(
+            code: circle.joinCode!,
+            asSupervisorWithFirebaseUID: "joiner",
+            name: "Joiner",
+            language: "en"
+        )
+        guard case .success = result else {
+            XCTFail("join failed"); return
+        }
+        let joiner = await personRepo.fetchSupervisor(firebaseUID: "joiner")
+        XCTAssertEqual(joiner?.role, Roles.secondarySupervisor,
+                       "new joiners are read-only secondary supervisors")
     }
 
     func testJoinCodeIsUniqueAcross1000Generations() async {
@@ -153,22 +182,48 @@ final class CareCircleRepositoryTests: XCTestCase {
         XCTAssertEqual(result, .failure(.alreadyMember))
     }
 
-    func testRegenerateJoinCodeChangesIt() async {
+    func testRegenerateJoinCodeChangesIt() async throws {
         let circle = await repo.createCareCircle(
             name: "X", foundingSupervisorFirebaseUID: "f", founderName: "F"
         )
         let original = circle.joinCode
-        let newCode = await repo.regenerateJoinCode(careCircleID: circle.id!)
-        XCTAssertNotNil(newCode)
+        let founder = await personRepo.fetchSupervisor(firebaseUID: "f")!
+        let newCode = try await repo.regenerateJoinCode(
+            careCircleID: circle.id!, actorPersonID: founder.id!
+        )
         XCTAssertNotEqual(newCode, original)
     }
 
-    func testRenameCircleUpdatesName() async {
+    func testRegenerateJoinCodeRefusesSecondary() async {
+        let circle = await repo.createCareCircle(
+            name: "X", foundingSupervisorFirebaseUID: "primary", founderName: "P"
+        )
+        _ = await repo.joinCareCircle(
+            code: circle.joinCode!,
+            asSupervisorWithFirebaseUID: "secondary",
+            name: "S"
+        )
+        let secondary = await personRepo.fetchSupervisor(firebaseUID: "secondary")!
+        do {
+            _ = try await repo.regenerateJoinCode(
+                careCircleID: circle.id!, actorPersonID: secondary.id!
+            )
+            XCTFail("Expected permissionDenied")
+        } catch let err as CareCircleEditError {
+            XCTAssertEqual(err, .permissionDenied)
+        } catch {
+            XCTFail("Wrong error type: \(error)")
+        }
+    }
+
+    func testRenameCircleUpdatesName() async throws {
         let circle = await repo.createCareCircle(
             name: "Original", foundingSupervisorFirebaseUID: "f", founderName: "F"
         )
-        let ok = await repo.renameCircle(careCircleID: circle.id!, newName: "Renamed")
-        XCTAssertTrue(ok)
+        let founder = await personRepo.fetchSupervisor(firebaseUID: "f")!
+        try await repo.renameCircle(
+            careCircleID: circle.id!, newName: "Renamed", actorPersonID: founder.id!
+        )
         let refreshed = await repo.fetchCareCircle(id: circle.id!)
         XCTAssertEqual(refreshed?.name, "Renamed")
     }
@@ -177,10 +232,41 @@ final class CareCircleRepositoryTests: XCTestCase {
         let circle = await repo.createCareCircle(
             name: "Original", foundingSupervisorFirebaseUID: "f", founderName: "F"
         )
-        let ok = await repo.renameCircle(careCircleID: circle.id!, newName: "   ")
-        XCTAssertFalse(ok)
+        let founder = await personRepo.fetchSupervisor(firebaseUID: "f")!
+        do {
+            try await repo.renameCircle(
+                careCircleID: circle.id!, newName: "   ", actorPersonID: founder.id!
+            )
+            XCTFail("Expected invalidName")
+        } catch let err as CareCircleEditError {
+            XCTAssertEqual(err, .invalidName)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
         let refreshed = await repo.fetchCareCircle(id: circle.id!)
         XCTAssertEqual(refreshed?.name, "Original")
+    }
+
+    func testRenameCircleRefusesSecondary() async {
+        let circle = await repo.createCareCircle(
+            name: "Original", foundingSupervisorFirebaseUID: "primary", founderName: "P"
+        )
+        _ = await repo.joinCareCircle(
+            code: circle.joinCode!,
+            asSupervisorWithFirebaseUID: "secondary",
+            name: "S"
+        )
+        let secondary = await personRepo.fetchSupervisor(firebaseUID: "secondary")!
+        do {
+            try await repo.renameCircle(
+                careCircleID: circle.id!, newName: "Hijacked", actorPersonID: secondary.id!
+            )
+            XCTFail("Expected permissionDenied")
+        } catch let err as CareCircleEditError {
+            XCTAssertEqual(err, .permissionDenied)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
     }
 
     // MARK: - Leave circle
@@ -202,32 +288,76 @@ final class CareCircleRepositoryTests: XCTestCase {
         _ = circle
     }
 
-    func testLeaveCircleSucceedsWhenAnotherSupervisorRemains() async {
+    func testSecondaryCanLeaveWhenPrimaryRemains() async {
+        // Founder is the primary; the joiner is a secondary. The
+        // secondary can leave directly because the primary stays
+        // behind to keep the circle writable.
         let circle = await repo.createCareCircle(
             name: "Pair", foundingSupervisorFirebaseUID: "founder", founderName: "Founder"
         )
-        let joinResult = await repo.joinCareCircle(
+        _ = await repo.joinCareCircle(
             code: circle.joinCode!,
             asSupervisorWithFirebaseUID: "second",
             name: "Second"
         )
-        guard case .success = joinResult else {
-            XCTFail("setup join failed"); return
-        }
-        let founder = await personRepo.fetchSupervisor(firebaseUID: "founder")!
-        let founderID = founder.id!
-
-        let leave = await repo.leaveCircle(supervisorPersonID: founderID)
+        let second = await personRepo.fetchSupervisor(firebaseUID: "second")!
+        let leave = await repo.leaveCircle(supervisorPersonID: second.id!)
         if case .failure(let error) = leave {
             XCTFail("Expected success, got \(error)")
         }
+        let goneSecondary = await personRepo.fetchSupervisor(firebaseUID: "second")
+        XCTAssertNil(goneSecondary)
+        let founder = await personRepo.fetchSupervisor(firebaseUID: "founder")
+        XCTAssertNotNil(founder)
+    }
 
-        // Founder is gone; second supervisor remains.
+    func testPrimaryCannotLeaveDirectlyWhenSecondaryExists() async {
+        // The primary must promote the secondary first; trying to leave
+        // before promoting returns the new `primaryMustPromoteFirst`.
+        let circle = await repo.createCareCircle(
+            name: "Pair", foundingSupervisorFirebaseUID: "founder", founderName: "Founder"
+        )
+        _ = await repo.joinCareCircle(
+            code: circle.joinCode!,
+            asSupervisorWithFirebaseUID: "second",
+            name: "Second"
+        )
+        let founder = await personRepo.fetchSupervisor(firebaseUID: "founder")!
+        let leave = await repo.leaveCircle(supervisorPersonID: founder.id!)
+        if case .failure(let err) = leave {
+            XCTAssertEqual(err, .primaryMustPromoteFirst)
+        } else {
+            XCTFail("Expected primaryMustPromoteFirst")
+        }
+        // Founder still in the circle.
+        let stillThere = await personRepo.fetchSupervisor(firebaseUID: "founder")
+        XCTAssertNotNil(stillThere)
+    }
+
+    func testPrimaryCanLeaveAfterPromotingSecondary() async throws {
+        let circle = await repo.createCareCircle(
+            name: "Pair", foundingSupervisorFirebaseUID: "founder", founderName: "Founder"
+        )
+        _ = await repo.joinCareCircle(
+            code: circle.joinCode!,
+            asSupervisorWithFirebaseUID: "second",
+            name: "Second"
+        )
+        let founder = await personRepo.fetchSupervisor(firebaseUID: "founder")!
+        let second = await personRepo.fetchSupervisor(firebaseUID: "second")!
+
+        try await personRepo.promoteToPrimary(
+            targetPersonID: second.id!, actorPersonID: founder.id!
+        )
+        // After promotion the founder is now a secondary and may leave.
+        let leave = await repo.leaveCircle(supervisorPersonID: founder.id!)
+        if case .failure(let error) = leave {
+            XCTFail("Expected success after promotion, got \(error)")
+        }
         let goneFounder = await personRepo.fetchSupervisor(firebaseUID: "founder")
         XCTAssertNil(goneFounder)
-        let second = await personRepo.fetchSupervisor(firebaseUID: "second")
-        XCTAssertNotNil(second)
-        XCTAssertEqual(second?.careCircle?.id, circle.id)
+        let nowPrimary = await personRepo.fetchSupervisor(firebaseUID: "second")
+        XCTAssertEqual(nowPrimary?.role, Roles.primarySupervisor)
     }
 
     func testLeaveThenJoinAnotherCircleCreatesFreshSupervisorRow() async {

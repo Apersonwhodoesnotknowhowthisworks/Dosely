@@ -25,11 +25,19 @@ extension FirestoreModels {
         var joinCode: String
         var createdAt: Date
         /// Denormalized count of `Person` rows in this circle whose
-        /// role == "supervisor". Maintained by the app via
+        /// role is either supervisor flavour. Maintained by the app via
         /// FieldValue.increment(±1) on supervisor add/remove. Drives the
         /// last-supervisor protection at the rules layer (see
         /// firestore.rules — Person delete requires post-batch count >= 1).
         var supervisorCount: Int
+        /// Person.id of the current primary supervisor in this circle.
+        /// Exactly one supervisor in the circle holds the
+        /// `primary_supervisor` role at all times; this field is the
+        /// single source of truth for who that is. `promoteToPrimary`
+        /// updates this field atomically with the role swap on both
+        /// Person docs and the two `/userMemberships` docs. Optional
+        /// because pre-`PrimaryRoleMigration` data has no value yet.
+        var primarySupervisorPersonID: String?
         /// Server timestamp for last write. Omitted on encode (Firestore
         /// fills it in via FieldValue.serverTimestamp() at the call site).
         var lastModified: Date?
@@ -168,6 +176,7 @@ extension FirestoreModels.FCareCircle {
         self.joinCode = circle.joinCode ?? ""
         self.createdAt = circle.createdAt ?? Date()
         self.supervisorCount = supervisorCount
+        self.primarySupervisorPersonID = circle.primarySupervisorPersonID?.uuidString
         self.lastModified = nil
     }
 
@@ -184,6 +193,7 @@ extension FirestoreModels.FCareCircle {
         circle.name = name
         circle.joinCode = joinCode
         circle.createdAt = createdAt
+        circle.primarySupervisorPersonID = primarySupervisorPersonID.flatMap { UUID(uuidString: $0) }
         return circle
     }
 }

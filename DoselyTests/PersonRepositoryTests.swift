@@ -12,8 +12,11 @@ final class PersonRepositoryTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         stack = CoreDataStack(inMemory: true)
-        personRepo = PersonRepository(stack: stack)
-        careCircleRepo = CareCircleRepository(stack: stack)
+        // See `CareCircleRepositoryTests.setUp` for why a no-op
+        // FirestoreService is wired in explicitly.
+        let noFirestore = FirestoreService()
+        personRepo = PersonRepository(stack: stack, firestore: noFirestore)
+        careCircleRepo = CareCircleRepository(stack: stack, firestore: noFirestore)
         circle = await careCircleRepo.createCareCircle(
             name: "Test", foundingSupervisorFirebaseUID: "uid-1", founderName: "Founder"
         )
@@ -26,10 +29,10 @@ final class PersonRepositoryTests: XCTestCase {
         super.tearDown()
     }
 
-    func testCreateDeviceClientHashesPin() async {
-        let client = await personRepo.createDeviceClient(
+    func testCreateDeviceClientHashesPin() async throws {
+        let client = try await personRepo.createDeviceClient(
             name: "Grandma", photoData: nil, pinPlaintext: "1234",
-            language: "pa", in: circle
+            language: "pa", in: circle, actorPersonID: supervisor.id!
         )
         XCTAssertEqual(client.role, "device_client")
         XCTAssertNotNil(client.pinHash)
@@ -37,20 +40,20 @@ final class PersonRepositoryTests: XCTestCase {
         XCTAssertNotEqual(client.pinHash, "1234", "PIN must never round-trip plaintext")
     }
 
-    func testVerifyPinSuccess() async {
-        let client = await personRepo.createDeviceClient(
+    func testVerifyPinSuccess() async throws {
+        let client = try await personRepo.createDeviceClient(
             name: "Bibi", photoData: nil, pinPlaintext: "5678",
-            language: "en", in: circle
+            language: "en", in: circle, actorPersonID: supervisor.id!
         )
         let result = await personRepo.verifyPin(personID: client.id!, pinPlaintext: "5678")
         XCTAssertTrue(result.verified)
         XCTAssertFalse(result.lockoutTriggered)
     }
 
-    func testVerifyPinFailureIncrementsCounter() async {
-        let client = await personRepo.createDeviceClient(
+    func testVerifyPinFailureIncrementsCounter() async throws {
+        let client = try await personRepo.createDeviceClient(
             name: "X", photoData: nil, pinPlaintext: "0000",
-            language: "en", in: circle
+            language: "en", in: circle, actorPersonID: supervisor.id!
         )
         let firstFail = await personRepo.verifyPin(personID: client.id!, pinPlaintext: "9999")
         XCTAssertFalse(firstFail.verified)
@@ -60,10 +63,10 @@ final class PersonRepositoryTests: XCTestCase {
         XCTAssertEqual(refreshed?.failedPinAttempts, 1)
     }
 
-    func testThreeWrongPinsTriggersLockout() async {
-        let client = await personRepo.createDeviceClient(
+    func testThreeWrongPinsTriggersLockout() async throws {
+        let client = try await personRepo.createDeviceClient(
             name: "X", photoData: nil, pinPlaintext: "0000",
-            language: "en", in: circle
+            language: "en", in: circle, actorPersonID: supervisor.id!
         )
         _ = await personRepo.verifyPin(personID: client.id!, pinPlaintext: "1111")
         _ = await personRepo.verifyPin(personID: client.id!, pinPlaintext: "2222")
@@ -71,10 +74,10 @@ final class PersonRepositoryTests: XCTestCase {
         XCTAssertTrue(third.lockoutTriggered)
     }
 
-    func testSuccessfulPinResetsFailureCounter() async {
-        let client = await personRepo.createDeviceClient(
+    func testSuccessfulPinResetsFailureCounter() async throws {
+        let client = try await personRepo.createDeviceClient(
             name: "X", photoData: nil, pinPlaintext: "1234",
-            language: "en", in: circle
+            language: "en", in: circle, actorPersonID: supervisor.id!
         )
         _ = await personRepo.verifyPin(personID: client.id!, pinPlaintext: "9999")
         _ = await personRepo.verifyPin(personID: client.id!, pinPlaintext: "1234")
@@ -83,9 +86,9 @@ final class PersonRepositoryTests: XCTestCase {
     }
 
     func testResetPinRequiresSupervisorInSameCircle() async throws {
-        let client = await personRepo.createDeviceClient(
+        let client = try await personRepo.createDeviceClient(
             name: "X", photoData: nil, pinPlaintext: "1111",
-            language: "en", in: circle
+            language: "en", in: circle, actorPersonID: supervisor.id!
         )
 
         // Same-circle supervisor: succeeds.
@@ -114,8 +117,8 @@ final class PersonRepositoryTests: XCTestCase {
     // MARK: - Role flip
 
     func testPromoteManagedClientToDeviceClientSetsPin() async throws {
-        let client = await personRepo.createManagedClient(
-            name: "Bibi", photoData: nil, language: "pa", in: circle
+        let client = try await personRepo.createManagedClient(
+            name: "Bibi", photoData: nil, language: "pa", in: circle, actorPersonID: supervisor.id!
         )
         try await personRepo.updatePersonRole(personID: client.id!,
                                               newRole: "device_client",
@@ -129,9 +132,9 @@ final class PersonRepositoryTests: XCTestCase {
     }
 
     func testDemoteDeviceClientToManagedClientClearsPin() async throws {
-        let client = await personRepo.createDeviceClient(
+        let client = try await personRepo.createDeviceClient(
             name: "X", photoData: nil, pinPlaintext: "1234",
-            language: "en", in: circle
+            language: "en", in: circle, actorPersonID: supervisor.id!
         )
         try await personRepo.updatePersonRole(personID: client.id!,
                                               newRole: "managed_client",
@@ -160,8 +163,8 @@ final class PersonRepositoryTests: XCTestCase {
     // MARK: - Remove from circle
 
     func testRemoveClientDeletesPersonAndCascadesMedications() async throws {
-        let client = await personRepo.createManagedClient(
-            name: "Y", photoData: nil, language: "en", in: circle
+        let client = try await personRepo.createManagedClient(
+            name: "Y", photoData: nil, language: "en", in: circle, actorPersonID: supervisor.id!
         )
         // Capture the id up front — Core Data nils out properties after
         // the managed object turns into a fault on delete.
@@ -198,9 +201,9 @@ final class PersonRepositoryTests: XCTestCase {
         }
     }
 
-    func testRemoveCrossCircleRefused() async {
-        let client = await personRepo.createManagedClient(
-            name: "X", photoData: nil, language: "en", in: circle
+    func testRemoveCrossCircleRefused() async throws {
+        let client = try await personRepo.createManagedClient(
+            name: "X", photoData: nil, language: "en", in: circle, actorPersonID: supervisor.id!
         )
         let otherCircle = await careCircleRepo.createCareCircle(
             name: "Other", foundingSupervisorFirebaseUID: "uid-other", founderName: "Stranger"
@@ -216,5 +219,157 @@ final class PersonRepositoryTests: XCTestCase {
             XCTFail("Unexpected error: \(error)")
         }
         _ = otherCircle
+    }
+
+    // MARK: - Primary / secondary split
+
+    /// Helper that adds a second supervisor to the test circle as a
+    /// secondary, returning the new Person row.
+    private func addSecondarySupervisor(uid: String, name: String) async -> Person {
+        let result = await careCircleRepo.joinCareCircle(
+            code: circle.joinCode!,
+            asSupervisorWithFirebaseUID: uid,
+            name: name
+        )
+        guard case .success = result else {
+            XCTFail("setup join failed for \(uid)")
+            return supervisor
+        }
+        return await personRepo.fetchSupervisor(firebaseUID: uid)!
+    }
+
+    func testFounderIsPrimaryAndCanWrite() async {
+        XCTAssertEqual(supervisor.role, Roles.primarySupervisor)
+        let isPrimary = await personRepo.isPrimary(personID: supervisor.id!)
+        XCTAssertTrue(isPrimary)
+        let canWrite = await personRepo.canWrite(actorPersonID: supervisor.id!)
+        XCTAssertTrue(canWrite)
+    }
+
+    func testJoinerIsSecondaryAndCannotWrite() async {
+        let secondary = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        XCTAssertEqual(secondary.role, Roles.secondarySupervisor)
+        let isPrimary = await personRepo.isPrimary(personID: secondary.id!)
+        XCTAssertFalse(isPrimary)
+        let canWrite = await personRepo.canWrite(actorPersonID: secondary.id!)
+        XCTAssertFalse(canWrite)
+    }
+
+    func testSecondaryCanReadPeople() async {
+        // Reads aren't gated locally — Core Data is open. The test
+        // just confirms a secondary can resolve the same data the
+        // primary sees. (Firestore-side read access for secondaries is
+        // verified by tests/firestore_rules.test.ts.)
+        _ = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        let people = await personRepo.fetchAllPeople(in: circle.id!)
+        XCTAssertEqual(people.count, 2)
+    }
+
+    func testSecondarySaveMedicationThrowsPermissionDenied() async {
+        let secondary = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        let medRepo = MedicationRepository(stack: stack)
+        do {
+            _ = try await medRepo.saveMedication(
+                personID: supervisor.id!,
+                actorPersonID: secondary.id!,
+                name: "Blocked", dose: "1mg", pillsPerDose: 1, foodRule: "either",
+                notes: nil, currentSupply: 1, pillPhotoData: nil
+            )
+            XCTFail("Expected permissionDenied")
+        } catch let err as MedicationRepositoryError {
+            XCTAssertEqual(err, .permissionDenied)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
+    }
+
+    // MARK: - promoteToPrimary
+
+    func testPromoteToPrimarySwapsRoles() async throws {
+        let secondary = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        try await personRepo.promoteToPrimary(
+            targetPersonID: secondary.id!, actorPersonID: supervisor.id!
+        )
+
+        let oldPrimary = await personRepo.fetchPerson(id: supervisor.id!)
+        let newPrimary = await personRepo.fetchPerson(id: secondary.id!)
+        XCTAssertEqual(oldPrimary?.role, Roles.secondarySupervisor)
+        XCTAssertEqual(newPrimary?.role, Roles.primarySupervisor)
+
+        let refreshedCircle = await careCircleRepo.fetchCareCircle(id: circle.id!)
+        XCTAssertEqual(refreshedCircle?.primarySupervisorPersonID, secondary.id)
+    }
+
+    func testPromoteToPrimaryRefusesNonPrimaryCaller() async {
+        let secondary = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        // The secondary tries to promote themselves — the actor isn't
+        // the current primary.
+        do {
+            try await personRepo.promoteToPrimary(
+                targetPersonID: secondary.id!, actorPersonID: secondary.id!
+            )
+            XCTFail("Expected notCurrentPrimary")
+        } catch let err as PersonRepositoryError {
+            XCTAssertEqual(err, .notCurrentPrimary)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
+    }
+
+    func testPromoteToPrimaryRefusesNonSupervisorTarget() async {
+        let client = try? await personRepo.createDeviceClient(
+            name: "Grandpa", photoData: nil, pinPlaintext: "1234",
+            language: "en", in: circle, actorPersonID: supervisor.id!
+        )
+        do {
+            try await personRepo.promoteToPrimary(
+                targetPersonID: client!.id!, actorPersonID: supervisor.id!
+            )
+            XCTFail("Expected invalidPromotionTarget")
+        } catch let err as PersonRepositoryError {
+            XCTAssertEqual(err, .invalidPromotionTarget)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
+    }
+
+    func testDemotedPrimaryCannotWriteAfterPromotion() async throws {
+        let secondary = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        try await personRepo.promoteToPrimary(
+            targetPersonID: secondary.id!, actorPersonID: supervisor.id!
+        )
+
+        // The original supervisor is now a secondary. Their saveMedication
+        // call must be rejected on the canWrite check.
+        let medRepo = MedicationRepository(stack: stack)
+        do {
+            _ = try await medRepo.saveMedication(
+                personID: secondary.id!,
+                actorPersonID: supervisor.id!,
+                name: "Forbidden", dose: "1mg", pillsPerDose: 1, foodRule: "either",
+                notes: nil, currentSupply: 1, pillPhotoData: nil
+            )
+            XCTFail("Expected permissionDenied — caller is now secondary")
+        } catch let err as MedicationRepositoryError {
+            XCTAssertEqual(err, .permissionDenied)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
+    }
+
+    func testPromotedSecondaryCanWriteAfterPromotion() async throws {
+        let secondary = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        try await personRepo.promoteToPrimary(
+            targetPersonID: secondary.id!, actorPersonID: supervisor.id!
+        )
+
+        let medRepo = MedicationRepository(stack: stack)
+        let med = try await medRepo.saveMedication(
+            personID: secondary.id!,
+            actorPersonID: secondary.id!,
+            name: "Allowed", dose: "1mg", pillsPerDose: 1, foodRule: "either",
+            notes: nil, currentSupply: 1, pillPhotoData: nil
+        )
+        XCTAssertEqual(med.name, "Allowed")
     }
 }

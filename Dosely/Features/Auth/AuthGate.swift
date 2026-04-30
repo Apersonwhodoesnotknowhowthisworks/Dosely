@@ -49,7 +49,7 @@ struct AuthGate: View {
     private var authedRoot: some View {
         if authService.needsCircleSetup {
             CircleSetupView()
-        } else if authService.currentPerson?.role == "supervisor" {
+        } else if Roles.isAnySupervisor(authService.currentPerson?.role) {
             SupervisorDashboardView()
         } else {
             TodayView()

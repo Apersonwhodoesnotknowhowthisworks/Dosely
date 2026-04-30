@@ -94,8 +94,9 @@ enum FirestoreUploadMigration {
         return await context.perform {
             let supervisorRequest = NSFetchRequest<Person>(entityName: "Person")
             supervisorRequest.predicate = NSPredicate(
-                format: "firebaseUID == %@ AND role == %@",
-                firebaseUID, "supervisor"
+                format: "firebaseUID == %@ AND role IN %@",
+                firebaseUID,
+                [Roles.primarySupervisor, Roles.secondarySupervisor, Roles.legacySupervisor]
             )
             supervisorRequest.fetchLimit = 1
             guard let supervisor = (try? context.fetch(supervisorRequest))?.first,
@@ -109,16 +110,20 @@ enum FirestoreUploadMigration {
             let fpeople = people.map { FirestoreModels.FPerson(from: $0, careCircleID: circleID) }
             let personIDs = Set(people.compactMap { $0.id })
 
-            let supervisors = people.filter { $0.role == "supervisor" }
+            let supervisors = people.filter { Roles.isAnySupervisor($0.role) }
             let bindings: [(firebaseUID: String, personID: String)] = supervisors.compactMap { p in
                 guard let uid = p.firebaseUID, let pid = p.id else { return nil }
                 return (firebaseUID: uid, personID: pid.uuidString)
             }
 
-            let fcircle = FirestoreModels.FCareCircle(
+            // Stamp the founder as the primary at upload time. Any
+            // additional supervisors found in the snapshot will be
+            // uploaded as `secondary_supervisor`.
+            var fcircle = FirestoreModels.FCareCircle(
                 from: circle,
                 supervisorCount: 0
             )
+            fcircle.primarySupervisorPersonID = founderPersonUUID.uuidString
 
             let medRequest = NSFetchRequest<Medication>(entityName: "Medication")
             let allMeds = (try? context.fetch(medRequest)) ?? []
@@ -164,7 +169,8 @@ enum FirestoreUploadMigration {
     ) async throws {
         // 1. Create the careCircle with supervisorCount=0. The
         //    founder-bootstrap path on the /userMemberships create rule
-        //    requires this initial state.
+        //    requires this initial state. `primarySupervisorPersonID`
+        //    is already set to the founder's id by the snapshot builder.
         try await firestore.createCareCircle(snapshot.circle)
 
         // 2. Founder bootstrap: write /userMemberships, then the founder's
@@ -173,7 +179,7 @@ enum FirestoreUploadMigration {
         let founderMembership = FirestoreModels.FUserMembership(
             careCircleID: snapshot.circle.id,
             personID: snapshot.founderPersonID,
-            role: "supervisor",
+            role: Roles.primarySupervisor,
             joinedAt: Date(),
             joinCode: nil
         )
@@ -182,19 +188,22 @@ enum FirestoreUploadMigration {
             membership: founderMembership
         )
         if let founderPerson = snapshot.people.first(where: { $0.id == snapshot.founderPersonID }) {
-            try await firestore.upsertPerson(founderPerson)
+            var fp = founderPerson
+            fp.role = Roles.primarySupervisor
+            try await firestore.upsertPerson(fp)
         }
 
-        // 3. Other people. Founder is now an authenticated supervisor at
+        // 3. Other people. Founder is now an authenticated primary at
         //    the rules layer (membership + Person doc both written), so
-        //    `isSupervisor` covers writes for the rest of the snapshot.
+        //    `isPrimary` covers writes for the rest of the snapshot.
         //    /userMemberships entries for additional supervisors go via
-        //    the supervisor-onboards-member branch.
+        //    the supervisor-onboards-member branch with role
+        //    `secondary_supervisor`.
         for binding in snapshot.supervisorBindings where binding.firebaseUID != snapshot.founderUID {
             let membership = FirestoreModels.FUserMembership(
                 careCircleID: snapshot.circle.id,
                 personID: binding.personID,
-                role: "supervisor",
+                role: Roles.secondarySupervisor,
                 joinedAt: Date(),
                 joinCode: nil
             )
@@ -204,7 +213,11 @@ enum FirestoreUploadMigration {
             )
         }
         for person in snapshot.people where person.id != snapshot.founderPersonID {
-            try await firestore.upsertPerson(person)
+            var p = person
+            if Roles.isAnySupervisor(p.role) {
+                p.role = Roles.secondarySupervisor
+            }
+            try await firestore.upsertPerson(p)
         }
 
         // 4. Upload subcollections.

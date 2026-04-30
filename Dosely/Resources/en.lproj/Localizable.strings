@@ -330,8 +330,36 @@
 "supervisor.people.empty.title" = "Just you so far";
 "supervisor.people.empty.body" = "Add a family member, then assign their medications from the Today tab.";
 "supervisor.role.supervisor" = "Supervisor";
+"supervisor.role.primary" = "Primary supervisor";
+"supervisor.role.secondary" = "Secondary supervisor";
 "supervisor.role.deviceclient" = "Device client";
 "supervisor.role.managedclient" = "Managed client";
+
+// Role badge in the dashboard top bar
+"supervisor.badge.primary" = "Primary";
+"supervisor.badge.viewonly" = "View only";
+"supervisor.badge.primary.a11y" = "You are the primary supervisor of this family.";
+"supervisor.badge.viewonly.a11y" = "You can view this family but only %@ can make changes.";
+
+// Read-only inline notice for secondaries
+"supervisor.readonly.notice" = "Only %@ can change this. Ask them if you need it updated.";
+"supervisor.readonly.notice.unknown" = "Only the primary supervisor can change this.";
+
+// Promote to primary
+"supervisor.promote.row" = "Make primary supervisor";
+"supervisor.promote.row.subtitle" = "Hand over write access for this family.";
+"supervisor.promote.confirm.title" = "Make %@ primary?";
+"supervisor.promote.confirm.body" = "If you make %@ primary, you will become a secondary supervisor and won't be able to add or change medications. Continue?";
+"supervisor.promote.confirm.action" = "Yes, make them primary";
+"supervisor.promote.error.notprimary" = "Only the primary supervisor can promote someone.";
+"supervisor.promote.error.target" = "That person can't be made primary.";
+"supervisor.promote.error.generic" = "Couldn't change who's primary. Please try again.";
+
+// Errors
+"supervisor.person.error.notprimary" = "Only the primary supervisor can do that. Ask the primary if you need it changed.";
+
+// Leave-as-primary blocker
+"circle.leave.error.primarypromotefirst" = "You're the primary supervisor. Make someone else primary first, then you can leave.";
 
 // MARK: - Add person
 "supervisor.add.title" = "Add a family member";

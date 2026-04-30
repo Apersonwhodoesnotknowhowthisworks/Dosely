@@ -15,6 +15,19 @@ enum CareCircleLeaveError: Error, Equatable {
     case lastSupervisor
     case notMember
     case notFound
+    /// The leaver is the current primary AND there's at least one
+    /// secondary supervisor in the circle. They must promote a secondary
+    /// to primary first; only then can they leave (as a secondary).
+    case primaryMustPromoteFirst
+}
+
+enum CareCircleEditError: Error, Equatable {
+    /// Caller is not the primary supervisor of the circle. Surface as
+    /// "Only the primary supervisor can do this" in the UI.
+    case permissionDenied
+    case invalidName
+    case notFound
+    case offline
 }
 
 /// Care circle reads stay synchronous from Core Data (instant UI).
@@ -38,6 +51,10 @@ final class CareCircleRepository {
     /// person + reserved join code), then mirrors the result into Core
     /// Data. The Firestore write happens first so two devices can
     /// observe the same circle from the moment of creation.
+    ///
+    /// The founder is the **primary supervisor** of the new circle —
+    /// `primary_supervisor` role on the Person doc, `primarySupervisorPersonID`
+    /// set on the CareCircle.
     @discardableResult
     func createCareCircle(
         name: String,
@@ -56,6 +73,7 @@ final class CareCircleRepository {
             joinCode: joinCode,
             createdAt: Date(),
             supervisorCount: 0,
+            primarySupervisorPersonID: supervisorID.uuidString,
             lastModified: nil
         )
 
@@ -71,7 +89,7 @@ final class CareCircleRepository {
         let founderMembership = FirestoreModels.FUserMembership(
             careCircleID: circleID.uuidString,
             personID: supervisorID.uuidString,
-            role: "supervisor",
+            role: Roles.primarySupervisor,
             joinedAt: Date(),
             joinCode: nil
         )
@@ -84,7 +102,7 @@ final class CareCircleRepository {
             id: supervisorID.uuidString,
             careCircleID: circleID.uuidString,
             name: founderName,
-            role: "supervisor",
+            role: Roles.primarySupervisor,
             languagePreference: founderLanguage,
             firebaseUID: foundingSupervisorFirebaseUID,
             photoData: nil,
@@ -106,11 +124,12 @@ final class CareCircleRepository {
             circle.name = resolvedName
             circle.createdAt = Date()
             circle.joinCode = joinCode
+            circle.primarySupervisorPersonID = supervisorID
 
             let supervisorRow = Person(context: context)
             supervisorRow.id = supervisorID
             supervisorRow.name = founderName
-            supervisorRow.role = "supervisor"
+            supervisorRow.role = Roles.primarySupervisor
             supervisorRow.languagePreference = founderLanguage
             supervisorRow.firebaseUID = foundingSupervisorFirebaseUID
             supervisorRow.failedPinAttempts = 0
@@ -126,8 +145,11 @@ final class CareCircleRepository {
     func fetchCareCircle(for firebaseUID: String) async -> CareCircle? {
         await context.perform { [context] in
             let request = NSFetchRequest<Person>(entityName: "Person")
-            request.predicate = NSPredicate(format: "firebaseUID == %@ AND role == %@",
-                                            firebaseUID, "supervisor")
+            request.predicate = NSPredicate(
+                format: "firebaseUID == %@ AND role IN %@",
+                firebaseUID,
+                [Roles.primarySupervisor, Roles.secondarySupervisor, Roles.legacySupervisor]
+            )
             request.fetchLimit = 1
             return (try? context.fetch(request))?.first?.careCircle
         }
@@ -201,11 +223,12 @@ final class CareCircleRepository {
         // Joiner bootstrap: write /userMemberships first (with the
         // joinCode that proves authority at the rules layer), then the
         // Person doc (whose self-bootstrap rule validates against the
-        // membership), then bump supervisorCount.
+        // membership), then bump supervisorCount. New joiners are
+        // **secondary** supervisors — read-only across the circle.
         let joinerMembership = FirestoreModels.FUserMembership(
             careCircleID: fcircle.id,
             personID: supervisorID.uuidString,
-            role: "supervisor",
+            role: Roles.secondarySupervisor,
             joinedAt: Date(),
             joinCode: normalized
         )
@@ -218,7 +241,7 @@ final class CareCircleRepository {
             id: supervisorID.uuidString,
             careCircleID: fcircle.id,
             name: trimmedName,
-            role: "supervisor",
+            role: Roles.secondarySupervisor,
             languagePreference: language,
             firebaseUID: firebaseUID,
             photoData: nil,
@@ -241,7 +264,7 @@ final class CareCircleRepository {
             let person = Person(context: context)
             person.id = supervisorID
             person.name = trimmedName
-            person.role = "supervisor"
+            person.role = Roles.secondarySupervisor
             person.languagePreference = language
             person.firebaseUID = firebaseUID
             person.failedPinAttempts = 0
@@ -277,7 +300,7 @@ final class CareCircleRepository {
             let supervisor = Person(context: context)
             supervisor.id = UUID()
             supervisor.name = name
-            supervisor.role = "supervisor"
+            supervisor.role = Roles.secondarySupervisor
             supervisor.languagePreference = language
             supervisor.firebaseUID = firebaseUID
             supervisor.failedPinAttempts = 0
@@ -294,15 +317,28 @@ final class CareCircleRepository {
             guard let actor = Self.findPerson(id: supervisorPersonID, in: context) else {
                 return .failure(.notFound)
             }
-            guard actor.role == "supervisor", let circle = actor.careCircle else {
+            guard Roles.isAnySupervisor(actor.role), let circle = actor.careCircle else {
                 return .failure(.notMember)
             }
             let people = (circle.people as? Set<Person>) ?? []
             let otherSupervisors = people.filter {
-                $0.role == "supervisor" && $0.id != actor.id
+                Roles.isAnySupervisor($0.role) && $0.id != actor.id
             }
             if otherSupervisors.isEmpty {
                 return .failure(.lastSupervisor)
+            }
+            // The current primary cannot leave directly — they must
+            // first promote a secondary to primary. The rules-layer
+            // would also reject the post-batch state where
+            // `primarySupervisorPersonID` points at a deleted Person.
+            let isCurrentPrimary: Bool = {
+                if let primaryID = circle.primarySupervisorPersonID {
+                    return primaryID == actor.id
+                }
+                return Roles.isPrimarySupervisor(actor.role)
+            }()
+            if isCurrentPrimary {
+                return .failure(.primaryMustPromoteFirst)
             }
             guard let circleID = circle.id, let actorID = actor.id else {
                 return .failure(.notFound)
@@ -336,19 +372,23 @@ final class CareCircleRepository {
 
     // MARK: - Rename
 
-    @discardableResult
-    func renameCircle(careCircleID: UUID, newName: String) async -> Bool {
+    func renameCircle(
+        careCircleID: UUID,
+        newName: String,
+        actorPersonID: UUID
+    ) async throws {
         let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return false }
+        guard !trimmed.isEmpty else { throw CareCircleEditError.invalidName }
+        try await ensurePrimary(actorPersonID: actorPersonID, in: careCircleID)
+
         try? await firestore.updateCareCircleName(
             circleID: careCircleID.uuidString,
             newName: trimmed
         )
-        return await context.perform { [context] in
-            guard let circle = Self.find(id: careCircleID, in: context) else { return false }
+        await context.perform { [context] in
+            guard let circle = Self.find(id: careCircleID, in: context) else { return }
             circle.name = trimmed
             try? context.save()
-            return true
         }
     }
 
@@ -357,12 +397,16 @@ final class CareCircleRepository {
     /// Regenerates the join code atomically across `/careCircles/{id}`,
     /// `/joinCodes/{old}` (deleted), and `/joinCodes/{new}` (created).
     /// Mirrors to Core Data on success.
-    @discardableResult
-    func regenerateJoinCode(careCircleID: UUID) async -> String? {
+    func regenerateJoinCode(
+        careCircleID: UUID,
+        actorPersonID: UUID
+    ) async throws -> String {
+        try await ensurePrimary(actorPersonID: actorPersonID, in: careCircleID)
+
         let oldCode: String? = await context.perform { [context] in
             Self.find(id: careCircleID, in: context)?.joinCode
         }
-        guard let oldCode else { return nil }
+        guard let oldCode else { throw CareCircleEditError.notFound }
 
         let newCode = await uniqueJoinCode()
         do {
@@ -372,18 +416,36 @@ final class CareCircleRepository {
                 newCode: newCode
             )
         } catch {
-            // Couldn't write to Firestore (offline, perms). Surface nil
-            // so the caller can show an error rather than handing out a
-            // local-only code that isn't valid for cross-device joins.
-            return nil
+            // Couldn't write to Firestore (offline, perms). Surface
+            // offline so the caller can show an error rather than
+            // handing out a local-only code that isn't valid for
+            // cross-device joins.
+            throw CareCircleEditError.offline
         }
 
         return await context.perform { [context] in
-            guard let circle = Self.find(id: careCircleID, in: context) else { return nil }
+            guard let circle = Self.find(id: careCircleID, in: context) else { return newCode }
             circle.joinCode = newCode
             try? context.save()
             return newCode
         }
+    }
+
+    // MARK: - Permission gate
+
+    /// Throws `CareCircleEditError.permissionDenied` if the actor isn't
+    /// the primary supervisor of `careCircleID`.
+    private func ensurePrimary(actorPersonID: UUID, in careCircleID: UUID) async throws {
+        let isPrimary: Bool = await context.perform { [context] in
+            guard let actor = Self.findPerson(id: actorPersonID, in: context),
+                  let circle = Self.find(id: careCircleID, in: context),
+                  actor.careCircle?.id == circle.id else { return false }
+            if let primaryID = circle.primarySupervisorPersonID {
+                return primaryID == actorPersonID
+            }
+            return Roles.isPrimarySupervisor(actor.role)
+        }
+        if !isPrimary { throw CareCircleEditError.permissionDenied }
     }
 
     // MARK: - Helpers

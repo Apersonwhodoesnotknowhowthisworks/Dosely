@@ -132,11 +132,11 @@ final class MedicationRepository {
             guard let actor = Self.findPerson(id: actorPersonID, in: context) else {
                 throw MedicationRepositoryError.actorNotFound
             }
-            guard actor.role == "supervisor" else {
-                throw MedicationRepositoryError.permissionDenied
-            }
-            guard let circleID = actor.careCircle?.id else {
+            guard let circle = actor.careCircle, let circleID = circle.id else {
                 throw MedicationRepositoryError.actorNotFound
+            }
+            guard Self.isPrimary(actor: actor, circle: circle) else {
+                throw MedicationRepositoryError.permissionDenied
             }
 
             let med: Medication
@@ -198,11 +198,14 @@ final class MedicationRepository {
             guard let actor = Self.findPerson(id: actorPersonID, in: context) else {
                 throw MedicationRepositoryError.actorNotFound
             }
-            guard actor.role == "supervisor" else {
+            guard let circle = actor.careCircle, let circleID = circle.id else {
+                throw MedicationRepositoryError.actorNotFound
+            }
+            guard Self.isPrimary(actor: actor, circle: circle) else {
                 throw MedicationRepositoryError.permissionDenied
             }
             guard let med = Self.find(id: id, in: context) else { return nil }
-            guard let medID = med.id, let circleID = actor.careCircle?.id else {
+            guard let medID = med.id else {
                 return nil
             }
             context.delete(med)
@@ -239,6 +242,14 @@ final class MedicationRepository {
                   let person = Self.findPerson(id: personID, in: context),
                   let circleID = person.careCircle?.id else { return nil }
 
+            // Secondary supervisors cannot log doses (read-only mode).
+            // Device clients logging their own dose, or the primary
+            // supervisor logging on someone's behalf, are both fine.
+            if let actor = Self.findPerson(id: loggedByPersonID, in: context),
+               actor.role == Roles.secondarySupervisor {
+                return nil
+            }
+
             let log = DoseLog(context: context)
             log.id = UUID()
             log.scheduledTime = scheduledTime
@@ -274,6 +285,18 @@ final class MedicationRepository {
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         request.fetchLimit = 1
         return (try? context.fetch(request))?.first
+    }
+
+    /// True iff `actor` is the primary supervisor of `circle`. Mirrors
+    /// `PersonRepository.isPrimary` but synchronous so callers already
+    /// holding the Core Data context don't need a re-entrant `perform`.
+    /// Pre-`PrimaryRoleMigration` circles fall back to "is the legacy
+    /// supervisor" — same fallback as `PersonRepository.isPrimary`.
+    private static func isPrimary(actor: Person, circle: CareCircle) -> Bool {
+        if let primaryID = circle.primarySupervisorPersonID {
+            return primaryID == actor.id
+        }
+        return Roles.isPrimarySupervisor(actor.role)
     }
 
     private static func replaceSchedules(

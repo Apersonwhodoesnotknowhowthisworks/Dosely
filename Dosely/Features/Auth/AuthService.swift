@@ -187,6 +187,11 @@ final class AuthService: ObservableObject {
         // local data: upload it once, then let listeners take over.
         await FirestoreUploadMigration.runIfNeeded(firebaseUID: user.uid)
 
+        // Split legacy "supervisor" rows into primary/secondary and
+        // stamp `CareCircle.primarySupervisorPersonID`. Idempotent via
+        // a UserDefaults flag; runs once per device.
+        await PrimaryRoleMigration.runIfNeeded()
+
         // Start (or re-target) Firestore listeners for the resolved
         // circle so changes from another supervisor's device flow in.
         if let circleID = resolved?.careCircle?.id {

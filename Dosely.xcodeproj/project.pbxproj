@@ -9,13 +9,8 @@
 /* Begin PBXBuildFile section */
 		13D32A5A2F9B2303005253C1 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 13D32A592F9B2303005253C1 /* FirebaseAuth */; };
 		13D32A5C2F9B2303005253C1 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 13D32A5B2F9B2303005253C1 /* FirebaseCore */; };
-		13D32A602F9B2303005253C1 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 13D32A5F2F9B2303005253C1 /* FirebaseFirestore */; };
 		13D32A5E2F9B2444005253C1 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 13D32A5D2F9B2444005253C1 /* GoogleService-Info.plist */; };
-		BFD0000000000000000000110 /* FirestoreModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000110 /* FirestoreModels.swift */; };
-		BFD0000000000000000000111 /* FirestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000111 /* FirestoreService.swift */; };
-		BFD0000000000000000000112 /* SyncCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000112 /* SyncCoordinator.swift */; };
-		BFD0000000000000000000113 /* FirestoreUploadMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000113 /* FirestoreUploadMigration.swift */; };
-		BFD0000000000000000000114 /* FirestoreServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000114 /* FirestoreServiceTests.swift */; };
+		13D32A602F9B2303005253C1 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 13D32A5F2F9B2303005253C1 /* FirebaseFirestore */; };
 		BFD0000000000000000000001 /* DoselyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000001 /* DoselyApp.swift */; };
 		BFD0000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000002 /* ContentView.swift */; };
 		BFD0000000000000000000003 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000003 /* Persistence.swift */; };
@@ -107,6 +102,14 @@
 		BFD0000000000000000000101 /* CreateCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000101 /* CreateCircleView.swift */; };
 		BFD0000000000000000000102 /* JoinCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000102 /* JoinCircleView.swift */; };
 		BFD0000000000000000000103 /* LeaveAndJoinFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000103 /* LeaveAndJoinFlow.swift */; };
+		BFD0000000000000000000110 /* FirestoreModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000110 /* FirestoreModels.swift */; };
+		BFD0000000000000000000111 /* FirestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000111 /* FirestoreService.swift */; };
+		BFD0000000000000000000112 /* SyncCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000112 /* SyncCoordinator.swift */; };
+		BFD0000000000000000000113 /* FirestoreUploadMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000113 /* FirestoreUploadMigration.swift */; };
+		BFD0000000000000000000114 /* FirestoreServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000114 /* FirestoreServiceTests.swift */; };
+		BFD0000000000000000000115 /* Roles.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000115 /* Roles.swift */; };
+		BFD0000000000000000000116 /* PrimaryRoleMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000116 /* PrimaryRoleMigration.swift */; };
+		BFD0000000000000000000117 /* PrimaryRoleMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000117 /* PrimaryRoleMigrationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -221,6 +224,9 @@
 		FRD0000000000000000000112 /* SyncCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCoordinator.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000113 /* FirestoreUploadMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreUploadMigration.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000114 /* FirestoreServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreServiceTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000115 /* Roles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Roles.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000116 /* PrimaryRoleMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimaryRoleMigration.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000117 /* PrimaryRoleMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimaryRoleMigrationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -317,6 +323,8 @@
 				FRD0000000000000000000111 /* FirestoreService.swift */,
 				FRD0000000000000000000112 /* SyncCoordinator.swift */,
 				FRD0000000000000000000113 /* FirestoreUploadMigration.swift */,
+				FRD0000000000000000000115 /* Roles.swift */,
+				FRD0000000000000000000116 /* PrimaryRoleMigration.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -334,6 +342,7 @@
 				FRD00000000000000000000E5 /* CareCircleRepositoryTests.swift */,
 				FRD00000000000000000000E6 /* CareCircleMigrationTests.swift */,
 				FRD0000000000000000000114 /* FirestoreServiceTests.swift */,
+				FRD0000000000000000000117 /* PrimaryRoleMigrationTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -350,39 +359,6 @@
 				GRP0000000000000000000020 /* Supervisor */,
 			);
 			path = Features;
-			sourceTree = "<group>";
-		};
-		GRP0000000000000000000020 /* Supervisor */ = {
-			isa = PBXGroup;
-			children = (
-				FRD00000000000000000000F0 /* SupervisorDashboardView.swift */,
-				FRD00000000000000000000F1 /* SupervisorDashboardViewModel.swift */,
-				GRP0000000000000000000021 /* Components */,
-				GRP0000000000000000000022 /* People */,
-			);
-			path = Supervisor;
-			sourceTree = "<group>";
-		};
-		GRP0000000000000000000021 /* Components */ = {
-			isa = PBXGroup;
-			children = (
-				FRD00000000000000000000F2 /* PersonSelector.swift */,
-				FRD00000000000000000000F3 /* SupervisorScheduleSection.swift */,
-				FRD00000000000000000000F4 /* AdherenceSummaryCard.swift */,
-				FRD00000000000000000000F5 /* AlertsCard.swift */,
-				FRD00000000000000000000F6 /* QuickActionsCard.swift */,
-			);
-			path = Components;
-			sourceTree = "<group>";
-		};
-		GRP0000000000000000000022 /* People */ = {
-			isa = PBXGroup;
-			children = (
-				FRD00000000000000000000F7 /* PeopleManagementView.swift */,
-				FRD00000000000000000000F8 /* PersonDetailView.swift */,
-				FRD00000000000000000000F9 /* AddPersonFlow.swift */,
-			);
-			path = People;
 			sourceTree = "<group>";
 		};
 		GRP0000000000000000000009 /* Today */ = {
@@ -533,6 +509,39 @@
 			path = Localization;
 			sourceTree = "<group>";
 		};
+		GRP0000000000000000000020 /* Supervisor */ = {
+			isa = PBXGroup;
+			children = (
+				FRD00000000000000000000F0 /* SupervisorDashboardView.swift */,
+				FRD00000000000000000000F1 /* SupervisorDashboardViewModel.swift */,
+				GRP0000000000000000000021 /* Components */,
+				GRP0000000000000000000022 /* People */,
+			);
+			path = Supervisor;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000021 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FRD00000000000000000000F2 /* PersonSelector.swift */,
+				FRD00000000000000000000F3 /* SupervisorScheduleSection.swift */,
+				FRD00000000000000000000F4 /* AdherenceSummaryCard.swift */,
+				FRD00000000000000000000F5 /* AlertsCard.swift */,
+				FRD00000000000000000000F6 /* QuickActionsCard.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		GRP0000000000000000000022 /* People */ = {
+			isa = PBXGroup;
+			children = (
+				FRD00000000000000000000F7 /* PeopleManagementView.swift */,
+				FRD00000000000000000000F8 /* PersonDetailView.swift */,
+				FRD00000000000000000000F9 /* AddPersonFlow.swift */,
+			);
+			path = People;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -579,7 +588,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1540;
-				LastUpgradeCheck = 1540;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					TRG0000000000000000000001 = {
 						CreatedOnToolsVersion = 15.4;
@@ -722,6 +731,8 @@
 				BFD0000000000000000000111 /* FirestoreService.swift in Sources */,
 				BFD0000000000000000000112 /* SyncCoordinator.swift in Sources */,
 				BFD0000000000000000000113 /* FirestoreUploadMigration.swift in Sources */,
+				BFD0000000000000000000115 /* Roles.swift in Sources */,
+				BFD0000000000000000000116 /* PrimaryRoleMigration.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -739,6 +750,7 @@
 				BFD00000000000000000000E5 /* CareCircleRepositoryTests.swift in Sources */,
 				BFD00000000000000000000E6 /* CareCircleMigrationTests.swift in Sources */,
 				BFD0000000000000000000114 /* FirestoreServiceTests.swift in Sources */,
+				BFD0000000000000000000117 /* PrimaryRoleMigrationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -779,6 +791,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -832,6 +845,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -842,6 +856,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -888,6 +903,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -958,7 +974,6 @@
 		BCT0000000000000000000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -977,7 +992,6 @@
 		BCT0000000000000000000004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

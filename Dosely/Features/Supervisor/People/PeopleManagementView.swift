@@ -35,13 +35,15 @@ struct PeopleManagementView: View {
             .background(Color.dsBackground.ignoresSafeArea())
             .navigationTitle(Text("supervisor.people.title"))
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { showingAdd = true }) {
-                        Image(systemName: "plus")
-                            .font(.title2.weight(.semibold))
-                            .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
+                if isPrimary {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(action: { showingAdd = true }) {
+                            Image(systemName: "plus")
+                                .font(.title2.weight(.semibold))
+                                .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
+                        }
+                        .accessibilityLabel(Text("supervisor.people.add"))
                     }
-                    .accessibilityLabel(Text("supervisor.people.add"))
                 }
             }
         }
@@ -108,22 +110,47 @@ struct PeopleManagementView: View {
             return
         }
         let fetched = await personRepo.fetchAllPeople(in: circleID)
-        // Show the supervisor at the top, then everyone else by name.
+        // Sort: primary supervisor first, then secondary supervisors,
+        // then clients alphabetically.
         people = fetched.sorted { lhs, rhs in
-            if (lhs.role == "supervisor") != (rhs.role == "supervisor") {
-                return lhs.role == "supervisor"
-            }
+            let lhsTier = Self.roleTier(lhs.role)
+            let rhsTier = Self.roleTier(rhs.role)
+            if lhsTier != rhsTier { return lhsTier < rhsTier }
             return (lhs.name ?? "") < (rhs.name ?? "")
         }
         isLoaded = true
     }
 
+    private static func roleTier(_ role: String?) -> Int {
+        switch role {
+        case Roles.primarySupervisor, Roles.legacySupervisor: return 0
+        case Roles.secondarySupervisor:                        return 1
+        default:                                               return 2
+        }
+    }
+
+    private var isPrimary: Bool {
+        guard let person = authService.currentPerson,
+              let circle = person.careCircle,
+              let me = person.id else { return false }
+        if let primaryID = circle.primarySupervisorPersonID {
+            return primaryID == me
+        }
+        return Roles.isPrimarySupervisor(person.role)
+    }
+
     private func roleLabel(_ role: String?) -> String {
         switch role {
-        case "supervisor":     return L("supervisor.role.supervisor")
-        case "device_client":  return L("supervisor.role.deviceclient")
-        case "managed_client": return L("supervisor.role.managedclient")
-        default:               return ""
+        case Roles.primarySupervisor, Roles.legacySupervisor:
+            return L("supervisor.role.primary")
+        case Roles.secondarySupervisor:
+            return L("supervisor.role.secondary")
+        case Roles.deviceClient:
+            return L("supervisor.role.deviceclient")
+        case Roles.managedClient:
+            return L("supervisor.role.managedclient")
+        default:
+            return ""
         }
     }
 }
@@ -187,19 +214,31 @@ struct PersonRow: View {
 
     private var roleBadge: String {
         switch person.role {
-        case "supervisor":     return L("supervisor.role.supervisor")
-        case "device_client":  return L("supervisor.role.deviceclient")
-        case "managed_client": return L("supervisor.role.managedclient")
-        default:               return ""
+        case Roles.primarySupervisor, Roles.legacySupervisor:
+            return L("supervisor.role.primary")
+        case Roles.secondarySupervisor:
+            return L("supervisor.role.secondary")
+        case Roles.deviceClient:
+            return L("supervisor.role.deviceclient")
+        case Roles.managedClient:
+            return L("supervisor.role.managedclient")
+        default:
+            return ""
         }
     }
 
     private var badgeColor: Color {
         switch person.role {
-        case "supervisor":     return .dsPrimary
-        case "device_client":  return .dsSuccess
-        case "managed_client": return .dsWarning
-        default:               return .dsTextSecondary
+        case Roles.primarySupervisor, Roles.legacySupervisor:
+            return .dsPrimary
+        case Roles.secondarySupervisor:
+            return .dsTextSecondary
+        case Roles.deviceClient:
+            return .dsSuccess
+        case Roles.managedClient:
+            return .dsWarning
+        default:
+            return .dsTextSecondary
         }
     }
 }
@@ -217,20 +256,35 @@ struct CircleSettingsSection: View {
     let personRepo: PersonRepository
     let careCircleRepo: CareCircleRepository
 
+    private var isPrimary: Bool {
+        guard let person = authService.currentPerson,
+              let circle = person.careCircle,
+              let me = person.id else { return false }
+        if let primaryID = circle.primarySupervisorPersonID {
+            return primaryID == me
+        }
+        return Roles.isPrimarySupervisor(person.role)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: DSSpacing.md) {
             Text("supervisor.circle.title")
                 .dsTitleMedium()
                 .foregroundColor(.dsTextPrimary)
 
-            row(title: L("supervisor.circle.name"),
-                value: circleName,
-                action: { renameText = circleName; showingRenameAlert = true })
+            if isPrimary {
+                row(title: L("supervisor.circle.name"),
+                    value: circleName,
+                    action: { renameText = circleName; showingRenameAlert = true })
 
-            row(title: L("supervisor.circle.joincode"),
-                value: joinCode ?? "—",
-                actionLabel: L("supervisor.circle.regenerate"),
-                action: { showingRegenAlert = true })
+                row(title: L("supervisor.circle.joincode"),
+                    value: joinCode ?? "—",
+                    actionLabel: L("supervisor.circle.regenerate"),
+                    action: { showingRegenAlert = true })
+            } else {
+                readOnlyRow(title: L("supervisor.circle.name"), value: circleName)
+                readOnlyRow(title: L("supervisor.circle.joincode"), value: joinCode ?? "—")
+            }
         }
         .padding(DSSpacing.md)
         .background(Color.dsSurface)
@@ -280,6 +334,18 @@ struct CircleSettingsSection: View {
         .padding(.vertical, DSSpacing.xs)
     }
 
+    private func readOnlyRow(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: DSSpacing.xs) {
+            Text(title).dsCaption().foregroundColor(.dsTextSecondary)
+            Text(value)
+                .dsBodyLarge()
+                .foregroundColor(.dsTextPrimary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, DSSpacing.xs)
+    }
+
     private func reloadCircle() {
         guard let circle = authService.currentPerson?.careCircle else { return }
         circleName = circle.name ?? ""
@@ -287,16 +353,30 @@ struct CircleSettingsSection: View {
     }
 
     private func rename(to newName: String) async {
-        guard let circleID = authService.currentPerson?.careCircle?.id else { return }
-        let ok = await careCircleRepo.renameCircle(careCircleID: circleID, newName: newName)
-        if ok { await MainActor.run { reloadCircle() } }
+        guard let circleID = authService.currentPerson?.careCircle?.id,
+              let actorID = authService.currentPerson?.id else { return }
+        do {
+            try await careCircleRepo.renameCircle(careCircleID: circleID,
+                                                  newName: newName,
+                                                  actorPersonID: actorID)
+            await MainActor.run { reloadCircle() }
+        } catch {
+            // Permission / blank name — silent on this surface; the
+            // primary-only affordances are hidden for secondaries via
+            // the role badge logic in SupervisorDashboardView.
+        }
     }
 
     private func regenerate() async {
-        guard let circleID = authService.currentPerson?.careCircle?.id else { return }
-        let newCode = await careCircleRepo.regenerateJoinCode(careCircleID: circleID)
-        await MainActor.run {
-            joinCode = newCode ?? joinCode
+        guard let circleID = authService.currentPerson?.careCircle?.id,
+              let actorID = authService.currentPerson?.id else { return }
+        do {
+            let newCode = try await careCircleRepo.regenerateJoinCode(
+                careCircleID: circleID, actorPersonID: actorID
+            )
+            await MainActor.run { joinCode = newCode }
+        } catch {
+            // Same rationale as rename — see above.
         }
     }
 }

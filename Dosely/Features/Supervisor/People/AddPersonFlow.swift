@@ -277,30 +277,43 @@ struct AddPersonFlow: View {
 
     private func createClient() async {
         guard let circle = authService.currentPerson?.careCircle,
+              let actorID = authService.currentPerson?.id,
               let type = selectedType else { return }
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        switch type {
-        case .managed:
-            _ = await personRepo.createManagedClient(name: trimmedName,
-                                                     photoData: nil,
-                                                     language: language,
-                                                     in: circle)
-            onAdded()
-            await MainActor.run { dismiss() }
-        case .device:
-            _ = await personRepo.createDeviceClient(name: trimmedName,
-                                                    photoData: nil,
-                                                    pinPlaintext: pin,
-                                                    language: language,
-                                                    in: circle)
-            onAdded()
-            await MainActor.run {
-                doneMessage = L("supervisor.add.device.handoff.body", trimmedName as NSString)
-                step = .deviceHandoff
+        do {
+            switch type {
+            case .managed:
+                _ = try await personRepo.createManagedClient(name: trimmedName,
+                                                             photoData: nil,
+                                                             language: language,
+                                                             in: circle,
+                                                             actorPersonID: actorID)
+                onAdded()
+                await MainActor.run { dismiss() }
+            case .device:
+                _ = try await personRepo.createDeviceClient(name: trimmedName,
+                                                            photoData: nil,
+                                                            pinPlaintext: pin,
+                                                            language: language,
+                                                            in: circle,
+                                                            actorPersonID: actorID)
+                onAdded()
+                await MainActor.run {
+                    doneMessage = L("supervisor.add.device.handoff.body", trimmedName as NSString)
+                    step = .deviceHandoff
+                }
+            case .supervisor:
+                // Handled in supervisorInviteStep — no client to create.
+                break
             }
-        case .supervisor:
-            // Handled in supervisorInviteStep — no client to create.
-            break
+        } catch PersonRepositoryError.permissionDenied {
+            await MainActor.run {
+                errorMessage = L("supervisor.person.error.notprimary")
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = L("supervisor.person.error.generic")
+            }
         }
     }
 

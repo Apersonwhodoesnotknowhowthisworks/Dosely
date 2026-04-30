@@ -172,6 +172,60 @@ final class FirestoreService {
         }
     }
 
+    /// Atomically declares `newPrimaryPersonID` the primary supervisor
+    /// of the circle. In one batch:
+    ///
+    /// - sets `careCircles/{id}.primarySupervisorPersonID = newPrimaryPersonID`
+    /// - for each supervisor in `supervisors`, writes `role` on their
+    ///   `Person` doc: the one whose `personID == newPrimaryPersonID`
+    ///   becomes `primary_supervisor`, everyone else becomes
+    ///   `secondary_supervisor`
+    /// - for each supervisor that has a `firebaseUID`, mirrors the role
+    ///   onto their `/userMemberships/{uid}` doc
+    ///
+    /// Used by both `PrimaryRoleMigration` (ALL supervisors at once,
+    /// converting legacy "supervisor" rows) and `promoteToPrimary` (the
+    /// current primary + target pair). The Firestore rules' `isPromotionBatch`
+    /// helper recognizes this exact write shape — see firestore.rules.
+    func applyPrimaryAssignment(
+        circleID: String,
+        newPrimaryPersonID: String,
+        supervisors: [(personID: String, firebaseUID: String?)]
+    ) async throws {
+        guard let db else { return }
+        do {
+            let batch = db.batch()
+            let circleRef = db.document(Path.careCircle(circleID))
+            batch.updateData([
+                "primarySupervisorPersonID": newPrimaryPersonID,
+                "lastModified": FieldValue.serverTimestamp()
+            ], forDocument: circleRef)
+
+            for entry in supervisors {
+                let role = entry.personID == newPrimaryPersonID
+                    ? "primary_supervisor"
+                    : "secondary_supervisor"
+                let personRef = db
+                    .collection(Path.people(circleID))
+                    .document(entry.personID)
+                batch.updateData([
+                    "role": role,
+                    "lastModified": FieldValue.serverTimestamp()
+                ], forDocument: personRef)
+                if let uid = entry.firebaseUID {
+                    let membershipRef = db.document(Path.userMembership(uid))
+                    batch.updateData([
+                        "role": role
+                    ], forDocument: membershipRef)
+                }
+            }
+
+            try await batch.commit()
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
     /// Atomically removes a supervisor: deletes their Person doc,
     /// decrements `supervisorCount` on the parent circle, and (if a
     /// Firebase UID is provided) deletes their `/userMemberships` doc.

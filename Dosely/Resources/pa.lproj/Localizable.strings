@@ -333,8 +333,36 @@
 "supervisor.people.empty.title" = "ਅਜੇ ਕੇਵਲ ਤੁਸੀਂ";
 "supervisor.people.empty.body" = "ਇੱਕ ਮੈਂਬਰ ਜੋੜੋ, ਫਿਰ Today ਟੈਬ ਤੋਂ ਉਨ੍ਹਾਂ ਦੀਆਂ ਦਵਾਈਆਂ ਜੋੜੋ।";
 "supervisor.role.supervisor" = "ਨਿਗਰਾਨ";
+"supervisor.role.primary" = "ਮੁੱਖ ਨਿਗਰਾਨ"; // REVIEW NEEDED
+"supervisor.role.secondary" = "ਸਹਾਇਕ ਨਿਗਰਾਨ"; // REVIEW NEEDED
 "supervisor.role.deviceclient" = "PIN ਵਾਲਾ";
 "supervisor.role.managedclient" = "ਪੂਰੇ ਪ੍ਰਬੰਧ ਵਾਲਾ";
+
+// Role badge — REVIEW NEEDED
+"supervisor.badge.primary" = "ਮੁੱਖ";
+"supervisor.badge.viewonly" = "ਸਿਰਫ਼ ਦੇਖਣ ਲਈ";
+"supervisor.badge.primary.a11y" = "ਤੁਸੀਂ ਇਸ ਪਰਿਵਾਰ ਦੇ ਮੁੱਖ ਨਿਗਰਾਨ ਹੋ।";
+"supervisor.badge.viewonly.a11y" = "ਤੁਸੀਂ ਪਰਿਵਾਰ ਨੂੰ ਦੇਖ ਸਕਦੇ ਹੋ ਪਰ ਸਿਰਫ਼ %@ ਬਦਲਾਅ ਕਰ ਸਕਦੇ ਹਨ।";
+
+// Read-only notice — REVIEW NEEDED
+"supervisor.readonly.notice" = "ਇਹ ਸਿਰਫ਼ %@ ਬਦਲ ਸਕਦੇ ਹਨ। ਜੇ ਬਦਲਣਾ ਹੈ ਤਾਂ ਉਨ੍ਹਾਂ ਨੂੰ ਕਹੋ।";
+"supervisor.readonly.notice.unknown" = "ਇਹ ਸਿਰਫ਼ ਮੁੱਖ ਨਿਗਰਾਨ ਬਦਲ ਸਕਦੇ ਹਨ।";
+
+// Promote to primary — REVIEW NEEDED
+"supervisor.promote.row" = "ਮੁੱਖ ਨਿਗਰਾਨ ਬਣਾਉ";
+"supervisor.promote.row.subtitle" = "ਇਸ ਪਰਿਵਾਰ ਦਾ ਲਿਖਣ ਦਾ ਅਧਿਕਾਰ ਉਨ੍ਹਾਂ ਨੂੰ ਦੇ ਦਿਉ।";
+"supervisor.promote.confirm.title" = "ਕੀ %@ ਨੂੰ ਮੁੱਖ ਬਣਾਉਣਾ ਹੈ?";
+"supervisor.promote.confirm.body" = "ਜੇ ਤੁਸੀਂ %@ ਨੂੰ ਮੁੱਖ ਬਣਾਉਂਦੇ ਹੋ, ਤੁਸੀਂ ਸਹਾਇਕ ਨਿਗਰਾਨ ਬਣ ਜਾਵੋਗੇ ਅਤੇ ਦਵਾਈਆਂ ਜੋੜ ਜਾਂ ਬਦਲ ਨਹੀਂ ਸਕੋਗੇ। ਜਾਰੀ ਰੱਖਣਾ?";
+"supervisor.promote.confirm.action" = "ਹਾਂ, ਉਨ੍ਹਾਂ ਨੂੰ ਮੁੱਖ ਬਣਾਉ";
+"supervisor.promote.error.notprimary" = "ਸਿਰਫ਼ ਮੁੱਖ ਨਿਗਰਾਨ ਕਿਸੇ ਨੂੰ ਮੁੱਖ ਬਣਾ ਸਕਦੇ ਹਨ।";
+"supervisor.promote.error.target" = "ਇਸ ਮੈਂਬਰ ਨੂੰ ਮੁੱਖ ਨਹੀਂ ਬਣਾਇਆ ਜਾ ਸਕਦਾ।";
+"supervisor.promote.error.generic" = "ਮੁੱਖ ਬਦਲਣ ਵਿੱਚ ਮੁਸ਼ਕਲ ਹੋਈ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
+
+// Errors — REVIEW NEEDED
+"supervisor.person.error.notprimary" = "ਇਹ ਸਿਰਫ਼ ਮੁੱਖ ਨਿਗਰਾਨ ਕਰ ਸਕਦੇ ਹਨ। ਜੇ ਬਦਲਣਾ ਹੈ ਤਾਂ ਉਨ੍ਹਾਂ ਨੂੰ ਕਹੋ।";
+
+// Leave-as-primary — REVIEW NEEDED
+"circle.leave.error.primarypromotefirst" = "ਤੁਸੀਂ ਮੁੱਖ ਨਿਗਰਾਨ ਹੋ। ਪਹਿਲਾਂ ਕਿਸੇ ਹੋਰ ਨੂੰ ਮੁੱਖ ਬਣਾਉ, ਫਿਰ ਤੁਸੀਂ ਛੱਡ ਸਕਦੇ ਹੋ।";
 
 // MARK: - Add person
 "supervisor.add.title" = "ਮੈਂਬਰ ਜੋੜੋ";

@@ -166,6 +166,8 @@ struct LeaveAndJoinFlow: View {
             step = .join
         case .failure(.lastSupervisor):
             leaveError = L("circle.leave.error.lastsupervisor")
+        case .failure(.primaryMustPromoteFirst):
+            leaveError = L("circle.leave.error.primarypromotefirst")
         case .failure(.notMember), .failure(.notFound):
             leaveError = L("circle.leave.error.generic")
         }
