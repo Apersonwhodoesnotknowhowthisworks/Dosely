@@ -31,10 +31,11 @@ enum CareCircleMigration {
         firebaseUID: String,
         displayName: String?,
         languagePreference: String,
-        stack: CoreDataStack = .shared
+        stack: CoreDataStack = .shared,
+        firestore: FirestoreService = .shared
     ) async -> Person? {
-        let careCircleRepo = CareCircleRepository(stack: stack)
-        let personRepo = PersonRepository(stack: stack)
+        let careCircleRepo = CareCircleRepository(stack: stack, firestore: firestore)
+        let personRepo = PersonRepository(stack: stack, firestore: firestore)
 
         // Already migrated? Just resolve the existing supervisor (may be
         // nil for accounts that haven't completed CircleSetupView yet).

@@ -4,10 +4,16 @@ import XCTest
 
 final class CareCircleMigrationTests: XCTestCase {
     var stack: CoreDataStack!
+    var noFirestore: FirestoreService!
 
     override func setUp() async throws {
         try await super.setUp()
         stack = CoreDataStack(inMemory: true)
+        // Explicit no-op service — without this, the migration's repos
+        // would default to `FirestoreService.shared` and the first
+        // Firestore write would "start" the SDK singleton, blocking
+        // FirestoreServiceTests from setting emulator settings later.
+        noFirestore = FirestoreService()
         CareCircleMigration.resetForTesting()
     }
 
@@ -23,7 +29,7 @@ final class CareCircleMigrationTests: XCTestCase {
         // CircleSetupView instead of auto-bootstrapping a circle.
         let supervisor = await CareCircleMigration.runIfNeeded(
             firebaseUID: "fb-1", displayName: "Joe",
-            languagePreference: "en", stack: stack
+            languagePreference: "en", stack: stack, firestore: noFirestore
         )
         XCTAssertNil(supervisor)
         XCTAssertFalse(CareCircleMigration.isComplete,
@@ -42,7 +48,7 @@ final class CareCircleMigrationTests: XCTestCase {
 
         let supervisor = await CareCircleMigration.runIfNeeded(
             firebaseUID: "fb-legacy", displayName: "Joe",
-            languagePreference: "en", stack: stack
+            languagePreference: "en", stack: stack, firestore: noFirestore
         )
         XCTAssertNotNil(supervisor)
         XCTAssertEqual(supervisor?.careCircle?.name, "My Family")
@@ -67,7 +73,7 @@ final class CareCircleMigrationTests: XCTestCase {
         // Run migration
         let supervisor = await CareCircleMigration.runIfNeeded(
             firebaseUID: "fb-2", displayName: "Mary",
-            languagePreference: "en", stack: stack
+            languagePreference: "en", stack: stack, firestore: noFirestore
         )
         XCTAssertNotNil(supervisor)
 
@@ -93,7 +99,7 @@ final class CareCircleMigrationTests: XCTestCase {
 
         _ = await CareCircleMigration.runIfNeeded(
             firebaseUID: "fb-3", displayName: "X",
-            languagePreference: "en", stack: stack
+            languagePreference: "en", stack: stack, firestore: noFirestore
         )
         XCTAssertTrue(CareCircleMigration.isComplete)
 
@@ -101,7 +107,7 @@ final class CareCircleMigrationTests: XCTestCase {
         // new circle.
         let again = await CareCircleMigration.runIfNeeded(
             firebaseUID: "fb-3", displayName: "X",
-            languagePreference: "en", stack: stack
+            languagePreference: "en", stack: stack, firestore: noFirestore
         )
         XCTAssertNotNil(again)
 
@@ -115,7 +121,7 @@ final class CareCircleMigrationTests: XCTestCase {
         // exists) but the migration flag hasn't been set yet (e.g. they
         // signed up on a build with no orphan data anywhere). Migration
         // should find them and set the flag, no extra circles.
-        let careRepo = CareCircleRepository(stack: stack)
+        let careRepo = CareCircleRepository(stack: stack, firestore: noFirestore)
         _ = await careRepo.createCareCircle(
             name: "Existing", foundingSupervisorFirebaseUID: "fb-existing",
             founderName: "User"
@@ -123,7 +129,7 @@ final class CareCircleMigrationTests: XCTestCase {
 
         let supervisor = await CareCircleMigration.runIfNeeded(
             firebaseUID: "fb-existing", displayName: "User",
-            languagePreference: "en", stack: stack
+            languagePreference: "en", stack: stack, firestore: noFirestore
         )
         XCTAssertNotNil(supervisor)
         XCTAssertEqual(supervisor?.careCircle?.name, "Existing")

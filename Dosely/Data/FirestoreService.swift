@@ -63,14 +63,27 @@ final class FirestoreService {
 
     /// Points the SDK at a local Firebase emulator. Tests call this in
     /// setUp; production code never does.
+    ///
+    /// **Idempotent.** `Firestore.firestore()` is a process-wide SDK
+    /// singleton, and `db.settings = ...` only succeeds *before* the
+    /// first operation on that singleton. Once any test has done a
+    /// read or write, the settings are frozen and re-assigning throws
+    /// `FIRIllegalStateException`. We cache the configured service on
+    /// the first call and return it for every subsequent setUp so
+    /// later tests don't crash trying to re-set the emulator host.
+    private static var cachedEmulatorService: FirestoreService?
+
     static func useEmulator(host: String = "127.0.0.1", port: Int = 8080) -> FirestoreService {
+        if let cached = cachedEmulatorService { return cached }
         let settings = FirestoreSettings()
         settings.host = "\(host):\(port)"
         settings.isSSLEnabled = false
         settings.cacheSettings = MemoryCacheSettings()
         let db = Firestore.firestore()
         db.settings = settings
-        return FirestoreService(db: db)
+        let service = FirestoreService(db: db)
+        cachedEmulatorService = service
+        return service
     }
 
     // MARK: - Collection paths
