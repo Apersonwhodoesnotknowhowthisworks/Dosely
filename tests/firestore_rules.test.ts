@@ -23,6 +23,7 @@ import {
   updateDoc,
   deleteDoc,
   writeBatch,
+  serverTimestamp,
 } from "firebase/firestore";
 import { readFileSync } from "fs";
 import { resolve } from "path";
@@ -1018,6 +1019,328 @@ describe("Firestore security rules", () => {
           currentSupply: 1,
           dateAdded: new Date(),
         })
+      );
+    });
+  });
+
+  // -- 14. Production scenario: Aunt 1 (founding supervisor) on the new ----
+  //         rules, with pre-Prompt-18 data shape (role=supervisor on both
+  //         the Person and /userMemberships docs, no primarySupervisorPersonID
+  //         on the CareCircle yet). This is the exact state that broke
+  //         production; the surrounding suite passed but didn't actually
+  //         exercise this combination of read paths and the migration batch.
+
+  describe("existing supervisor (pre-Prompt-18 production data)", () => {
+    const circleID = "aunt1-circle";
+    const aunt1 = { uid: "aunt1-uid", personID: "person-aunt1" };
+    const joinCode = "987654";
+    const grandpaMedID = "med-grandpa-1";
+
+    beforeEach(async () => {
+      await seedCircle({
+        circleID,
+        joinCode,
+        supervisor: aunt1,
+        legacyRoles: true, // role="supervisor" everywhere; no primarySupervisorPersonID
+      });
+      await seedMedication(circleID, grandpaMedID, aunt1.personID, "Lisinopril");
+    });
+
+    it("can read /careCircles/{id}", async () => {
+      const db = authedDb(aunt1.uid);
+      await assertSucceeds(getDoc(doc(db, `careCircles/${circleID}`)));
+    });
+
+    it("can read own /userMemberships doc", async () => {
+      const db = authedDb(aunt1.uid);
+      await assertSucceeds(getDoc(doc(db, `userMemberships/${aunt1.uid}`)));
+    });
+
+    it("can read /careCircles/{id}/people/{personID}", async () => {
+      const db = authedDb(aunt1.uid);
+      await assertSucceeds(
+        getDoc(doc(db, `careCircles/${circleID}/people/${aunt1.personID}`))
+      );
+    });
+
+    it("can read /careCircles/{id}/medications/{medID}", async () => {
+      const db = authedDb(aunt1.uid);
+      await assertSucceeds(
+        getDoc(doc(db, `careCircles/${circleID}/medications/${grandpaMedID}`))
+      );
+    });
+
+    it("can write a medication using legacy supervisor role", async () => {
+      const db = authedDb(aunt1.uid);
+      await assertSucceeds(
+        setDoc(doc(db, `careCircles/${circleID}/medications/new-med`), {
+          id: "new-med",
+          personID: aunt1.personID,
+          name: "Aspirin",
+          dose: "81mg",
+          pillsPerDose: 1,
+          foodRule: "either",
+          currentSupply: 30,
+          dateAdded: new Date(),
+        })
+      );
+    });
+
+    /**
+     * The migration batch shape produced by `applyPrimaryAssignment` for
+     * a sole legacy supervisor: stamp `primarySupervisorPersonID`, flip
+     * Person.role to `primary_supervisor`, mirror onto `/userMemberships`.
+     * Three docs in one batch.
+     */
+    it("PrimaryRoleMigration batch is allowed (single-supervisor circle)", async () => {
+      const db = authedDb(aunt1.uid);
+      const batch = writeBatch(db);
+      batch.update(doc(db, `careCircles/${circleID}`), {
+        primarySupervisorPersonID: aunt1.personID,
+      });
+      batch.update(doc(db, `careCircles/${circleID}/people/${aunt1.personID}`), {
+        role: "primary_supervisor",
+      });
+      batch.update(doc(db, `userMemberships/${aunt1.uid}`), {
+        role: "primary_supervisor",
+      });
+      await assertSucceeds(batch.commit());
+    });
+
+    it("can write a medication AFTER migration completes", async () => {
+      const db = authedDb(aunt1.uid);
+      // Run the migration batch first.
+      const migrate = writeBatch(db);
+      migrate.update(doc(db, `careCircles/${circleID}`), {
+        primarySupervisorPersonID: aunt1.personID,
+      });
+      migrate.update(doc(db, `careCircles/${circleID}/people/${aunt1.personID}`), {
+        role: "primary_supervisor",
+      });
+      migrate.update(doc(db, `userMemberships/${aunt1.uid}`), {
+        role: "primary_supervisor",
+      });
+      await migrate.commit();
+
+      // Now write a new medication post-migration.
+      await assertSucceeds(
+        setDoc(doc(db, `careCircles/${circleID}/medications/post-mig-med`), {
+          id: "post-mig-med",
+          personID: aunt1.personID,
+          name: "Atorvastatin",
+          dose: "20mg",
+          pillsPerDose: 1,
+          foodRule: "either",
+          currentSupply: 30,
+          dateAdded: new Date(),
+        })
+      );
+    });
+  });
+
+  // -- 15. The actual production breakage: legacy supervisor whose
+  //         /userMemberships doc never made it to Firestore (or got lost).
+  //         Without a membership doc, `memberOf(circleID)` returns false
+  //         and ALL reads on the circle fail. The migration must be able
+  //         to *create* the missing membership rather than only updating it.
+
+  describe("legacy supervisor with missing /userMemberships doc", () => {
+    const circleID = "broken-aunt-circle";
+    const aunt = { uid: "broken-aunt-uid", personID: "person-broken-aunt" };
+    const joinCode = "888888";
+
+    beforeEach(async () => {
+      // Seed the circle and Person doc directly under admin auth, but
+      // INTENTIONALLY skip /userMemberships. This is the production
+      // shape we suspect for the founding aunt: data uploaded by an
+      // earlier migration that didn't write the membership index.
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, `careCircles/${circleID}`), {
+          id: circleID,
+          name: "Broken Family",
+          joinCode,
+          createdAt: new Date(),
+          supervisorCount: 1,
+          // No primarySupervisorPersonID — pre-Prompt-18.
+        });
+        await setDoc(doc(db, `joinCodes/${joinCode}`), {
+          careCircleID: circleID,
+          regeneratedAt: new Date(),
+        });
+        await setDoc(
+          doc(db, `careCircles/${circleID}/people/${aunt.personID}`),
+          {
+            id: aunt.personID,
+            careCircleID: circleID,
+            name: "Aunt",
+            role: "supervisor",
+            languagePreference: "en",
+            firebaseUID: aunt.uid,
+            failedPinAttempts: 0,
+          }
+        );
+        // /userMemberships intentionally not seeded.
+      });
+    });
+
+    it("CANNOT read /careCircles without a membership doc — confirms the bug", async () => {
+      const db = authedDb(aunt.uid);
+      // Without /userMemberships, memberOf returns false and every read
+      // on the circle fails. This matches the production "Missing or
+      // insufficient permissions" symptom across careCircles, people,
+      // medications, doseSchedules, doseLogs.
+      await assertFails(getDoc(doc(db, `careCircles/${circleID}`)));
+    });
+
+    /**
+     * The fix: the migration must be able to *create* the missing
+     * membership doc, not just update it. The membership create rule's
+     * branch (a) accepts a self-create when supervisorCount==0 (founder
+     * bootstrap) — but the legacy circle has supervisorCount==1, so we
+     * fall through to branch (c): primary onboarding another member.
+     * For the legacy supervisor, isPrimary(circleID) reads Person.role
+     * which is "supervisor" — the legacy alias counts as primary, so
+     * the create succeeds.
+     */
+    it("legacy supervisor can self-create their own missing /userMemberships", async () => {
+      const db = authedDb(aunt.uid);
+      await assertSucceeds(
+        setDoc(doc(db, `userMemberships/${aunt.uid}`), {
+          careCircleID: circleID,
+          personID: aunt.personID,
+          role: "primary_supervisor",
+          joinedAt: new Date(),
+        })
+      );
+    });
+
+    it("after backfilling /userMemberships, reads work again", async () => {
+      const db = authedDb(aunt.uid);
+      // Backfill the missing membership.
+      await setDoc(doc(db, `userMemberships/${aunt.uid}`), {
+        careCircleID: circleID,
+        personID: aunt.personID,
+        role: "primary_supervisor",
+        joinedAt: new Date(),
+      });
+      // Now reads work.
+      await assertSucceeds(getDoc(doc(db, `careCircles/${circleID}`)));
+      await assertSucceeds(
+        getDoc(doc(db, `careCircles/${circleID}/people/${aunt.personID}`))
+      );
+    });
+
+    /**
+     * The migration runs in two phases when /userMemberships is missing:
+     *   PHASE A: setData(merge:true) on the actor's /userMemberships,
+     *            allowed by membership create rule branch (d) (the
+     *            Person doc proves authority).
+     *   PHASE B: the existing atomic batch (CareCircle update + Person
+     *            updates + other /userMemberships updates). Now that
+     *            PHASE A wrote /userMemberships, isPrimary resolves
+     *            correctly for the actor and the batch's writes are
+     *            authorised.
+     *
+     * They cannot fold into a single batch because the CareCircle and
+     * Person update rules need isPrimary, which depends on a pre-batch
+     * /userMemberships. Adding isPrimaryAfter to Person update would
+     * let a secondary supervisor self-promote in one batch — explicitly
+     * a security hole. The two-phase split avoids that.
+     */
+    it("PHASE A: actor self-backfills /userMemberships via setData(merge: true)", async () => {
+      const db = authedDb(aunt.uid);
+      await assertSucceeds(
+        setDoc(
+          doc(db, `userMemberships/${aunt.uid}`),
+          {
+            careCircleID: circleID,
+            personID: aunt.personID,
+            role: "primary_supervisor",
+            joinedAt: serverTimestamp(),
+          },
+          { merge: true }
+        )
+      );
+    });
+
+    it("PHASE B: the atomic role-assignment batch succeeds after PHASE A", async () => {
+      const db = authedDb(aunt.uid);
+      // PHASE A: ensure /userMemberships exists.
+      await setDoc(
+        doc(db, `userMemberships/${aunt.uid}`),
+        {
+          careCircleID: circleID,
+          personID: aunt.personID,
+          role: "primary_supervisor",
+          joinedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      // PHASE B: the existing atomic batch.
+      const batch = writeBatch(db);
+      batch.update(doc(db, `careCircles/${circleID}`), {
+        primarySupervisorPersonID: aunt.personID,
+      });
+      batch.update(doc(db, `careCircles/${circleID}/people/${aunt.personID}`), {
+        role: "primary_supervisor",
+      });
+      batch.set(
+        doc(db, `userMemberships/${aunt.uid}`),
+        { role: "primary_supervisor" },
+        { merge: true }
+      );
+      await assertSucceeds(batch.commit());
+    });
+
+    it("a SECONDARY cannot self-promote by writing their own /userMemberships role", async () => {
+      // Defense in depth: even if a secondary uses the membership
+      // self-edit / branch-(d) path to bump their /userMemberships role
+      // to "primary_supervisor", the rules read role from the Person
+      // doc, not the membership. They still cannot update Person.role
+      // because the Person update rule's isPrimary check fails.
+      const secondary = { uid: "secondary-uid-x", personID: "person-secondary-x" };
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        // Seed: secondary has both Person + /userMemberships with role=secondary_supervisor.
+        await setDoc(
+          doc(db, `careCircles/${circleID}/people/${secondary.personID}`),
+          {
+            id: secondary.personID,
+            careCircleID: circleID,
+            name: "Secondary",
+            role: "secondary_supervisor",
+            languagePreference: "en",
+            firebaseUID: secondary.uid,
+            failedPinAttempts: 0,
+          }
+        );
+        await setDoc(doc(db, `userMemberships/${secondary.uid}`), {
+          careCircleID: circleID,
+          personID: secondary.personID,
+          role: "secondary_supervisor",
+          joinedAt: new Date(),
+        });
+      });
+
+      const db = authedDb(secondary.uid);
+      // Step 1: secondary "promotes" their /userMemberships role —
+      // allowed (it's informational), but doesn't change anything that
+      // the rules trust.
+      await assertSucceeds(
+        updateDoc(doc(db, `userMemberships/${secondary.uid}`), {
+          role: "primary_supervisor",
+        })
+      );
+      // Step 2: secondary tries to update Person.role to primary —
+      // DENIED. The rules read role from the Person doc, which is still
+      // "secondary_supervisor". isPrimary fails.
+      await assertFails(
+        updateDoc(
+          doc(db, `careCircles/${circleID}/people/${secondary.personID}`),
+          { role: "primary_supervisor" }
+        )
       );
     });
   });

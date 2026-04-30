@@ -206,7 +206,17 @@ service cloud.firestore {
       //   (a) Founder of a fresh circle (careCircle.supervisorCount == 0), or
       //   (b) Joiner with a valid joinCode that resolves to the named circle, or
       //   (c) An existing primary of the circle adding someone else's
-      //       membership (e.g. a future device_client with a Firebase UID).
+      //       membership (e.g. a future device_client with a Firebase UID), or
+      //   (d) Self-backfill for a supervisor whose /userMemberships index
+      //       doc was lost (or never written by an early app version). The
+      //       Person doc at the claimed (circleID, personID) path must
+      //       exist, have firebaseUID == request.auth.uid, and a supervisor
+      //       role. The Person doc is the authoritative source — if it
+      //       says this user is a supervisor, the membership index can be
+      //       safely re-created. This breaks the chicken-and-egg in
+      //       branch (c): a primary cannot prove `isPrimary` without
+      //       /userMemberships, and they need /userMemberships to exist
+      //       before the rules consider them primary.
       // Roles allowed in /userMemberships: primary_supervisor,
       // secondary_supervisor, legacy supervisor, device_client.
       // (managed_clients and family_contacts have no Firebase UID and so
@@ -229,7 +239,13 @@ service cloud.firestore {
                        exists(/databases/$(database)/documents/joinCodes/$(request.resource.data.joinCode)) &&
                        get(/databases/$(database)/documents/joinCodes/$(request.resource.data.joinCode)).data.careCircleID == request.resource.data.careCircleID) ||
                       // (c) primary onboarding another member
-                      isPrimary(request.resource.data.careCircleID)
+                      isPrimary(request.resource.data.careCircleID) ||
+                      // (d) self-backfill: Person doc proves authority
+                      (request.auth.uid == uid &&
+                       exists(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)/people/$(request.resource.data.personID)) &&
+                       get(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)/people/$(request.resource.data.personID)).data.firebaseUID == request.auth.uid &&
+                       get(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)/people/$(request.resource.data.personID)).data.role in
+                         ['primary_supervisor', 'secondary_supervisor', 'supervisor'])
                     );
 
       // Update: self-edit, OR a primary of the same circle updating any

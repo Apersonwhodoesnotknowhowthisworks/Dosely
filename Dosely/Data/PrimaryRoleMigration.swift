@@ -31,8 +31,23 @@ enum PrimaryRoleMigration {
     /// Runs the migration. Safe to call on every launch — gated by the
     /// UserDefaults flag, and a no-op when the local store has no
     /// CareCircles needing assignment.
+    ///
+    /// `actorFirebaseUID` (when supplied) is used to backfill the
+    /// caller's `/userMemberships` index doc as PHASE A before the
+    /// atomic role-assignment batch in PHASE B. Production data from
+    /// older app versions sometimes has a Person doc without a
+    /// corresponding `/userMemberships` — under the new role-aware
+    /// rules that locks the supervisor out (`memberOf` returns false →
+    /// every read denied). PHASE A self-heals that state. The two
+    /// phases cannot fold into a single batch because the CareCircle
+    /// and Person update rules need `isPrimary`, which depends on a
+    /// pre-batch /userMemberships; loosening Person update with
+    /// `isPrimaryAfter` would let a secondary self-promote in one
+    /// batch (security hole). Tests can omit `actorFirebaseUID` to
+    /// exercise just the local Core Data path.
     @discardableResult
     static func runIfNeeded(
+        actorFirebaseUID: String? = nil,
         stack: CoreDataStack = .shared,
         firestore: FirestoreService = .shared
     ) async -> Bool {
@@ -52,6 +67,25 @@ enum PrimaryRoleMigration {
         var anyApplied = false
         for plan in plans {
             do {
+                // PHASE A: ensure the caller's /userMemberships exists.
+                // Without it, PHASE B's writes can't authorize as
+                // primary because the rules' `isPrimary` requires the
+                // membership index. setData(merge: true) creates the
+                // doc if missing, refreshes role if present.
+                if let actorUID = actorFirebaseUID,
+                   let actorEntry = plan.supervisors.first(where: { $0.firebaseUID == actorUID }) {
+                    let actorRole = actorEntry.personID == plan.primaryPersonID
+                        ? Roles.primarySupervisor
+                        : Roles.secondarySupervisor
+                    try await firestore.ensureMembership(
+                        circleID: plan.circleID.uuidString,
+                        firebaseUID: actorUID,
+                        personID: actorEntry.personID.uuidString,
+                        role: actorRole
+                    )
+                }
+
+                // PHASE B: atomic role-assignment batch.
                 try await firestore.applyPrimaryAssignment(
                     circleID: plan.circleID.uuidString,
                     newPrimaryPersonID: plan.primaryPersonID.uuidString,

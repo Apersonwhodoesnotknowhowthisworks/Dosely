@@ -189,8 +189,11 @@ final class AuthService: ObservableObject {
 
         // Split legacy "supervisor" rows into primary/secondary and
         // stamp `CareCircle.primarySupervisorPersonID`. Idempotent via
-        // a UserDefaults flag; runs once per device.
-        await PrimaryRoleMigration.runIfNeeded()
+        // a UserDefaults flag; runs once per device. The actor's UID
+        // is passed so PHASE A can self-heal a missing /userMemberships
+        // index doc (a pre-Prompt-18 production state we hit) before
+        // PHASE B's atomic batch.
+        await PrimaryRoleMigration.runIfNeeded(actorFirebaseUID: user.uid)
 
         // Start (or re-target) Firestore listeners for the resolved
         // circle so changes from another supervisor's device flow in.

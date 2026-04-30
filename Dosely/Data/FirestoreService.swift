@@ -185,6 +185,34 @@ final class FirestoreService {
         }
     }
 
+    /// Backfills (or refreshes) a `/userMemberships/{uid}` doc for the
+    /// caller. Used as PHASE A of `PrimaryRoleMigration` on devices
+    /// whose membership index doc was lost — without it, the rules'
+    /// `isPrimary` check fails (it requires a /userMemberships to look
+    /// up the Person doc), which blocks the migration's atomic batch.
+    /// `setData(merge: true)` creates the doc if missing (Firestore
+    /// rules' membership create branch (d) allows this when a Person
+    /// doc with matching firebaseUID + supervisor role already exists)
+    /// and updates the role on an existing doc.
+    func ensureMembership(
+        circleID: String,
+        firebaseUID: String,
+        personID: String,
+        role: String
+    ) async throws {
+        guard let db else { return }
+        do {
+            try await db.document(Path.userMembership(firebaseUID)).setData([
+                "careCircleID": circleID,
+                "personID": personID,
+                "role": role,
+                "joinedAt": FieldValue.serverTimestamp()
+            ], merge: true)
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
     /// Atomically declares `newPrimaryPersonID` the primary supervisor
     /// of the circle. In one batch:
     ///
@@ -194,7 +222,14 @@ final class FirestoreService {
     ///   becomes `primary_supervisor`, everyone else becomes
     ///   `secondary_supervisor`
     /// - for each supervisor that has a `firebaseUID`, mirrors the role
-    ///   onto their `/userMemberships/{uid}` doc
+    ///   onto their `/userMemberships/{uid}` doc. The membership write
+    ///   uses `setData(merge: true)` with the full membership shape
+    ///   (careCircleID, personID, role, joinedAt) so it self-heals
+    ///   missing index docs — production data from earlier app versions
+    ///   sometimes has a Person row without a corresponding
+    ///   /userMemberships, which would lock the supervisor out under
+    ///   the new role-aware rules. The Firestore rules' membership
+    ///   create-rule branch (d) "self-backfill" recognizes this case.
     ///
     /// Used by both `PrimaryRoleMigration` (ALL supervisors at once,
     /// converting legacy "supervisor" rows) and `promoteToPrimary` (the
@@ -227,9 +262,17 @@ final class FirestoreService {
                 ], forDocument: personRef)
                 if let uid = entry.firebaseUID {
                     let membershipRef = db.document(Path.userMembership(uid))
-                    batch.updateData([
-                        "role": role
-                    ], forDocument: membershipRef)
+                    // setData(merge: true): updates `role` on an existing
+                    // membership; creates the full doc if missing. The
+                    // careCircleID / personID / joinedAt fields satisfy
+                    // the rules' validation either way (membership update
+                    // ignores them; membership create requires them).
+                    batch.setData([
+                        "careCircleID": circleID,
+                        "personID": entry.personID,
+                        "role": role,
+                        "joinedAt": FieldValue.serverTimestamp()
+                    ], forDocument: membershipRef, merge: true)
                 }
             }
 

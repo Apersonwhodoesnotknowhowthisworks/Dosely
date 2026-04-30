@@ -144,10 +144,13 @@ A primary cannot leave the circle directly while secondaries exist — `CareCirc
 Runs once per device, gated by `UserDefaults["primary_role_migration_v1"]`. For every local CareCircle without a `primarySupervisorPersonID`:
 
 - Picks the supervisor whose `Person.id.uuidString` sorts first as primary. Deterministic across devices, so concurrent migrations from two devices converge on the same answer without coordination.
-- Writes a single Firestore batch via `applyPrimaryAssignment`: stamps `primarySupervisorPersonID`, sets the chosen primary's role to `primary_supervisor` and everyone else's to `secondary_supervisor`, mirrors role onto each `/userMemberships`.
+- **PHASE A**: backfills the caller's own `/userMemberships` index doc via `FirestoreService.ensureMembership` (a single `setData(merge: true)` write). Production data from earlier app versions sometimes has a Person doc without a corresponding `/userMemberships` — under the new role-aware rules that locks the supervisor out (`memberOf` returns false → every read denied with "Missing or insufficient permissions"). PHASE A self-heals that state. The membership create rule's branch (d) — "self-backfill: Person doc proves authority" — recognises this case: when the requester's auth.uid matches a Person doc with a supervisor role at the claimed circle/personID path, the membership index can be safely re-created.
+- **PHASE B**: writes a single Firestore batch via `applyPrimaryAssignment`: stamps `primarySupervisorPersonID`, sets the chosen primary's role to `primary_supervisor` and everyone else's to `secondary_supervisor`, mirrors role onto each `/userMemberships` (using `setData(merge: true)` so other supervisors with missing memberships get created too — the actor is now primary post-PHASE-A, so branch (c) of the membership create rule allows it).
 - Mirrors the result into Core Data so the UI updates without waiting on the SyncCoordinator listener.
 
-Runs from `AuthService.resolveCurrentPerson` after `FirestoreUploadMigration`, so the upload migration's "supervisor" rows get fixed up immediately. New circles created post-split set `primarySupervisorPersonID` directly at create time, so the migration is a no-op for them.
+The two phases cannot fold into a single batch: the CareCircle and Person update rules need `isPrimary`, which depends on a pre-batch `/userMemberships`. Adding `isPrimaryAfter` to the Person update rule would let a secondary supervisor self-promote in one batch (write their own `/userMemberships` role to `primary_supervisor` + their Person.role to `primary_supervisor` — both gated only by the post-batch state) — explicitly a security hole. The two-phase split keeps Person.role mutations gated by the *pre-batch* `/userMemberships` evaluation while still letting legacy supervisors recover.
+
+Runs from `AuthService.resolveCurrentPerson` after `FirestoreUploadMigration`, with the user's Firebase UID passed in so PHASE A targets the right membership doc. New circles created post-split set `primarySupervisorPersonID` directly at create time, so the migration is a no-op for them.
 
 ## Account model
 
