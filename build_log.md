@@ -273,6 +273,18 @@ Tests in `DoselyTests/PullToRefreshTests.swift`: silent no-op when there's no ac
 
 The trap I keep hitting on this codebase: a function that "gracefully" returns an empty result when something's wrong reads identically to a function that says "yes, the answer is empty." Combine that with downstream code that prunes anything not in the result and you have a cache-wipe machine. Better to throw and let the caller decide.
 
+## May 1 — Add-person chooser was rendering raw localization keys (commit `7541904`)
+
+People → "+" → "Add a family member" was showing `supervisor.add.managed.title` etc as the option titles. The user's first guess was missing keys; the keys were actually present in both `en.lproj` and `pa.lproj`. Bug was at the call site in `Dosely/Features/Supervisor/People/AddPersonFlow.swift`:
+
+    Text(type.titleKey)   // type.titleKey is a runtime String
+
+`Text(_:)` on a runtime `String` binds to the verbatim initializer and skips Localizable.strings. Only `Text(LocalizedStringKey)` — which Swift picks for string literals — routes through the bundle. Same trap was sitting on the `.fillForm` nav-title branch, latent until anyone made it to step 2 of the flow. Fix was three `L(...)` wrappers.
+
+Two tests in `DoselyTests/AddPersonFlowLocalizationTests.swift`. The first probes the lookup table — every chooser key must resolve to something other than itself in `en.lproj` — which catches the user's original hypothesis if a future chooser type ships without strings. The second renders the chooser in a `UIHostingController` and walks the UIKit hierarchy for any `UILabel.text` that equals one of the six raw keys. That one catches the actual bug class (key resolves but the call site never asked for localization), which the lookup test alone would miss.
+
+The diagnosis matters more than the fix. The user's hypothesis was specific and confident, and a few of the suggested replacement strings drifted away from what the data model actually supports — "Someone with their own iPhone" for `device_client` reads like the device client owns the phone, but in this app device clients share the supervisor's phone with a PIN. Reading the source first beat patching to the brief.
+
 ## Still pending
 
 - Dark/light mode adaptive DSColors (queued — invisible text on real iPhone)
