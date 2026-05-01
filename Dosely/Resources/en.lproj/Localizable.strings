@@ -316,8 +316,6 @@
 "supervisor.adherence.tapforhistory" = "Opens the History tab for this person";
 "supervisor.alerts.title" = "Alerts";
 "supervisor.alerts.empty" = "No active alerts.";
-"supervisor.alerts.stub.refill.title" = "Refill check";
-"supervisor.alerts.stub.refill.body" = "Watch %@'s pill supply this week.";
 "supervisor.quickactions.title" = "Quick actions";
 "supervisor.quickactions.addmed" = "Add medication";
 "supervisor.quickactions.medicalid" = "Edit Medical ID";

@@ -115,6 +115,39 @@ final class SupervisorDashboardViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.clients.first?.name, "Grandpa")
     }
 
+    // MARK: - Alerts (no real signal yet)
+    //
+    // Until missed-dose rollups, low-supply, PIN lockout, and emergency
+    // alerts all ship, the dashboard MUST NOT surface any alert. The
+    // previous `stubAlerts` helper produced a hardcoded "Watch %@'s
+    // pill supply this week" warning unconditionally — once a person
+    // was selected, the alert always appeared, regardless of supply,
+    // and the substituted name often didn't match the supervisor's
+    // expectation because of stale `activePersonID` state.
+
+    func test_load_alertsAreEmptyWhenAClientWithNoMedicationsIsSelected() async throws {
+        let grandpa = try await addManagedClient(name: "Grandpa")
+
+        await viewModel.load(circleID: circle.id!,
+                             supervisorID: primary.id!,
+                             activePersonID: grandpa.id!)
+
+        XCTAssertTrue(viewModel.alerts.isEmpty,
+                      "no real alert signal — selecting a client must not surface a placeholder warning")
+    }
+
+    func test_load_alertsAreEmptyOnTheAllView() async throws {
+        _ = try await addManagedClient(name: "Grandpa")
+        _ = try await addManagedClient(name: "Bibi")
+
+        await viewModel.load(circleID: circle.id!,
+                             supervisorID: primary.id!,
+                             activePersonID: nil)
+
+        XCTAssertTrue(viewModel.alerts.isEmpty,
+                      "the All view must not show alerts until real signals (missed doses, low supply) ship")
+    }
+
     /// "All" view aggregates doses across the filtered clients only.
     /// A scheduled dose on a managed client should land in the combined
     /// list; a scheduled dose on a supervisor (a degenerate but

@@ -77,12 +77,17 @@ final class SupervisorDashboardViewModel: ObservableObject {
         if let activePersonID {
             self.doses = await loadDoses(for: activePersonID, now: now)
             self.adherence = await computeAdherence(for: activePersonID, in: onlyClients, now: now)
-            self.alerts = stubAlerts(for: activePersonID, clients: onlyClients)
         } else {
             self.doses = await loadCombinedDoses(across: onlyClients, now: now)
             self.adherence = nil
-            self.alerts = stubAlerts(for: nil, clients: onlyClients)
         }
+        // No real-signal alerts yet — missed-dose rollups, low supply,
+        // PIN lockout, emergency button all live in the "Prompt 19"
+        // queue. Until they ship, the AlertsCard renders its
+        // "supervisor.alerts.empty" copy. The previous `stubAlerts`
+        // helper produced a hardcoded refill warning regardless of
+        // supply state, which gave supervisors a false signal.
+        self.alerts = []
 
         self.isLoaded = true
     }
@@ -180,21 +185,6 @@ final class SupervisorDashboardViewModel: ObservableObject {
                                personName: person.name ?? "",
                                takenCount: taken,
                                scheduledCount: denom)
-    }
-
-    /// Stubbed alerts — replaced in Prompt 15. Returns a fixed sample so
-    /// the AlertsCard has visible content during dashboard development.
-    private func stubAlerts(for activePersonID: UUID?, clients: [Person]) -> [DashboardAlert] {
-        guard let activePersonID,
-              let person = clients.first(where: { $0.id == activePersonID }) else {
-            return []
-        }
-        let firstName = (person.name ?? "").components(separatedBy: " ").first ?? ""
-        return [
-            DashboardAlert(title: L("supervisor.alerts.stub.refill.title"),
-                           body: L("supervisor.alerts.stub.refill.body", firstName as NSString),
-                           severity: .warning)
-        ]
     }
 
     // MARK: - Date helpers

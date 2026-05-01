@@ -319,8 +319,6 @@
 "supervisor.adherence.tapforhistory" = "ਇਸ ਮੈਂਬਰ ਦੀ History ਟੈਬ ਖੁੱਲ੍ਹਦੀ ਹੈ";
 "supervisor.alerts.title" = "ਚੇਤਾਵਨੀਆਂ";
 "supervisor.alerts.empty" = "ਕੋਈ ਚੇਤਾਵਨੀ ਨਹੀਂ।";
-"supervisor.alerts.stub.refill.title" = "ਦਵਾਈ ਦੀ ਜਾਂਚ";
-"supervisor.alerts.stub.refill.body" = "ਇਸ ਹਫ਼ਤੇ %@ ਦੀਆਂ ਗੋਲੀਆਂ ਦਾ ਧਿਆਨ ਰੱਖੋ।";
 "supervisor.quickactions.title" = "ਛੇਤੀ ਕੰਮ";
 "supervisor.quickactions.addmed" = "ਦਵਾਈ ਜੋੜੋ";
 "supervisor.quickactions.medicalid" = "Medical ID ਸੋਧੋ";
