@@ -270,6 +270,8 @@
 "circle.join.error.alreadymember" = "You're already part of this family. Sign in normally.";
 "circle.join.error.invalidname" = "Please enter the name your family will see.";
 "circle.join.error.offline" = "Couldn't reach the network. Please check your connection and try again.";
+"circle.join.error.permissiondenied" = "Couldn't join the family. Try again, or contact support if this persists.";
+"circle.join.error.unknown" = "Something went wrong joining the family. Please try again.";
 
 // MARK: - Circle setup mistake escape hatch
 "circle.setup.mistake" = "Already created a family by mistake? Tap here to leave it and join another.";

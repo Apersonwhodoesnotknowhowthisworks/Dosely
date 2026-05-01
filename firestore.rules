@@ -339,15 +339,25 @@ service cloud.firestore {
                     request.resource.data.supervisorCount == 0 &&
                     request.resource.data.joinCode is string;
 
-      // Update permitted in three shapes:
+      // Update permitted in four shapes:
       //   (a) The current primary writing anything (rename, regenerate
       //       join code, primarySupervisorPersonID change as part of a
       //       promotion batch).
       //   (b) A primary being established in this same batch — founder
-      //       count++ during bootstrap or joiner count++ during join.
+      //       count++ during bootstrap or joiner count++ during the
+      //       founder-bootstrap path.
       //   (c) Any supervisor flavour decrementing supervisorCount as
       //       part of leaving themselves. The post-batch count must
       //       still satisfy the last-supervisor protection (>= 1).
+      //   (d) Joiner-bootstrap: a brand-new joining secondary supervisor
+      //       incrementing supervisorCount by exactly 1 in the same
+      //       batch as their /userMemberships create + Person doc create.
+      //       Authority comes from the membership write whose joinCode
+      //       branch (b) on /userMemberships already validates the
+      //       /joinCodes proof. The `existsAfter` check confirms the
+      //       /userMemberships doc lands in this batch with careCircleID
+      //       matching this circle, so we know the same actor is the
+      //       one being seated.
       // id and createdAt are immutable.
       allow update: if (
                       isPrimary(circleID) ||
@@ -358,6 +368,13 @@ service cloud.firestore {
                           .hasOnly(['supervisorCount', 'lastModified']) &&
                         request.resource.data.supervisorCount == resource.data.supervisorCount - 1 &&
                         request.resource.data.supervisorCount >= 1
+                      ) ||
+                      (
+                        existsAfter(/databases/$(database)/documents/userMemberships/$(request.auth.uid)) &&
+                        getAfter(/databases/$(database)/documents/userMemberships/$(request.auth.uid)).data.careCircleID == circleID &&
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['supervisorCount', 'lastModified']) &&
+                        request.resource.data.supervisorCount == resource.data.supervisorCount + 1
                       )
                     ) &&
                     request.resource.data.id == resource.data.id &&

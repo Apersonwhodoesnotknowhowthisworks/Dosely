@@ -9,6 +9,12 @@ enum CareCircleJoinError: Error, Equatable {
     /// this circle to fall back on. Distinct from `codeNotFound` —
     /// retry-after-network would help here.
     case offline
+    /// Rules-layer rejected the join (stale code, wrong shape, etc).
+    /// Distinct from `codeNotFound` so the UI can prompt the user
+    /// rather than telling them the code is wrong when it isn't.
+    case permissionDenied
+    /// Catch-all for anything else. Surface as a generic retry.
+    case unknown
 }
 
 enum CareCircleLeaveError: Error, Equatable {
@@ -163,10 +169,23 @@ final class CareCircleRepository {
 
     // MARK: - Join
 
-    /// Joins a circle by its 6-digit code. The lookup hits Firestore via
-    /// `/joinCodes/{code}` — a direct document fetch, not a collection
-    /// scan — so it works for circles never seen on this device.
+    /// Joins a circle by its 6-digit code.
     ///
+    /// Order matters because the rules deny `/careCircles/{id}` reads
+    /// to non-members:
+    ///   1. Resolve the careCircleID via `/joinCodes/{code}` (the only
+    ///      read a non-member is allowed to do).
+    ///   2. Already-member check via Core Data.
+    ///   3. Atomic batch: `/userMemberships/{uid}` + `/people/{newID}`
+    ///      + `/careCircles/{id}.supervisorCount += 1`. The membership
+    ///      write proves authority at the rules layer; the Person and
+    ///      careCircle update rules use `getAfter` to see it.
+    ///   4. Now we're a member — `loadCareCircle` succeeds and we mirror
+    ///      the circle into Core Data alongside the new Person row.
+    ///
+    /// Errors are preserved: `.codeNotFound` only when the code really
+    /// doesn't resolve, `.permissionDenied` when the rules refused (a
+    /// stale code, a wrong shape), `.offline` for unreachable, etc.
     /// Falls back to a Core Data scan when Firestore is unreachable so
     /// the existing single-device flow still works offline (e.g. a
     /// handed-down iPad scenario where the circle row is already local).
@@ -180,9 +199,11 @@ final class CareCircleRepository {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return .failure(.invalidName) }
 
-        let fcircle: FirestoreModels.FCareCircle?
+        // Step 1: resolve careCircleID via /joinCodes only. We DO NOT
+        // touch /careCircles here — that read requires membership.
+        let resolvedCircleID: String?
         do {
-            fcircle = try await firestore.lookupJoinCode(normalized)
+            resolvedCircleID = try await firestore.lookupJoinCode(normalized)
         } catch FirestoreServiceError.offline {
             return await joinViaCoreData(
                 normalized: normalized,
@@ -190,16 +211,17 @@ final class CareCircleRepository {
                 name: trimmedName,
                 language: language
             )
+        } catch FirestoreServiceError.permissionDenied {
+            return .failure(.permissionDenied)
         } catch {
+            return .failure(.unknown)
+        }
+        guard let careCircleID = resolvedCircleID,
+              let circleUUID = UUID(uuidString: careCircleID) else {
             return .failure(.codeNotFound)
         }
 
-        guard let fcircle, let circleUUID = UUID(uuidString: fcircle.id) else {
-            return .failure(.codeNotFound)
-        }
-
-        // Already a supervisor in this circle on this device? Don't
-        // create a duplicate. Mirror to Core Data first if missing.
+        // Step 2: already-member check via Core Data.
         let alreadyMember = await context.perform { [context] in
             let request = NSFetchRequest<Person>(entityName: "Person")
             request.predicate = NSPredicate(
@@ -211,55 +233,47 @@ final class CareCircleRepository {
         }
         if alreadyMember { return .failure(.alreadyMember) }
 
-        // Mirror the Firestore circle into Core Data so the new
-        // supervisor row has somewhere to live.
-        await context.perform { [context] in
-            fcircle.upsert(in: context)
-            try? context.save()
+        // Step 3: atomic three-write batch. New joiners are secondary
+        // supervisors — read-only across the circle.
+        let supervisorID = UUID()
+        do {
+            try await firestore.joinCircleAsSecondary(
+                circleID: careCircleID,
+                firebaseUID: firebaseUID,
+                personID: supervisorID.uuidString,
+                name: trimmedName,
+                language: language,
+                joinCode: normalized
+            )
+        } catch FirestoreServiceError.permissionDenied {
+            return .failure(.permissionDenied)
+        } catch FirestoreServiceError.offline {
+            return .failure(.offline)
+        } catch {
+            return .failure(.unknown)
         }
 
-        let supervisorID = UUID()
-
-        // Joiner bootstrap: write /userMemberships first (with the
-        // joinCode that proves authority at the rules layer), then the
-        // Person doc (whose self-bootstrap rule validates against the
-        // membership), then bump supervisorCount. New joiners are
-        // **secondary** supervisors — read-only across the circle.
-        let joinerMembership = FirestoreModels.FUserMembership(
-            careCircleID: fcircle.id,
-            personID: supervisorID.uuidString,
-            role: Roles.secondarySupervisor,
-            joinedAt: Date(),
-            joinCode: normalized
-        )
-        try? await firestore.upsertMembership(
-            firebaseUID: firebaseUID,
-            membership: joinerMembership
-        )
-
-        let fperson = FirestoreModels.FPerson(
-            id: supervisorID.uuidString,
-            careCircleID: fcircle.id,
-            name: trimmedName,
-            role: Roles.secondarySupervisor,
-            languagePreference: language,
-            firebaseUID: firebaseUID,
-            photoData: nil,
-            pinHash: nil,
-            pinSalt: nil,
-            failedPinAttempts: 0,
-            lastModified: nil
-        )
-        try? await firestore.upsertPerson(fperson)
-
-        try? await firestore.adjustSupervisorCount(
-            circleID: fcircle.id,
-            delta: 1
-        )
+        // Step 4: NOW we're a member. Read the full careCircle for the
+        // local mirror and the success return value. SyncCoordinator
+        // will subsequently keep this in sync.
+        let fcircle: FirestoreModels.FCareCircle?
+        do {
+            fcircle = try await firestore.loadCareCircle(circleID: careCircleID)
+        } catch {
+            // Membership wrote successfully but we can't load the
+            // circle right now. Treat as offline-after-success — the
+            // join landed, the next refresh will hydrate Core Data via
+            // SyncCoordinator. Mirror what we know locally so the UI
+            // doesn't dead-end on a missing circle row.
+            fcircle = nil
+        }
 
         return await context.perform { [context] in
+            if let fcircle {
+                fcircle.upsert(in: context)
+            }
             guard let circle = Self.find(id: circleUUID, in: context) else {
-                return .failure(.codeNotFound)
+                return .failure(.unknown)
             }
             let person = Person(context: context)
             person.id = supervisorID

@@ -356,19 +356,110 @@ final class FirestoreService {
         }
     }
 
-    /// Looks up a join code via `/joinCodes/{code}` (a direct document
-    /// fetch, not a collection scan). Returns the `FCareCircle` document
-    /// if both lookups succeed, else nil. When Firebase isn't
-    /// configured, throws `.offline` so callers fall back to their
-    /// Core Data path rather than treating the service as authoritative.
-    func lookupJoinCode(_ code: String) async throws -> FirestoreModels.FCareCircle? {
+    /// Resolves a join code to a careCircle id via `/joinCodes/{code}`
+    /// (a direct document fetch — readable by any signed-in user, by
+    /// design, so a joiner can find the circle they're about to join).
+    /// Returns the `careCircleID` on hit, nil if the code is unknown.
+    /// When Firebase isn't configured, throws `.offline` so callers
+    /// fall back to their Core Data path.
+    ///
+    /// **Does NOT read `/careCircles/{id}`.** That read requires
+    /// `memberOf(circleID)`, which a brand-new joiner cannot satisfy
+    /// before their `/userMemberships` doc is written. Loading the
+    /// careCircle inside this lookup was the source of the join-flow
+    /// permission-denied that the UI was misreporting as "code not
+    /// found." Callers that need the full circle doc must call
+    /// `loadCareCircle` themselves *after* the membership write.
+    func lookupJoinCode(_ code: String) async throws -> String? {
         guard let db else { throw FirestoreServiceError.offline }
         do {
             let codeSnap = try await db.document("\(Path.joinCodes)/\(code)").getDocument()
             guard codeSnap.exists else { return nil }
             let index = try decode(FirestoreModels.FJoinCodeIndex.self, from: codeSnap)
-            return try await loadCareCircle(circleID: index.careCircleID)
+            return index.careCircleID
         } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    /// Atomic joiner-bootstrap. In a single Firestore batch:
+    /// - creates `/userMemberships/{firebaseUID}` (with the joinCode
+    ///   that satisfies the rules' branch (b) authority check),
+    /// - creates `/careCircles/{circleID}/people/{personID}` with role
+    ///   `secondary_supervisor`,
+    /// - increments `/careCircles/{circleID}.supervisorCount` by 1.
+    ///
+    /// All three writes commit together. The Person create rule's
+    /// `existsAfter(/userMemberships/{auth.uid})` and the careCircle
+    /// update rule's joiner-bootstrap branch both evaluate against the
+    /// post-batch state where the membership doc exists with
+    /// `careCircleID == circleID`, so each row's rule passes.
+    ///
+    /// Throws `.permissionDenied` when the rules reject the batch
+    /// (typically a stale or wrong join code), `.offline` when the
+    /// network's down, `.unknown` for everything else.
+    func joinCircleAsSecondary(
+        circleID: String,
+        firebaseUID: String,
+        personID: String,
+        name: String,
+        language: String,
+        joinCode: String
+    ) async throws {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            let membership = FirestoreModels.FUserMembership(
+                careCircleID: circleID,
+                personID: personID,
+                role: Roles.secondarySupervisor,
+                joinedAt: Date(),
+                joinCode: joinCode
+            )
+            let person = FirestoreModels.FPerson(
+                id: personID,
+                careCircleID: circleID,
+                name: name,
+                role: Roles.secondarySupervisor,
+                languagePreference: language,
+                firebaseUID: firebaseUID,
+                photoData: nil,
+                pinHash: nil,
+                pinSalt: nil,
+                failedPinAttempts: 0,
+                lastModified: nil
+            )
+            var membershipPayload = try encode(membership)
+            membershipPayload["joinedAt"] = FieldValue.serverTimestamp()
+            var personPayload = try encode(person)
+            personPayload["lastModified"] = FieldValue.serverTimestamp()
+
+            let batch = db.batch()
+            batch.setData(
+                membershipPayload,
+                forDocument: db.document(Path.userMembership(firebaseUID))
+            )
+            batch.setData(
+                personPayload,
+                forDocument: db
+                    .collection(Path.people(circleID))
+                    .document(personID)
+            )
+            batch.updateData([
+                "supervisorCount": FieldValue.increment(Int64(1)),
+                "lastModified": FieldValue.serverTimestamp()
+            ], forDocument: db.document(Path.careCircle(circleID)))
+            #if DEBUG
+            print("[JOIN-DEBUG] batch.commit circle=\(circleID) joiner=\(firebaseUID) personID=\(personID)")
+            #endif
+            try await batch.commit()
+            #if DEBUG
+            print("[JOIN-DEBUG] commit succeeded for joiner=\(firebaseUID)")
+            #endif
+        } catch {
+            #if DEBUG
+            let ns = error as NSError
+            print("[JOIN-DEBUG] commit threw: domain=\(ns.domain) code=\(ns.code) desc=\(ns.localizedDescription)")
+            #endif
             throw FirestoreServiceError.map(error)
         }
     }

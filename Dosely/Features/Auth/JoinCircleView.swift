@@ -218,10 +218,12 @@ struct JoinCircleView: View {
 
     private func friendly(for error: CareCircleJoinError) -> String {
         switch error {
-        case .codeNotFound:  return L("circle.join.error.notfound")
-        case .alreadyMember: return L("circle.join.error.alreadymember")
-        case .invalidName:   return L("circle.join.error.invalidname")
-        case .offline:       return L("circle.join.error.offline")
+        case .codeNotFound:      return L("circle.join.error.notfound")
+        case .alreadyMember:     return L("circle.join.error.alreadymember")
+        case .invalidName:       return L("circle.join.error.invalidname")
+        case .offline:           return L("circle.join.error.offline")
+        case .permissionDenied:  return L("circle.join.error.permissiondenied")
+        case .unknown:           return L("circle.join.error.unknown")
         }
     }
 }

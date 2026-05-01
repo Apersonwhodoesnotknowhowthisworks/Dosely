@@ -273,6 +273,8 @@
 "circle.join.error.alreadymember" = "ਤੁਸੀਂ ਪਹਿਲਾਂ ਹੀ ਇਸ ਪਰਿਵਾਰ ਦਾ ਹਿੱਸਾ ਹੋ। ਆਮ ਤਰੀਕੇ ਨਾਲ ਸਾਈਨ-ਇਨ ਕਰੋ।";
 "circle.join.error.invalidname" = "ਉਹ ਨਾਮ ਪਾਉ ਜੋ ਤੁਹਾਡੇ ਪਰਿਵਾਰ ਨੂੰ ਦਿਖੇਗਾ।";
 "circle.join.error.offline" = "ਨੈੱਟਵਰਕ ਨਾਲ ਜੁੜ ਨਹੀਂ ਸਕੇ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
+"circle.join.error.permissiondenied" = "ਪਰਿਵਾਰ ਵਿੱਚ ਜੁੜ ਨਹੀਂ ਸਕੇ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ, ਜੇ ਇਹ ਜਾਰੀ ਰਹੇ ਤਾਂ ਸਹਾਇਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।"; // REVIEW NEEDED
+"circle.join.error.unknown" = "ਪਰਿਵਾਰ ਵਿੱਚ ਜੁੜਨ ਵੇਲੇ ਕੁਝ ਗ਼ਲਤ ਹੋਇਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
 
 // MARK: - Circle setup mistake escape hatch — REVIEW NEEDED
 "circle.setup.mistake" = "ਗ਼ਲਤੀ ਨਾਲ ਪਰਿਵਾਰ ਬਣਾ ਲਿਆ? ਇੱਥੇ ਟੈਪ ਕਰ ਕੇ ਉਸਨੂੰ ਛੱਡੋ ਅਤੇ ਕਿਸੇ ਹੋਰ ਵਿੱਚ ਜੁੜੋ।";

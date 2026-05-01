@@ -86,7 +86,7 @@ final class FirestoreServiceTests: XCTestCase {
         XCTAssertEqual(loaded?.joinCode, code)
 
         let viaCode = try await service.lookupJoinCode(code)
-        XCTAssertEqual(viaCode?.id, id)
+        XCTAssertEqual(viaCode, id)
     }
 
     // MARK: - regenerateJoinCode is atomic
@@ -114,7 +114,7 @@ final class FirestoreServiceTests: XCTestCase {
         XCTAssertNil(viaOld, "old code should be invalid the moment regenerate returns")
 
         let viaNew = try await service.lookupJoinCode(newCode)
-        XCTAssertEqual(viaNew?.id, id, "new code should resolve immediately")
+        XCTAssertEqual(viaNew, id, "new code should resolve immediately")
 
         let reloaded = try await service.loadCareCircle(circleID: id)
         XCTAssertEqual(reloaded?.joinCode, newCode)
@@ -176,6 +176,104 @@ final class FirestoreServiceTests: XCTestCase {
         } catch {
             XCTFail("expected .offline, got \(error)")
         }
+    }
+
+    // MARK: - lookupJoinCode does not read /careCircles
+
+    /// Regression for the bug that produced "code didn't match a
+    /// family" on a real, valid code: `lookupJoinCode` must NOT touch
+    /// `/careCircles/{id}`. That read is denied to non-members; loading
+    /// the careCircle inside the lookup made every joiner's first
+    /// attempt fail with permission-denied which the repo collapsed to
+    /// `.codeNotFound`.
+    func test_lookupJoinCode_returnsCircleIDOnly() async throws {
+        guard await emulatorAvailable() else { return }
+
+        let id = UUID().uuidString
+        let code = String(format: "%06d", Int.random(in: 0..<1_000_000))
+        let circle = FirestoreModels.FCareCircle(
+            id: id,
+            name: "Lookup-Only",
+            joinCode: code,
+            createdAt: Date(),
+            supervisorCount: 0,
+            lastModified: nil
+        )
+        try await service.createCareCircle(circle)
+
+        let resolved = try await service.lookupJoinCode(code)
+        XCTAssertEqual(resolved, id, "lookup must return the careCircleID without loading /careCircles")
+    }
+
+    func test_lookupJoinCode_unknownCodeReturnsNil() async throws {
+        guard await emulatorAvailable() else { return }
+        let resolved = try await service.lookupJoinCode("000000")
+        XCTAssertNil(resolved)
+    }
+
+    // MARK: - joinCircleAsSecondary atomic batch
+
+    /// Happy-path emulator integration: the joiner-bootstrap batch
+    /// writes `/userMemberships/{uid}`, the new Person doc, and bumps
+    /// `supervisorCount` together. Verifies all three landed and that
+    /// the careCircle is afterwards readable as a member.
+    func test_joinCircleAsSecondary_writesMembershipPersonAndBumpsCount() async throws {
+        guard await emulatorAvailable() else { return }
+        guard let db = service.db else { return }
+
+        // Founder seeds a circle with supervisorCount=1 (founder is in).
+        let circleID = UUID().uuidString
+        let code = String(format: "%06d", Int.random(in: 0..<1_000_000))
+        let founderPersonID = UUID().uuidString
+        let circle = FirestoreModels.FCareCircle(
+            id: circleID,
+            name: "Joiner Family",
+            joinCode: code,
+            createdAt: Date(),
+            supervisorCount: 1,
+            primarySupervisorPersonID: founderPersonID,
+            lastModified: nil
+        )
+        try await service.createCareCircle(circle)
+        // createCareCircle resets supervisorCount to 0; nudge it to 1
+        // to simulate a real founder bootstrap.
+        try await service.adjustSupervisorCount(circleID: circleID, delta: 1)
+
+        let joinerUID = "joiner-\(UUID().uuidString)"
+        let joinerPersonID = UUID().uuidString
+
+        try await service.joinCircleAsSecondary(
+            circleID: circleID,
+            firebaseUID: joinerUID,
+            personID: joinerPersonID,
+            name: "Cousin",
+            language: "en",
+            joinCode: code
+        )
+
+        // /userMemberships/{joinerUID} exists with the expected shape.
+        let membershipSnap = try await db
+            .document(FirestoreService.Path.userMembership(joinerUID))
+            .getDocument()
+        XCTAssertTrue(membershipSnap.exists)
+        XCTAssertEqual(membershipSnap.data()?["careCircleID"] as? String, circleID)
+        XCTAssertEqual(membershipSnap.data()?["personID"] as? String, joinerPersonID)
+        XCTAssertEqual(membershipSnap.data()?["role"] as? String, Roles.secondarySupervisor)
+
+        // /careCircles/{id}/people/{joinerPersonID} exists as secondary.
+        let personSnap = try await db
+            .collection(FirestoreService.Path.people(circleID))
+            .document(joinerPersonID)
+            .getDocument()
+        XCTAssertTrue(personSnap.exists)
+        XCTAssertEqual(personSnap.data()?["firebaseUID"] as? String, joinerUID)
+        XCTAssertEqual(personSnap.data()?["role"] as? String, Roles.secondarySupervisor)
+
+        // /careCircles/{id}.supervisorCount went up by 1 (founder + joiner = 2).
+        let circleSnap = try await db
+            .document(FirestoreService.Path.careCircle(circleID))
+            .getDocument()
+        XCTAssertEqual(circleSnap.data()?["supervisorCount"] as? Int, 2)
     }
 
     // MARK: - Two-device sync via listener

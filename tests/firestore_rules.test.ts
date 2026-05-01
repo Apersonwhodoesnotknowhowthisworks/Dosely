@@ -1345,6 +1345,120 @@ describe("Firestore security rules", () => {
     });
   });
 
+  // -- 15.5. Joiner bootstrap: atomic 3-write batch ---------------------
+  //
+  // The joining secondary supervisor needs to land three writes atomically:
+  //   a) /userMemberships/{uid} create with the joinCode proof,
+  //   b) /careCircles/{id}/people/{newPersonID} create as secondary,
+  //   c) /careCircles/{id}.supervisorCount += 1.
+  // The careCircle update rule's joiner-bootstrap branch (d) recognises
+  // (c) when (a) lands in the same batch with careCircleID matching.
+
+  describe("joiner bootstrap (atomic 3-write batch)", () => {
+    const circleID = "circle-joiner-bootstrap";
+    const primary = { uid: "primary-bootstrap-uid", personID: "person-primary-bs" };
+    const joiner = { uid: "joiner-bootstrap-uid", personID: "person-joiner-bs" };
+    const code = "550000";
+
+    beforeEach(async () => {
+      await seedCircle({
+        circleID,
+        joinCode: code,
+        supervisor: primary,
+        supervisorCount: 1,
+      });
+    });
+
+    it("joiner can land /userMemberships + Person + supervisorCount++ in one batch", async () => {
+      const db = authedDb(joiner.uid);
+      const batch = writeBatch(db);
+      batch.set(doc(db, `userMemberships/${joiner.uid}`), {
+        careCircleID: circleID,
+        personID: joiner.personID,
+        role: "secondary_supervisor",
+        joinedAt: new Date(),
+        joinCode: code,
+      });
+      batch.set(doc(db, `careCircles/${circleID}/people/${joiner.personID}`), {
+        id: joiner.personID,
+        careCircleID: circleID,
+        name: "New Joiner",
+        role: "secondary_supervisor",
+        languagePreference: "en",
+        firebaseUID: joiner.uid,
+        failedPinAttempts: 0,
+      });
+      batch.update(doc(db, `careCircles/${circleID}`), {
+        supervisorCount: 2,
+      });
+      await assertSucceeds(batch.commit());
+    });
+
+    it("incrementing supervisorCount WITHOUT writing /userMemberships in the same batch is denied", async () => {
+      // No membership doc lands in this batch — joiner branch fails
+      // because the existsAfter(/userMemberships/{auth.uid}) check
+      // returns false. The other branches (isPrimary, decrement, etc.)
+      // also don't apply. Should be rejected.
+      const db = authedDb(joiner.uid);
+      await assertFails(
+        updateDoc(doc(db, `careCircles/${circleID}`), {
+          supervisorCount: 2,
+        })
+      );
+    });
+
+    it("incrementing supervisorCount by MORE THAN 1 in a joiner batch is denied", async () => {
+      const db = authedDb(joiner.uid);
+      const batch = writeBatch(db);
+      batch.set(doc(db, `userMemberships/${joiner.uid}`), {
+        careCircleID: circleID,
+        personID: joiner.personID,
+        role: "secondary_supervisor",
+        joinedAt: new Date(),
+        joinCode: code,
+      });
+      batch.set(doc(db, `careCircles/${circleID}/people/${joiner.personID}`), {
+        id: joiner.personID,
+        careCircleID: circleID,
+        name: "Greedy",
+        role: "secondary_supervisor",
+        languagePreference: "en",
+        firebaseUID: joiner.uid,
+        failedPinAttempts: 0,
+      });
+      batch.update(doc(db, `careCircles/${circleID}`), {
+        supervisorCount: 5,  // not + 1
+      });
+      await assertFails(batch.commit());
+    });
+
+    it("a joiner whose /userMemberships in the batch points at a DIFFERENT circle cannot increment this circle's count", async () => {
+      // Membership claims circle-other (not seeded — but exists check
+      // doesn't apply here; the joinCode validation is what matters).
+      // The careCircle update rule's joiner branch verifies the
+      // /userMemberships's careCircleID equals the circle being
+      // updated, so this batch must fail.
+      await seedCircle({
+        circleID: "circle-other",
+        joinCode: "550001",
+        supervisor: { uid: "other-uid", personID: "person-other" },
+      });
+      const db = authedDb(joiner.uid);
+      const batch = writeBatch(db);
+      batch.set(doc(db, `userMemberships/${joiner.uid}`), {
+        careCircleID: "circle-other",
+        personID: joiner.personID,
+        role: "secondary_supervisor",
+        joinedAt: new Date(),
+        joinCode: "550001",
+      });
+      batch.update(doc(db, `careCircles/${circleID}`), {
+        supervisorCount: 2,
+      });
+      await assertFails(batch.commit());
+    });
+  });
+
   // -- 16. Orphan-founder cleanup --------------------------------------
   //
   // Rules-layer support for `OrphanCircleCleanupMigration`. The founder
