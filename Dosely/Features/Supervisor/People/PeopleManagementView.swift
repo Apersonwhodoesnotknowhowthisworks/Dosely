@@ -9,6 +9,15 @@ struct PeopleManagementView: View {
 
     let personRepo: PersonRepository
     let careCircleRepo: CareCircleRepository
+    let medicationRepo: MedicationRepository
+
+    init(personRepo: PersonRepository,
+         careCircleRepo: CareCircleRepository,
+         medicationRepo: MedicationRepository = MedicationRepository()) {
+        self.personRepo = personRepo
+        self.careCircleRepo = careCircleRepo
+        self.medicationRepo = medicationRepo
+    }
 
     var body: some View {
         NavigationStack {
@@ -58,7 +67,9 @@ struct PeopleManagementView: View {
             .environmentObject(authService)
         }
         .sheet(item: $detailPerson) { person in
-            PersonDetailView(person: person, personRepo: personRepo) {
+            PersonDetailView(person: person,
+                             personRepo: personRepo,
+                             medicationRepo: medicationRepo) {
                 Task { await reload() }
             }
             .environmentObject(authService)

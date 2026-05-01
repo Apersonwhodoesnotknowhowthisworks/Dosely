@@ -109,13 +109,17 @@ struct SupervisorDashboardView: View {
             await reload()
         }
         .sheet(isPresented: $showingAdd) {
-            if let target = pendingAddTargetPersonID {
-                AddMedicationFlow(repository: medicationRepo) {
-                    Task { await reload() }
-                }
-                .environmentObject(authService)
-                .environment(\.supervisorTargetPersonID, target)
+            // Sheet content must NEVER be empty — wrapping the body in
+            // `if let target = pendingAddTargetPersonID` previously
+            // produced a blank white sheet whenever the state hadn't
+            // settled by render time. The flow now always renders;
+            // `supervisorTargetPersonID` is optional and falls back to
+            // an in-flow person picker when nil.
+            AddMedicationFlow(repository: medicationRepo) {
+                Task { await reload() }
             }
+            .environmentObject(authService)
+            .environment(\.supervisorTargetPersonID, pendingAddTargetPersonID)
         }
         .sheet(isPresented: $showingSettings) {
             SettingsSheet()
@@ -236,7 +240,8 @@ struct SupervisorDashboardView: View {
 
     private var peopleTab: some View {
         PeopleManagementView(personRepo: personRepo,
-                             careCircleRepo: careCircleRepo)
+                             careCircleRepo: careCircleRepo,
+                             medicationRepo: medicationRepo)
     }
 
     // MARK: - Helpers

@@ -389,6 +389,9 @@
 // MARK: - Person detail
 "supervisor.person.name" = "ਨਾਮ";
 "supervisor.person.language" = "ਭਾਸ਼ਾ";
+"supervisor.person.medications.title" = "ਦਵਾਈਆਂ"; // REVIEW NEEDED
+"supervisor.person.medications.empty" = "ਅਜੇ ਕੋਈ ਦਵਾਈ ਨਹੀਂ।"; // REVIEW NEEDED
+"supervisor.person.medications.add" = "ਦਵਾਈ ਜੋੜੋ"; // REVIEW NEEDED
 "supervisor.person.pinreset.title" = "PIN ਨਵਾਂ ਕਰੋ";
 "supervisor.person.pinreset.body" = "ਨਵਾਂ 4-ਅੰਕ PIN ਪਾਉ। ਮੌਜੂਦਾ PIN ਫ਼ੌਰਨ ਬੰਦ ਹੋ ਜਾਏਗਾ।";
 "supervisor.person.pinreset.placeholder" = "ਨਵਾਂ PIN";

@@ -114,6 +114,7 @@
 		BFD0000000000000000000119 /* RemotePersonResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000119 /* RemotePersonResolverTests.swift */; };
 		BFD000000000000000000011A /* OrphanCircleCleanupMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011A /* OrphanCircleCleanupMigration.swift */; };
 		BFD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */; };
+		BFD000000000000000000011C /* AddMedicationFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011C /* AddMedicationFlowTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -235,6 +236,7 @@
 		FRD0000000000000000000119 /* RemotePersonResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePersonResolverTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000011A /* OrphanCircleCleanupMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanCircleCleanupMigration.swift; sourceTree = "<group>"; };
 		FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanCircleCleanupMigrationTests.swift; sourceTree = "<group>"; };
+		FRD000000000000000000011C /* AddMedicationFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMedicationFlowTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -355,6 +357,7 @@
 				FRD0000000000000000000117 /* PrimaryRoleMigrationTests.swift */,
 				FRD0000000000000000000119 /* RemotePersonResolverTests.swift */,
 				FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */,
+				FRD000000000000000000011C /* AddMedicationFlowTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -767,6 +770,7 @@
 				BFD0000000000000000000117 /* PrimaryRoleMigrationTests.swift in Sources */,
 				BFD0000000000000000000119 /* RemotePersonResolverTests.swift in Sources */,
 				BFD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift in Sources */,
+				BFD000000000000000000011C /* AddMedicationFlowTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

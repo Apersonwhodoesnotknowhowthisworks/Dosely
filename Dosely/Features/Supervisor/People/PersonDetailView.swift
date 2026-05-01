@@ -18,9 +18,13 @@ struct PersonDetailView: View {
     @State private var showingRemoveAlert = false
     @State private var showingPromoteToPrimaryAlert = false
     @State private var errorMessage: String?
+    @State private var personMedications: [Medication] = []
+    @State private var medicationsLoaded = false
+    @State private var showingAddMedication = false
 
     let person: Person
     let personRepo: PersonRepository
+    let medicationRepo: MedicationRepository
     var onChanged: () -> Void
 
     private var actorIsPrimary: Bool {
@@ -46,9 +50,11 @@ struct PersonDetailView: View {
 
     init(person: Person,
          personRepo: PersonRepository,
+         medicationRepo: MedicationRepository = MedicationRepository(),
          onChanged: @escaping () -> Void) {
         self.person = person
         self.personRepo = personRepo
+        self.medicationRepo = medicationRepo
         self.onChanged = onChanged
         _name = State(initialValue: person.name ?? "")
         _language = State(initialValue: person.languagePreference ?? "en")
@@ -60,6 +66,10 @@ struct PersonDetailView: View {
                 VStack(alignment: .leading, spacing: DSSpacing.lg) {
                     nameSection
                     languageSection
+
+                    if !Roles.isAnySupervisor(person.role) {
+                        medicationsSection
+                    }
 
                     if actorIsPrimary {
                         if person.role == Roles.deviceClient {
@@ -89,6 +99,17 @@ struct PersonDetailView: View {
             .background(Color.dsBackground.ignoresSafeArea())
             .navigationTitle(Text(name.isEmpty ? L("supervisor.people.title") : name))
             .navigationBarTitleDisplayMode(.inline)
+            .task(id: person.id) { await loadMedications() }
+            .sheet(isPresented: $showingAddMedication) {
+                AddMedicationFlow(repository: medicationRepo) {
+                    Task {
+                        await loadMedications()
+                        onChanged()
+                    }
+                }
+                .environmentObject(authService)
+                .environment(\.supervisorTargetPersonID, person.id)
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(L("common.done")) {
@@ -193,6 +214,70 @@ struct PersonDetailView: View {
                     .cornerRadius(DSSpacing.rMd)
             }
         }
+    }
+
+    private var medicationsSection: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.sm) {
+            Text("supervisor.person.medications.title")
+                .dsBodyLarge()
+                .foregroundColor(.dsTextPrimary)
+
+            if !medicationsLoaded {
+                ProgressView()
+                    .frame(maxWidth: .infinity, minHeight: 60)
+            } else if personMedications.isEmpty {
+                Text("supervisor.person.medications.empty")
+                    .dsBodyRegular()
+                    .foregroundColor(.dsTextSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                VStack(spacing: DSSpacing.xs) {
+                    ForEach(personMedications, id: \.id) { med in
+                        medicationRow(med)
+                    }
+                }
+            }
+
+            if actorIsPrimary {
+                Button(action: { showingAddMedication = true }) {
+                    HStack(spacing: DSSpacing.sm) {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.white)
+                            .accessibilityHidden(true)
+                        Text("supervisor.person.medications.add")
+                            .dsBodyLarge()
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
+                    .background(Color.dsPrimary)
+                    .cornerRadius(DSSpacing.rMd)
+                }
+                .accessibilityLabel(Text("supervisor.person.medications.add"))
+            }
+        }
+        .padding(DSSpacing.md)
+        .background(Color.dsSurface)
+        .cornerRadius(DSSpacing.rLg)
+    }
+
+    private func medicationRow(_ med: Medication) -> some View {
+        HStack(spacing: DSSpacing.sm) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(med.name ?? "")
+                    .dsBodyLarge()
+                    .foregroundColor(.dsTextPrimary)
+                if let dose = med.dose, !dose.isEmpty {
+                    Text(dose)
+                        .dsCaption()
+                        .foregroundColor(.dsTextSecondary)
+                }
+            }
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget, alignment: .leading)
+        .padding(.vertical, DSSpacing.xs)
+        .accessibilityElement(children: .combine)
     }
 
     private var promoteToPrimaryRow: some View {
@@ -309,6 +394,17 @@ struct PersonDetailView: View {
                                       language: language)
         onChanged()
         dismiss()
+    }
+
+    private func loadMedications() async {
+        guard let id = person.id else {
+            personMedications = []
+            medicationsLoaded = true
+            return
+        }
+        let meds = await medicationRepo.fetchAllMedications(for: id)
+        personMedications = meds
+        medicationsLoaded = true
     }
 
     private func resetPin() async {

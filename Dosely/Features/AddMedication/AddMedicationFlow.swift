@@ -110,6 +110,11 @@ struct AddMedicationFlow: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showPermissionBanner = false
     @State private var saveError: String?
+    /// Set when the user picks a target inside the in-flow picker.
+    /// Takes precedence over `supervisorTargetPersonID` only when the
+    /// environment value was nil at presentation time (i.e. the
+    /// dashboard didn't preselect anyone).
+    @State private var pickedTargetPersonID: UUID?
 
     let repository: MedicationRepository
     var onSaved: () -> Void
@@ -119,7 +124,48 @@ struct AddMedicationFlow: View {
         self.onSaved = onSaved
     }
 
+    /// Resolves the patient this medication will belong to:
+    /// 1. The dashboard's preselected person via environment, if any.
+    /// 2. The user's pick from the in-flow target picker, if shown.
+    /// 3. The actor (the supervisor themselves) at save-time fallback.
+    /// (1) and (2) are computed for *rendering* — does the picker
+    /// belong on screen? (3) is only the save-time fallback.
+    private var resolvedTargetForUI: UUID? {
+        supervisorTargetPersonID ?? pickedTargetPersonID
+    }
+
+    /// Pure decision used by the body. Extracted as a static helper so
+    /// the regression test (the sheet must NEVER render blank) can
+    /// verify the mapping without a full SwiftUI render.
+    static func shouldShowTargetPicker(
+        supervisorTargetPersonID: UUID?,
+        pickedTargetPersonID: UUID?
+    ) -> Bool {
+        supervisorTargetPersonID == nil && pickedTargetPersonID == nil
+    }
+
     var body: some View {
+        Group {
+            if Self.shouldShowTargetPicker(
+                supervisorTargetPersonID: supervisorTargetPersonID,
+                pickedTargetPersonID: pickedTargetPersonID
+            ) {
+                AddMedicationTargetPicker(
+                    onPick: { pickedTargetPersonID = $0 },
+                    onCancel: { dismiss() }
+                )
+            } else {
+                medicationStepsFlow
+            }
+        }
+        .environmentObject(state)
+        .task {
+            let status = await ReminderScheduler.currentStatus()
+            showPermissionBanner = (status == .denied)
+        }
+    }
+
+    private var medicationStepsFlow: some View {
         VStack(spacing: 0) {
             if showPermissionBanner {
                 PermissionBanner()
@@ -143,11 +189,6 @@ struct AddMedicationFlow: View {
             }
             .tint(.dsPrimary)
         }
-        .environmentObject(state)
-        .task {
-            let status = await ReminderScheduler.currentStatus()
-            showPermissionBanner = (status == .denied)
-        }
     }
 
     private func save() {
@@ -157,9 +198,10 @@ struct AddMedicationFlow: View {
         }
         // The supervisor dashboard sets `supervisorTargetPersonID` via the
         // environment when a supervisor is creating a medication on behalf
-        // of a managed client. Otherwise (single-user / device-client
-        // path) the medication belongs to the actor themself.
-        let targetPersonID = supervisorTargetPersonID ?? actorID
+        // of a managed client. The in-flow picker covers the case where
+        // it wasn't preselected. Final fallback is the actor — single-user
+        // / device-client path.
+        let targetPersonID = supervisorTargetPersonID ?? pickedTargetPersonID ?? actorID
 
         let trimmedNotes = state.notes.trimmingCharacters(in: .whitespacesAndNewlines)
         let schedules = state.doseTimes.map {
@@ -198,6 +240,78 @@ struct AddMedicationFlow: View {
                 }
             }
         }
+    }
+}
+
+/// Shown as the root of `AddMedicationFlow` when neither
+/// `supervisorTargetPersonID` (env) nor an in-flow pick has resolved.
+/// Lets the supervisor pick the patient before the medication-detail
+/// steps begin. Clients and the supervisor themselves are eligible
+/// targets — supervisor doctrine matches the dashboard's existing
+/// `supervisor.addmed.picker.*` flow.
+struct AddMedicationTargetPicker: View {
+    @EnvironmentObject var authService: AuthService
+
+    let onPick: (UUID) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: DSSpacing.sm) {
+                    Text("supervisor.addmed.picker.title")
+                        .dsBodyRegular()
+                        .foregroundColor(.dsTextSecondary)
+                        .padding(.bottom, DSSpacing.xs)
+                    ForEach(eligibleTargets, id: \.id) { target in
+                        Button(action: { if let id = target.id { onPick(id) } }) {
+                            HStack(spacing: DSSpacing.md) {
+                                Text(target.name ?? "")
+                                    .dsBodyLarge()
+                                    .foregroundColor(.dsTextPrimary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.dsTextSecondary)
+                                    .accessibilityHidden(true)
+                            }
+                            .padding(DSSpacing.md)
+                            .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget, alignment: .leading)
+                            .background(Color.dsSurface)
+                            .cornerRadius(DSSpacing.rMd)
+                        }
+                        .accessibilityLabel(Text(target.name ?? ""))
+                    }
+                }
+                .padding(DSSpacing.lg)
+            }
+            .background(Color.dsBackground.ignoresSafeArea())
+            .navigationTitle("supervisor.addmed.picker.title")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(L("common.cancel")) { onCancel() }
+                }
+            }
+        }
+    }
+
+    /// People in the care circle that can be the target of a new
+    /// medication: every client (managed or device), plus the actor
+    /// themself for the single-user case. Sorted with the actor last
+    /// so clients dominate the list.
+    private var eligibleTargets: [Person] {
+        guard let actor = authService.currentPerson,
+              let people = actor.careCircle?.people as? Set<Person> else { return [] }
+        let clients = people
+            .filter {
+                $0.id != nil &&
+                ($0.role == Roles.deviceClient || $0.role == Roles.managedClient)
+            }
+            .sorted { ($0.name ?? "") < ($1.name ?? "") }
+        if let actorID = actor.id, !clients.contains(where: { $0.id == actorID }) {
+            return clients + [actor]
+        }
+        return clients
     }
 }
 

@@ -386,6 +386,9 @@
 // MARK: - Person detail
 "supervisor.person.name" = "Name";
 "supervisor.person.language" = "Language";
+"supervisor.person.medications.title" = "Medications";
+"supervisor.person.medications.empty" = "No medications yet.";
+"supervisor.person.medications.add" = "Add medication";
 "supervisor.person.pinreset.title" = "Reset PIN";
 "supervisor.person.pinreset.body" = "Enter a new 4-digit PIN. The current one will stop working.";
 "supervisor.person.pinreset.placeholder" = "New PIN";
