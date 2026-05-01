@@ -85,7 +85,11 @@ struct AddPersonFlow: View {
     private var navTitle: Text {
         switch step {
         case .pickType:         return Text("supervisor.add.title")
-        case .fillForm:         return Text(selectedType?.titleKey ?? "supervisor.add.title")
+        // `selectedType?.titleKey` is a runtime String, so route
+        // through `L()` instead of `Text(String)` (which doesn't
+        // localize). The other branches use string literals and bind
+        // to `Text(LocalizedStringKey)` automatically.
+        case .fillForm:         return Text(L(selectedType?.titleKey ?? "supervisor.add.title"))
         case .deviceHandoff:    return Text("supervisor.add.device.handoff.title")
         case .supervisorInvite: return Text("supervisor.add.supervisor.title")
         }
@@ -109,10 +113,17 @@ struct AddPersonFlow: View {
                             .frame(width: 36)
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: DSSpacing.xs) {
-                            Text(type.titleKey)
+                            // `type.titleKey` / `type.blurbKey` are
+                            // runtime String values. Plain `Text(_:)`
+                            // with a String binds to the verbatim
+                            // initializer — no localization — so the
+                            // raw key would render. Route through `L()`
+                            // explicitly. (Same trap on the navTitle's
+                            // `.fillForm` branch below.)
+                            Text(L(type.titleKey))
                                 .dsBodyLarge()
                                 .foregroundColor(.dsTextPrimary)
-                            Text(type.blurbKey)
+                            Text(L(type.blurbKey))
                                 .dsBodyRegular()
                                 .foregroundColor(.dsTextSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
