@@ -285,6 +285,26 @@ Two tests in `DoselyTests/AddPersonFlowLocalizationTests.swift`. The first probe
 
 The diagnosis matters more than the fix. The user's hypothesis was specific and confident, and a few of the suggested replacement strings drifted away from what the data model actually supports — "Someone with their own iPhone" for `device_client` reads like the device client owns the phone, but in this app device clients share the supervisor's phone with a PIN. Reading the source first beat patching to the brief.
 
+## May 1 — Managed client double-rendered on the People list (commit `b505044`)
+
+Add a managed client through People → "+" → "Someone I care for", and the new row appeared twice. One Firestore doc, two Core Data rows holding the same UUID. Confirmed by the user: deleting either row deleted the other, which is the fingerprint of the orphan-prune sweep doing its job after both rows lost their Firestore parent at once.
+
+The shape of the bug, in `Dosely/Data/PersonRepository.swift`:
+
+    try? await firestore.upsertPerson(fperson)
+    return await context.perform { ... in
+        let person = Person(context: context)   // always-insert
+        ...
+    }
+
+The Firestore write fires the `/people` listener on this device. `SyncCoordinator.mirrorPeople` runs on a fresh background context, calls `FPerson.upsert`, finds nothing at this UUID, and inserts. Then the view-context block above runs and inserts ANOTHER row at the same UUID. The Person entity has no uniqueness constraint at the data-model layer (and Core Data doesn't enforce one without an explicit `<uniquenessConstraints>`), so both rows happily coexist. The People list iterated `[Person]` directly and rendered both.
+
+Fix is the FPerson.upsert pattern lifted into both create paths: fetch by id, reuse the existing row if present, otherwise insert. Same change to `createDeviceClient`. Added an optional `personID:` parameter (defaulted to `UUID()`) so the regression tests can pre-seed a row at a known id and prove the upsert.
+
+Tests in `DoselyTests/PersonRepositoryTests.swift`: exactly-one-row from a clean create for both paths, plus an upsert-against-pre-seeded-row test for each that drops a Person at a known id, calls the repo, and asserts the row count stays at one with the new fields applied. The pre-seeded row stands in for the listener-already-mirrored race that the no-op FirestoreService in this test suite otherwise prevents.
+
+The hazard is "create" methods that act like inserts when the rest of the layer treats Firestore as the source of truth. Once Firestore is the canonical store, every local write should be an upsert keyed on the canonical id — not a fresh insert and a hope that nothing else got there first. Worth scanning the rest of the repos for the same pattern next quiet hour.
+
 ## Still pending
 
 - Dark/light mode adaptive DSColors (queued — invisible text on real iPhone)
