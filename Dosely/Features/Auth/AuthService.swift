@@ -153,12 +153,26 @@ final class AuthService: ObservableObject {
 
     // MARK: - Person resolution
 
-    /// Resolves the local Person for the current Firebase user. If no
-    /// Person exists yet (fresh signup), bootstraps a default CareCircle
-    /// + supervisor as a stopgap until Prompt 14's welcome screen lands.
-    /// Also runs the v1 care-circle migration on first invocation, the
-    /// one-shot Firestore upload migration for legacy local-only data,
-    /// and starts the SyncCoordinator so cross-device updates land.
+    /// Resolves the local Person for the current Firebase user.
+    ///
+    /// **Membership-first.** Hits Firestore's `/userMemberships/{uid}`
+    /// index before consulting Core Data. The index is the source of
+    /// truth for "does this Firebase user already belong to a circle?";
+    /// a Core Data miss alone — which happens on a fresh install,
+    /// post-sign-out, or a first sign-in on a second device — must not
+    /// be treated as proof that the user is brand-new. When the index
+    /// resolves, the referenced CareCircle and Person docs are mirrored
+    /// into Core Data so the dashboard renders immediately and the
+    /// SyncCoordinator listener can fill in the rest.
+    ///
+    /// Falls back to `CareCircleMigration` only when the resolver
+    /// returns `.notFound` (truly new account) or `.unavailable`
+    /// (offline / no Firestore configured) — preserving the legacy
+    /// orphan-reassignment path and the offline-with-cache path.
+    ///
+    /// Also runs the upload migration for pre-Firestore local data and
+    /// the primary/secondary role migration, then starts the
+    /// SyncCoordinator so cross-device updates land.
     @MainActor
     func resolveCurrentPerson() async {
         guard let user = currentUser else {
@@ -172,14 +186,30 @@ final class AuthService: ObservableObject {
             : (user.email ?? "Me")
         let lang = UserDefaults.standard.string(forKey: "app_language") ?? "en"
 
-        // The migration only auto-bootstraps a circle for legacy data
-        // (Medications/DoseLogs without a personID). For brand-new
-        // accounts it returns nil and we route to CircleSetupView.
-        let resolved = await CareCircleMigration.runIfNeeded(
-            firebaseUID: user.uid,
-            displayName: displayName,
-            languagePreference: lang
-        )
+        let outcome = await RemotePersonResolver.resolve(firebaseUID: user.uid)
+
+        let resolved: Person?
+        switch outcome {
+        case .found(let person):
+            // Hydrated from Firestore. Flip the legacy migration flag
+            // so we don't keep sweeping for orphans on every launch —
+            // a user with a Firestore membership cannot also have
+            // pre-Firestore orphan rows by construction.
+            UserDefaults.standard.set(true, forKey: CareCircleMigration.flagKey)
+            resolved = person
+        case .notFound, .unavailable:
+            // `.notFound`: brand-new account — the migration creates a
+            // circle iff there's legacy orphan data, otherwise returns
+            // nil and AuthGate routes to CircleSetupView.
+            // `.unavailable`: Firestore couldn't be reached. Fall back
+            // to the local Core Data path so an offline supervisor
+            // with a populated cache still lands on the dashboard.
+            resolved = await CareCircleMigration.runIfNeeded(
+                firebaseUID: user.uid,
+                displayName: displayName,
+                languagePreference: lang
+            )
+        }
         currentPerson = resolved
         needsCircleSetup = (resolved == nil)
 

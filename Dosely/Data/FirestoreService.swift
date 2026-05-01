@@ -169,6 +169,25 @@ final class FirestoreService {
         }
     }
 
+    /// Fetches `/userMemberships/{firebaseUID}`. Returns nil when the
+    /// doc doesn't exist (brand-new user, or membership lost on a wipe).
+    /// Throws `.offline` when Firebase isn't configured or the network
+    /// is unreachable so the caller can distinguish "no membership"
+    /// from "couldn't ask" — the membership-first sign-in path needs
+    /// that distinction to avoid misclassifying offline users as new.
+    func fetchMembership(
+        firebaseUID: String
+    ) async throws -> FirestoreModels.FUserMembership? {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            let snap = try await db.document(Path.userMembership(firebaseUID)).getDocument()
+            guard snap.exists else { return nil }
+            return try decode(FirestoreModels.FUserMembership.self, from: snap)
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
     /// Bumps `careCircles/{id}.supervisorCount` by `delta`. Pass +1 when a
     /// supervisor is added (createCareCircle / joinCareCircle), -1 when a
     /// supervisor leaves or is removed. Decrement is the second half of
@@ -420,6 +439,28 @@ final class FirestoreService {
         do {
             let snap = try await db.collection(Path.people(circleID)).getDocuments()
             return snap.documents.compactMap { try? $0.data(as: FirestoreModels.FPerson.self) }
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    /// Fetches a single Person doc by full path. Used at sign-in
+    /// alongside `fetchMembership` to hydrate the caller's Core Data
+    /// cache before any listener fires. Returns nil when the doc
+    /// doesn't exist; throws `.offline` when Firebase isn't reachable
+    /// so the caller can fall back to local-only resolution.
+    func fetchPerson(
+        circleID: String,
+        personID: String
+    ) async throws -> FirestoreModels.FPerson? {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            let snap = try await db
+                .collection(Path.people(circleID))
+                .document(personID)
+                .getDocument()
+            guard snap.exists else { return nil }
+            return try decode(FirestoreModels.FPerson.self, from: snap)
         } catch {
             throw FirestoreServiceError.map(error)
         }
