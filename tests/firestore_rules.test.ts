@@ -1344,4 +1344,135 @@ describe("Firestore security rules", () => {
       );
     });
   });
+
+  // -- 16. Orphan-founder cleanup --------------------------------------
+  //
+  // Rules-layer support for `OrphanCircleCleanupMigration`. The founder
+  // of an orphan circle (their Person doc is the careCircle's
+  // primarySupervisorPersonID and has firebaseUID == auth.uid) must be
+  // able to read the orphan, delete its subcollections, delete the
+  // /joinCodes doc, and delete the careCircle root — even though their
+  // /userMemberships points at a different (real) circle.
+
+  describe("orphan-founder cleanup", () => {
+    const realCircleID = "real-circle";
+    const orphanCircleID = "orphan-circle";
+    const founder = { uid: "founder-uid", personID: "person-founder" };
+    const stranger = { uid: "stranger-uid", personID: "person-stranger" };
+
+    beforeEach(async () => {
+      // Real circle: founder is the active primary, has /userMemberships.
+      await seedCircle({
+        circleID: realCircleID,
+        joinCode: "111111",
+        supervisor: founder,
+      });
+      // Orphan circle: founder's Person doc is the primary, but
+      // /userMemberships points at the real circle (founder is keyed by
+      // uid in /userMemberships and so cannot be the membership of two
+      // circles). We seed the orphan's Person doc directly without
+      // touching /userMemberships.
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, `careCircles/${orphanCircleID}`), {
+          id: orphanCircleID,
+          name: "Orphan Family",
+          joinCode: "999999",
+          createdAt: new Date(),
+          supervisorCount: 1,
+          primarySupervisorPersonID: founder.personID,
+        });
+        await setDoc(doc(db, `joinCodes/999999`), {
+          careCircleID: orphanCircleID,
+          regeneratedAt: new Date(),
+        });
+        await setDoc(
+          doc(db, `careCircles/${orphanCircleID}/people/${founder.personID}`),
+          {
+            id: founder.personID,
+            careCircleID: orphanCircleID,
+            name: "Founder",
+            role: "primary_supervisor",
+            languagePreference: "en",
+            firebaseUID: founder.uid,
+            failedPinAttempts: 0,
+          }
+        );
+        // A stale medication so we can verify subcollection delete.
+        await setDoc(
+          doc(db, `careCircles/${orphanCircleID}/medications/orphan-med`),
+          {
+            id: "orphan-med",
+            personID: founder.personID,
+            name: "Stale",
+            dose: "5mg",
+            pillsPerDose: 1,
+            foodRule: "either",
+            currentSupply: 30,
+            dateAdded: new Date(),
+          }
+        );
+      });
+    });
+
+    it("founder can READ the orphan careCircle even without /userMemberships pointing at it", async () => {
+      const db = authedDb(founder.uid);
+      await assertSucceeds(getDoc(doc(db, `careCircles/${orphanCircleID}`)));
+    });
+
+    it("a stranger CANNOT read the orphan careCircle", async () => {
+      const db = authedDb(stranger.uid);
+      await assertFails(getDoc(doc(db, `careCircles/${orphanCircleID}`)));
+    });
+
+    it("founder can read and DELETE a Person doc in the orphan", async () => {
+      const db = authedDb(founder.uid);
+      await assertSucceeds(
+        getDoc(doc(db, `careCircles/${orphanCircleID}/people/${founder.personID}`))
+      );
+      await assertSucceeds(
+        deleteDoc(doc(db, `careCircles/${orphanCircleID}/people/${founder.personID}`))
+      );
+    });
+
+    it("founder can DELETE a medication in the orphan circle", async () => {
+      const db = authedDb(founder.uid);
+      await assertSucceeds(
+        deleteDoc(doc(db, `careCircles/${orphanCircleID}/medications/orphan-med`))
+      );
+    });
+
+    it("founder can DELETE the /joinCodes doc pointing at the orphan", async () => {
+      const db = authedDb(founder.uid);
+      await assertSucceeds(deleteDoc(doc(db, `joinCodes/999999`)));
+    });
+
+    it("a stranger CANNOT delete the /joinCodes doc pointing at the orphan", async () => {
+      const db = authedDb(stranger.uid);
+      await assertFails(deleteDoc(doc(db, `joinCodes/999999`)));
+    });
+
+    it("founder can DELETE the orphan careCircle root", async () => {
+      const db = authedDb(founder.uid);
+      await assertSucceeds(deleteDoc(doc(db, `careCircles/${orphanCircleID}`)));
+    });
+
+    it("a stranger CANNOT delete the orphan careCircle even though it has no membership", async () => {
+      const db = authedDb(stranger.uid);
+      await assertFails(deleteDoc(doc(db, `careCircles/${orphanCircleID}`)));
+    });
+
+    it("isOrphanFounder does NOT grant the founder rights on someone else's circle", async () => {
+      // Stranger's circle, stranger is the primary. Founder has nothing
+      // to do with it.
+      await seedCircle({
+        circleID: "strangers-circle",
+        joinCode: "222222",
+        supervisor: stranger,
+      });
+      const db = authedDb(founder.uid);
+      await assertFails(getDoc(doc(db, `careCircles/strangers-circle`)));
+      await assertFails(deleteDoc(doc(db, `careCircles/strangers-circle`)));
+    });
+  });
 });

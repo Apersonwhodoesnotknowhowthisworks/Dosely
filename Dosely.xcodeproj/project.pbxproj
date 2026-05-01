@@ -112,6 +112,8 @@
 		BFD0000000000000000000117 /* PrimaryRoleMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000117 /* PrimaryRoleMigrationTests.swift */; };
 		BFD0000000000000000000118 /* RemotePersonResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000118 /* RemotePersonResolver.swift */; };
 		BFD0000000000000000000119 /* RemotePersonResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000119 /* RemotePersonResolverTests.swift */; };
+		BFD000000000000000000011A /* OrphanCircleCleanupMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011A /* OrphanCircleCleanupMigration.swift */; };
+		BFD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -231,6 +233,8 @@
 		FRD0000000000000000000117 /* PrimaryRoleMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimaryRoleMigrationTests.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000118 /* RemotePersonResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePersonResolver.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000119 /* RemotePersonResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePersonResolverTests.swift; sourceTree = "<group>"; };
+		FRD000000000000000000011A /* OrphanCircleCleanupMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanCircleCleanupMigration.swift; sourceTree = "<group>"; };
+		FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanCircleCleanupMigrationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -330,6 +334,7 @@
 				FRD0000000000000000000115 /* Roles.swift */,
 				FRD0000000000000000000116 /* PrimaryRoleMigration.swift */,
 				FRD0000000000000000000118 /* RemotePersonResolver.swift */,
+				FRD000000000000000000011A /* OrphanCircleCleanupMigration.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -349,6 +354,7 @@
 				FRD0000000000000000000114 /* FirestoreServiceTests.swift */,
 				FRD0000000000000000000117 /* PrimaryRoleMigrationTests.swift */,
 				FRD0000000000000000000119 /* RemotePersonResolverTests.swift */,
+				FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -740,6 +746,7 @@
 				BFD0000000000000000000115 /* Roles.swift in Sources */,
 				BFD0000000000000000000116 /* PrimaryRoleMigration.swift in Sources */,
 				BFD0000000000000000000118 /* RemotePersonResolver.swift in Sources */,
+				BFD000000000000000000011A /* OrphanCircleCleanupMigration.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -759,6 +766,7 @@
 				BFD0000000000000000000114 /* FirestoreServiceTests.swift in Sources */,
 				BFD0000000000000000000117 /* PrimaryRoleMigrationTests.swift in Sources */,
 				BFD0000000000000000000119 /* RemotePersonResolverTests.swift in Sources */,
+				BFD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

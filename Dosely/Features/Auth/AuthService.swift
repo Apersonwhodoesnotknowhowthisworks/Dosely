@@ -225,6 +225,13 @@ final class AuthService: ObservableObject {
         // PHASE B's atomic batch.
         await PrimaryRoleMigration.runIfNeeded(actorFirebaseUID: user.uid)
 
+        // Tear down any care circles this user founded during earlier
+        // debugging cycles but no longer belongs to. Runs once per
+        // device, keyed off /userMemberships' truth and an
+        // isOrphanFounder rules-layer ownership proof. No-op for
+        // anyone whose data is already clean.
+        await OrphanCircleCleanupMigration.runIfNeeded(firebaseUID: user.uid)
+
         // Start (or re-target) Firestore listeners for the resolved
         // circle so changes from another supervisor's device flow in.
         if let circleID = resolved?.careCircle?.id {

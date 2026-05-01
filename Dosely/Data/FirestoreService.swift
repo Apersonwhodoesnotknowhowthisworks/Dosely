@@ -592,6 +592,105 @@ final class FirestoreService {
         }
     }
 
+    // MARK: - Orphan cleanup
+
+    /// Lists every doc in `/joinCodes`. Each entry is `(code,
+    /// careCircleID)`. Used by `OrphanCircleCleanupMigration` to
+    /// enumerate candidate circles a user may have founded but no
+    /// longer has membership in.
+    func listAllJoinCodes() async throws -> [(code: String, careCircleID: String)] {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            let snap = try await db.collection(Path.joinCodes).getDocuments()
+            return snap.documents.compactMap { doc in
+                guard let careCircleID = doc.data()["careCircleID"] as? String else { return nil }
+                return (code: doc.documentID, careCircleID: careCircleID)
+            }
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    /// Recursively tears down a careCircle the caller founded but no
+    /// longer belongs to: every Person, Medication, DoseSchedule,
+    /// DoseLog, MedicalProfile, Alert, and FamilyContact under it; every
+    /// `/joinCodes` doc that points at it; the careCircle root doc
+    /// itself.
+    ///
+    /// Delete order matters because the rules-layer
+    /// `isOrphanFounder(circleID)` check resolves the founder via
+    /// `careCircle.primarySupervisorPersonID` → `/people/{primaryID}`
+    /// → that Person doc's `firebaseUID`. The careCircle root and the
+    /// founder's Person doc must both exist at the moment any rule
+    /// uses them. The strategy:
+    ///
+    /// 1. Delete every non-Person subcollection doc (medications,
+    ///    doseSchedules, doseLogs, medicalProfiles, alerts,
+    ///    familyContacts). Founder Person doc is untouched, so
+    ///    `isOrphanFounder` keeps passing.
+    /// 2. Delete every Person doc EXCEPT the founder's. The founder's
+    ///    Person doc is the rules helper's anchor — pulling it before
+    ///    the careCircle root would orphan the careCircle delete.
+    /// 3. Delete `/joinCodes/{code}` lookups for this circle. The rule
+    ///    on those reads the careCircle (still present) and the founder
+    ///    Person doc (still present).
+    /// 4. Single Firestore batch: founder's Person doc + careCircle
+    ///    root. Both writes' rules evaluate against the pre-batch state
+    ///    where both still exist, so `isOrphanFounder` passes for both.
+    ///
+    /// Throws `.permissionDenied` when the caller isn't actually the
+    /// founder of `circleID`; the migration treats that as "skip,
+    /// not our orphan."
+    func deleteOrphanedCareCircle(circleID: String) async throws {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            let circleSnap = try await db.document(Path.careCircle(circleID)).getDocument()
+            guard let founderPersonID = circleSnap.data()?["primarySupervisorPersonID"] as? String,
+                  !founderPersonID.isEmpty else {
+                // No primarySupervisorPersonID means the rules' founder
+                // anchor doesn't exist either, so we couldn't have
+                // deleted any of this anyway. Bail.
+                return
+            }
+
+            let subcollections = [
+                Path.medications(circleID),
+                Path.doseSchedules(circleID),
+                Path.doseLogs(circleID),
+                Path.medicalProfiles(circleID),
+                Path.alerts(circleID),
+                Path.familyContacts(circleID)
+            ]
+            for path in subcollections {
+                let snap = try await db.collection(path).getDocuments()
+                for doc in snap.documents {
+                    try await doc.reference.delete()
+                }
+            }
+
+            let peopleSnap = try await db.collection(Path.people(circleID)).getDocuments()
+            for doc in peopleSnap.documents where doc.documentID != founderPersonID {
+                try await doc.reference.delete()
+            }
+
+            let codeSnap = try await db.collection(Path.joinCodes)
+                .whereField("careCircleID", isEqualTo: circleID)
+                .getDocuments()
+            for doc in codeSnap.documents {
+                try await doc.reference.delete()
+            }
+
+            let batch = db.batch()
+            batch.deleteDocument(
+                db.collection(Path.people(circleID)).document(founderPersonID)
+            )
+            batch.deleteDocument(db.document(Path.careCircle(circleID)))
+            try await batch.commit()
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
     // MARK: - Listener registration
 
     /// Generic listener — observes a collection and decodes each
