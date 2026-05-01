@@ -118,6 +118,7 @@
 		BFD000000000000000000011D /* PullToRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011D /* PullToRefresh.swift */; };
 		BFD000000000000000000011E /* PullToRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011E /* PullToRefreshTests.swift */; };
 		BFD000000000000000000011F /* AddPersonFlowLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011F /* AddPersonFlowLocalizationTests.swift */; };
+		BFD0000000000000000000120 /* SupervisorDashboardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000120 /* SupervisorDashboardViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -243,6 +244,7 @@
 		FRD000000000000000000011D /* PullToRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PullToRefresh.swift; path = Common/PullToRefresh.swift; sourceTree = "<group>"; };
 		FRD000000000000000000011E /* PullToRefreshTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PullToRefreshTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000011F /* AddPersonFlowLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPersonFlowLocalizationTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000120 /* SupervisorDashboardViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupervisorDashboardViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -366,6 +368,7 @@
 				FRD000000000000000000011C /* AddMedicationFlowTests.swift */,
 				FRD000000000000000000011E /* PullToRefreshTests.swift */,
 				FRD000000000000000000011F /* AddPersonFlowLocalizationTests.swift */,
+				FRD0000000000000000000120 /* SupervisorDashboardViewModelTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -783,6 +786,7 @@
 				BFD000000000000000000011C /* AddMedicationFlowTests.swift in Sources */,
 				BFD000000000000000000011E /* PullToRefreshTests.swift in Sources */,
 				BFD000000000000000000011F /* AddPersonFlowLocalizationTests.swift in Sources */,
+				BFD0000000000000000000120 /* SupervisorDashboardViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

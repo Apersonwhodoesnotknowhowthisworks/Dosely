@@ -62,8 +62,15 @@ final class SupervisorDashboardViewModel: ObservableObject {
               activePersonID: UUID?,
               now: Date = Date()) async {
         let allPeople = await personRepo.fetchAllPeople(in: circleID)
+        // Filter by role, not by id. The selector and the dose-aggregation
+        // paths below only make sense for dose-targets — co-supervisors
+        // are caregivers, not patients, and previously slipped in because
+        // we only excluded the *acting* supervisor. Per the data model
+        // (CLAUDE.md) both device_client and managed_client are valid
+        // dose-targets; every supervisor flavor (including the legacy
+        // alias) is excluded.
         let onlyClients = allPeople
-            .filter { $0.id != supervisorID }
+            .filter { $0.role == Roles.deviceClient || $0.role == Roles.managedClient }
             .sorted { ($0.name ?? "") < ($1.name ?? "") }
         self.clients = onlyClients
 
