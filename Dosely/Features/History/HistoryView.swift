@@ -4,6 +4,7 @@ struct HistoryView: View {
     @EnvironmentObject var authService: AuthService
     @StateObject private var viewModel: HistoryViewModel
     @State private var selectedCell: GridCell?
+    @State private var refreshErrorMessage: String?
 
     /// When non-nil this overrides `authService.currentPerson?.id`. The
     /// supervisor dashboard sets it to the active client so the History
@@ -22,32 +23,39 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: DSSpacing.lg) {
-                WeekPicker(
-                    label: viewModel.weekLabel(),
-                    canGoBack: viewModel.canGoBack,
-                    canGoForward: viewModel.canGoForward,
-                    onBack: { viewModel.goBack() },
-                    onForward: { viewModel.goForward() }
-                )
+            ScrollView {
+                VStack(alignment: .leading, spacing: DSSpacing.lg) {
+                    WeekPicker(
+                        label: viewModel.weekLabel(),
+                        canGoBack: viewModel.canGoBack,
+                        canGoForward: viewModel.canGoForward,
+                        onBack: { viewModel.goBack() },
+                        onForward: { viewModel.goForward() }
+                    )
 
-                if viewModel.isLoaded {
-                    WeekGridView(cells: viewModel.cells) { cell in
-                        selectedCell = cell
+                    if viewModel.isLoaded {
+                        WeekGridView(cells: viewModel.cells) { cell in
+                            selectedCell = cell
+                        }
+                        .padding(.horizontal, DSSpacing.lg)
+                    } else {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, minHeight: 200)
                     }
-                    .padding(.horizontal, DSSpacing.lg)
-                } else {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, minHeight: 200)
+
+                    summaryText
+                        .padding(.horizontal, DSSpacing.lg)
                 }
-
-                summaryText
-                    .padding(.horizontal, DSSpacing.lg)
-
-                Spacer()
+                .padding(.top, DSSpacing.sm)
+                .frame(maxWidth: .infinity, alignment: .top)
             }
-            .padding(.top, DSSpacing.sm)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .refreshable {
+                await PullToRefresh.perform(messageBinding: $refreshErrorMessage)
+                if let personID = effectivePersonID {
+                    await viewModel.load(personID: personID)
+                }
+            }
+            .pullToRefreshBanner(message: $refreshErrorMessage)
             .background(Color.dsBackground.ignoresSafeArea())
             .navigationTitle(Text("history.title"))
             .accessibilityAdjustableAction { direction in

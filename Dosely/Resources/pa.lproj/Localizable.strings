@@ -419,3 +419,8 @@
 "supervisor.circle.rename.title" = "ਨਾਮ ਬਦਲੋ";
 "supervisor.circle.regenerate.title" = "ਜੁਆਇਨ ਕੋਡ ਨਵਾਂ ਕਰਨਾ?";
 "supervisor.circle.regenerate.body" = "ਮੌਜੂਦਾ ਕੋਡ ਫ਼ੌਰਨ ਬੰਦ ਹੋ ਜਾਏਗਾ। ਜਿਨ੍ਹਾਂ ਨਾਲ ਪਹਿਲਾਂ ਸਾਂਝਾ ਕੀਤਾ ਸੀ ਉਨ੍ਹਾਂ ਨੂੰ ਨਵਾਂ ਚਾਹੀਦਾ ਹੋਵੇਗਾ।";
+
+// MARK: - Pull-to-refresh
+"sync.refresh.error.offline" = "ਤਾਜ਼ਾ ਨਹੀਂ ਕਰ ਸਕੇ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
+"sync.refresh.error.permissiondenied" = "ਤਾਜ਼ਾ ਨਹੀਂ ਕਰ ਸਕੇ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਸਾਈਨ-ਇਨ ਕਰੋ।"; // REVIEW NEEDED
+"sync.refresh.error.generic" = "ਤਾਜ਼ਾ ਨਹੀਂ ਕਰ ਸਕੇ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED

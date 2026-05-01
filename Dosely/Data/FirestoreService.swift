@@ -537,8 +537,13 @@ final class FirestoreService {
         }
     }
 
+    /// Lists every Person doc under the circle. Throws `.offline` when
+    /// Firebase isn't configured — see `fetchMedications` for the
+    /// rationale (the manual refresh in `SyncCoordinator.refresh` would
+    /// otherwise mistake "couldn't ask" for "the circle has no
+    /// people" and prune the local cache via the orphan helpers).
     func fetchPeople(circleID: String) async throws -> [FirestoreModels.FPerson] {
-        guard let db else { return [] }
+        guard let db else { throw FirestoreServiceError.offline }
         do {
             let snap = try await db.collection(Path.people(circleID)).getDocuments()
             return snap.documents.compactMap { try? $0.data(as: FirestoreModels.FPerson.self) }
@@ -570,6 +575,24 @@ final class FirestoreService {
     }
 
     // MARK: - Medication
+
+    /// Lists every medication doc under the circle. Used by manual
+    /// pull-to-refresh in `SyncCoordinator.refresh` — the listener path
+    /// keeps the cache fresh in the steady state, but a network blip or
+    /// a backgrounded session can stale the listener; the manual refresh
+    /// is the user's recovery handle. Throws `.offline` when Firebase
+    /// isn't configured so the refresher doesn't mistake "couldn't ask"
+    /// for "nothing exists" and wipe the local cache via the orphan
+    /// cleanup in the mirror helpers.
+    func fetchMedications(circleID: String) async throws -> [FirestoreModels.FMedication] {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            let snap = try await db.collection(Path.medications(circleID)).getDocuments()
+            return snap.documents.compactMap { try? $0.data(as: FirestoreModels.FMedication.self) }
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
 
     func upsertMedication(circleID: String, med: FirestoreModels.FMedication) async throws {
         guard let db else { return }
@@ -612,6 +635,17 @@ final class FirestoreService {
     }
 
     // MARK: - DoseSchedule
+
+    /// See `fetchMedications` — same contract, same reason.
+    func fetchDoseSchedules(circleID: String) async throws -> [FirestoreModels.FDoseSchedule] {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            let snap = try await db.collection(Path.doseSchedules(circleID)).getDocuments()
+            return snap.documents.compactMap { try? $0.data(as: FirestoreModels.FDoseSchedule.self) }
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
 
     func upsertSchedule(circleID: String, schedule: FirestoreModels.FDoseSchedule) async throws {
         guard let db else { return }
@@ -668,6 +702,17 @@ final class FirestoreService {
     }
 
     // MARK: - DoseLog
+
+    /// See `fetchMedications` — same contract, same reason.
+    func fetchDoseLogs(circleID: String) async throws -> [FirestoreModels.FDoseLog] {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            let snap = try await db.collection(Path.doseLogs(circleID)).getDocuments()
+            return snap.documents.compactMap { try? $0.data(as: FirestoreModels.FDoseLog.self) }
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
 
     func upsertDoseLog(circleID: String, log: FirestoreModels.FDoseLog) async throws {
         guard let db else { return }

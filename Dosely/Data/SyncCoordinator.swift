@@ -2,6 +2,21 @@ import CoreData
 import FirebaseFirestore
 import Foundation
 
+/// Result of a manual `SyncCoordinator.refresh` (pull-to-refresh).
+/// Callers map these to a localized inline banner; nothing else
+/// surfaces them.
+enum SyncRefreshError: Error, Equatable {
+    /// Firebase isn't configured or the network's down.
+    case offline
+    /// The rules denied at least one of the per-collection reads.
+    /// Most often: the user's `/userMemberships` doc is gone or points
+    /// at a different circle than `activeCircleID`.
+    case permissionDenied
+    /// Anything else. The string is debug-only; the UI uses a generic
+    /// "couldn't refresh" message.
+    case unknown(String)
+}
+
 /// Owns the Firestore listeners that keep Core Data in sync with the
 /// active care circle. Reads remain synchronous from Core Data; writes
 /// go through the repositories. SyncCoordinator's job is purely the
@@ -81,6 +96,63 @@ final class SyncCoordinator: ObservableObject {
         for listener in listeners { listener.remove() }
         listeners.removeAll()
         activeCircleID = nil
+    }
+
+    // MARK: - Manual refresh (pull-to-refresh)
+
+    /// One-shot reconciliation against Firestore for the active circle.
+    /// Hits the same per-collection reads that the listeners feed but
+    /// in a single round trip; on success the existing mirror helpers
+    /// upsert the data into Core Data and prune locally-orphaned rows.
+    ///
+    /// Returns silently when there's no active circle (signed out, or
+    /// `start(careCircleID:)` hasn't run yet) — pull-to-refresh on a
+    /// pre-bootstrap screen is a no-op, not an error.
+    ///
+    /// On any per-collection failure the *whole* refresh aborts before
+    /// touching Core Data. Mistaking "couldn't ask" for "the server has
+    /// no data" would let the orphan cleanup wipe the local cache.
+    /// Errors land as `SyncRefreshError` so the caller can map to
+    /// distinct copy: "you're offline", "couldn't refresh", etc.
+    func refresh() async throws {
+        guard let circleID = activeCircleID else { return }
+        let id = circleID.uuidString
+
+        let resolvedCircle: FirestoreModels.FCareCircle?
+        let resolvedPeople: [FirestoreModels.FPerson]
+        let resolvedMeds: [FirestoreModels.FMedication]
+        let resolvedSchedules: [FirestoreModels.FDoseSchedule]
+        let resolvedLogs: [FirestoreModels.FDoseLog]
+
+        do {
+            // Concurrent fetches. Bail on the first failure rather than
+            // mirror a partial snapshot.
+            async let circleTask = firestore.loadCareCircle(circleID: id)
+            async let peopleTask = firestore.fetchPeople(circleID: id)
+            async let medsTask = firestore.fetchMedications(circleID: id)
+            async let schedulesTask = firestore.fetchDoseSchedules(circleID: id)
+            async let logsTask = firestore.fetchDoseLogs(circleID: id)
+
+            resolvedCircle = try await circleTask
+            resolvedPeople = try await peopleTask
+            resolvedMeds = try await medsTask
+            resolvedSchedules = try await schedulesTask
+            resolvedLogs = try await logsTask
+        } catch FirestoreServiceError.offline {
+            throw SyncRefreshError.offline
+        } catch FirestoreServiceError.permissionDenied {
+            throw SyncRefreshError.permissionDenied
+        } catch {
+            throw SyncRefreshError.unknown("\(error)")
+        }
+
+        if let resolvedCircle {
+            mirrorCircle(resolvedCircle)
+        }
+        mirrorPeople(resolvedPeople, circleID: circleID)
+        mirrorMedications(resolvedMeds, circleID: circleID)
+        mirrorSchedules(resolvedSchedules, circleID: circleID)
+        mirrorDoseLogs(resolvedLogs, circleID: circleID)
     }
 
     // MARK: - Mirror helpers (Firestore → Core Data)

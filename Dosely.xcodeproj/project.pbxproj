@@ -115,6 +115,8 @@
 		BFD000000000000000000011A /* OrphanCircleCleanupMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011A /* OrphanCircleCleanupMigration.swift */; };
 		BFD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */; };
 		BFD000000000000000000011C /* AddMedicationFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011C /* AddMedicationFlowTests.swift */; };
+		BFD000000000000000000011D /* PullToRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011D /* PullToRefresh.swift */; };
+		BFD000000000000000000011E /* PullToRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011E /* PullToRefreshTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -237,6 +239,8 @@
 		FRD000000000000000000011A /* OrphanCircleCleanupMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanCircleCleanupMigration.swift; sourceTree = "<group>"; };
 		FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanCircleCleanupMigrationTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000011C /* AddMedicationFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMedicationFlowTests.swift; sourceTree = "<group>"; };
+		FRD000000000000000000011D /* PullToRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PullToRefresh.swift; path = Common/PullToRefresh.swift; sourceTree = "<group>"; };
+		FRD000000000000000000011E /* PullToRefreshTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PullToRefreshTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -358,6 +362,7 @@
 				FRD0000000000000000000119 /* RemotePersonResolverTests.swift */,
 				FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */,
 				FRD000000000000000000011C /* AddMedicationFlowTests.swift */,
+				FRD000000000000000000011E /* PullToRefreshTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -372,6 +377,7 @@
 				GRP0000000000000000000011 /* Auth */,
 				GRP0000000000000000000012 /* MedicationDetail */,
 				GRP0000000000000000000020 /* Supervisor */,
+				FRD000000000000000000011D /* PullToRefresh.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -750,6 +756,7 @@
 				BFD0000000000000000000116 /* PrimaryRoleMigration.swift in Sources */,
 				BFD0000000000000000000118 /* RemotePersonResolver.swift in Sources */,
 				BFD000000000000000000011A /* OrphanCircleCleanupMigration.swift in Sources */,
+				BFD000000000000000000011D /* PullToRefresh.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -771,6 +778,7 @@
 				BFD0000000000000000000119 /* RemotePersonResolverTests.swift in Sources */,
 				BFD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift in Sources */,
 				BFD000000000000000000011C /* AddMedicationFlowTests.swift in Sources */,
+				BFD000000000000000000011E /* PullToRefreshTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

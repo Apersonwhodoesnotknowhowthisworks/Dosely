@@ -416,3 +416,8 @@
 "supervisor.circle.rename.title" = "Rename circle";
 "supervisor.circle.regenerate.title" = "Regenerate join code?";
 "supervisor.circle.regenerate.body" = "The current code will stop working immediately. Anyone you've already shared it with will need the new one.";
+
+// MARK: - Pull-to-refresh
+"sync.refresh.error.offline" = "Couldn't refresh. Check your connection and try again.";
+"sync.refresh.error.permissiondenied" = "Couldn't refresh. Please sign in again.";
+"sync.refresh.error.generic" = "Couldn't refresh. Please try again.";

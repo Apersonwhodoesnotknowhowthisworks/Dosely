@@ -13,6 +13,7 @@ struct SupervisorDashboardView: View {
     @State private var historyPersonIDOverride: UUID?
     @State private var pendingAddTargetPersonID: UUID?
     @State private var promptAddTargetPicker = false
+    @State private var todayRefreshError: String?
 
     private let medicationRepo: MedicationRepository
     private let personRepo: PersonRepository
@@ -89,6 +90,11 @@ struct SupervisorDashboardView: View {
                 }
                 .padding(.vertical, DSSpacing.md)
             }
+            .refreshable {
+                await PullToRefresh.perform(messageBinding: $todayRefreshError)
+                await reload()
+            }
+            .pullToRefreshBanner(message: $todayRefreshError)
             .background(Color.dsBackground.ignoresSafeArea())
             .navigationTitle("today.title")
             .toolbar {

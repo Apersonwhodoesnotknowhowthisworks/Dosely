@@ -7,6 +7,7 @@ struct TodayView: View {
     @State private var showingAdd = false
     @State private var showingSettings = false
     @State private var detailDose: TodayDose?
+    @State private var refreshErrorMessage: String?
 
     init(repository: MedicationRepository = MedicationRepository()) {
         self.repository = repository
@@ -31,18 +32,24 @@ struct TodayView: View {
 
     private var todayTab: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(LocalizedFormatters.fullDateFormatter.string(from: Date()))
-                    .dsBodyLarge()
-                    .foregroundColor(.dsTextSecondary)
-                    .padding(.horizontal, DSSpacing.lg)
-                    .padding(.bottom, DSSpacing.sm)
-                    .accessibilityLabel(L("today.subtitle.todayis",
-                                          LocalizedFormatters.fullDateFormatter.string(from: Date()) as NSString))
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(LocalizedFormatters.fullDateFormatter.string(from: Date()))
+                        .dsBodyLarge()
+                        .foregroundColor(.dsTextSecondary)
+                        .padding(.horizontal, DSSpacing.lg)
+                        .padding(.bottom, DSSpacing.sm)
+                        .accessibilityLabel(L("today.subtitle.todayis",
+                                              LocalizedFormatters.fullDateFormatter.string(from: Date()) as NSString))
 
-                content
+                    content
+                }
+                .frame(maxWidth: .infinity, alignment: .top)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .refreshable {
+                await PullToRefresh.perform(messageBinding: $refreshErrorMessage)
+            }
+            .pullToRefreshBanner(message: $refreshErrorMessage)
             .background(Color.dsBackground.ignoresSafeArea())
             .navigationTitle("today.title")
             .toolbar {
@@ -113,25 +120,28 @@ struct TodayView: View {
     @ViewBuilder
     private var content: some View {
         if authService.currentPerson == nil || !viewModel.isLoaded {
-            ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            ProgressView()
+                .frame(maxWidth: .infinity, minHeight: 200)
         } else if viewModel.doses.isEmpty {
             EmptyTodayView()
+                .frame(maxWidth: .infinity, alignment: .center)
         } else {
-            ScrollView {
-                LazyVStack(spacing: DSSpacing.md) {
-                    ForEach(viewModel.doses) { dose in
-                        DoseCardView(
-                            dose: dose,
-                            onTake: { Task { await markTaken(dose) } },
-                            onSkip: { Task { await skip(dose) } },
-                            onSnooze: { print("TODO snooze") },
-                            onLearnMore: { detailDose = dose }
-                        )
-                    }
+            // Outer .refreshable lives on the parent ScrollView; this
+            // intentionally is a plain VStack to avoid nesting scroll
+            // views (which kills the pull gesture on the inner one).
+            LazyVStack(spacing: DSSpacing.md) {
+                ForEach(viewModel.doses) { dose in
+                    DoseCardView(
+                        dose: dose,
+                        onTake: { Task { await markTaken(dose) } },
+                        onSkip: { Task { await skip(dose) } },
+                        onSnooze: { print("TODO snooze") },
+                        onLearnMore: { detailDose = dose }
+                    )
                 }
-                .padding(.horizontal, DSSpacing.lg)
-                .padding(.bottom, DSSpacing.xl)
             }
+            .padding(.horizontal, DSSpacing.lg)
+            .padding(.bottom, DSSpacing.xl)
         }
     }
 

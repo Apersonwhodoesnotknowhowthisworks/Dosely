@@ -6,6 +6,7 @@ struct PeopleManagementView: View {
     @State private var isLoaded = false
     @State private var showingAdd = false
     @State private var detailPerson: Person?
+    @State private var refreshErrorMessage: String?
 
     let personRepo: PersonRepository
     let careCircleRepo: CareCircleRepository
@@ -41,6 +42,11 @@ struct PeopleManagementView: View {
                 }
                 .padding(DSSpacing.lg)
             }
+            .refreshable {
+                await PullToRefresh.perform(messageBinding: $refreshErrorMessage)
+                await reload()
+            }
+            .pullToRefreshBanner(message: $refreshErrorMessage)
             .background(Color.dsBackground.ignoresSafeArea())
             .navigationTitle(Text("supervisor.people.title"))
             .toolbar {
