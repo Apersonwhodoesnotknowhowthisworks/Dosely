@@ -319,6 +319,16 @@ Tests in `DoselyTests/SupervisorDashboardViewModelTests.swift`: two managed clie
 
 Same shape of mistake as the chooser fix three commits back — a filter that almost did the right thing but landed on the wrong key. The previous one filtered on object identity instead of role; this one filtered on a single id instead of a role class. The data layer has roles; the views should ask in those terms, not by exclusion of whoever happens to be running the screen.
 
+## May 1 — Stubbed Refill alert removed (commit `5d1c678`)
+
+The Today tab's AlertsCard was showing "Refill check — Watch %@'s pill supply this week" any time a client was selected, regardless of supply state. The function in `Dosely/Features/Supervisor/SupervisorDashboardViewModel.swift` was named `stubAlerts` and the doc comment promised "replaced in Prompt 15" — placeholder content that never got replaced. The user reported it substituting "Grandpa" while a different person was visibly selected, which I'd guess is stale `activePersonID` state from the duplicate-row bug we shipped earlier today, but the symptom is moot once the stub is gone.
+
+Supply tracking has a `currentSupply` field on Medication but no threshold-driven alert path. Real alerts — missed-dose rollups, low supply, PIN lockout, emergency button — are queued for Prompt 19. Until then, `viewModel.alerts` is `[]` and the AlertsCard renders its existing "supervisor.alerts.empty" copy. The two unused localization keys came out of `en.lproj` and `pa.lproj` while I was in there.
+
+Two new tests in `DoselyTests/SupervisorDashboardViewModelTests.swift` assert the alerts array is empty both for the single-client view (zero medications) and the All view. Previously either path would have surfaced the stub.
+
+Worth tagging: stubs that ship with `Prompt N` markers in the comments and never get replaced are a recurring source of these reports. The doc comment above `stubAlerts` literally said "replaced in Prompt 15" and we're past 19 by the rest of the codebase. A periodic grep for "stub" or "Prompt N — replace" might be worth a /schedule.
+
 ## Still pending
 
 - Dark/light mode adaptive DSColors (queued — invisible text on real iPhone)
