@@ -377,34 +377,46 @@ final class FirestoreService {
     /// - delete `/joinCodes/{old}`
     /// - create `/joinCodes/{new}`
     /// - update `/careCircles/{id}.joinCode = new`
-    /// All three happen in one Firestore transaction.
+    /// All three commit together via a single `WriteBatch` so the
+    /// reverse-lookup index never points at a stale code. (We use a
+    /// `WriteBatch` rather than `runTransaction` because the swap has no
+    /// reads — a pure-write transaction is a degenerate shape that has
+    /// historically returned success without committing on this path.)
+    /// Throws `FirestoreServiceError.offline` when Firebase isn't
+    /// configured or the network is unreachable so callers don't update
+    /// local state with a code that never reached the server.
     func regenerateJoinCode(circleID: String, oldCode: String, newCode: String) async throws {
-        guard let db else { return }
+        guard let db else { throw FirestoreServiceError.offline }
         do {
-            _ = try await db.runTransaction({ (txn, errorPointer) -> Any? in
-                let circleRef = db.document(Path.careCircle(circleID))
-                let oldCodeRef = db.document("\(Path.joinCodes)/\(oldCode)")
-                let newCodeRef = db.document("\(Path.joinCodes)/\(newCode)")
+            let batch = db.batch()
+            let circleRef = db.document(Path.careCircle(circleID))
+            let oldCodeRef = db.document("\(Path.joinCodes)/\(oldCode)")
+            let newCodeRef = db.document("\(Path.joinCodes)/\(newCode)")
 
-                txn.updateData([
-                    "joinCode": newCode,
-                    "lastModified": FieldValue.serverTimestamp()
-                ], forDocument: circleRef)
-                txn.deleteDocument(oldCodeRef)
-                do {
-                    let index = FirestoreModels.FJoinCodeIndex(
-                        careCircleID: circleID,
-                        regeneratedAt: Date()
-                    )
-                    let payload = try Firestore.Encoder().encode(index)
-                    txn.setData(payload, forDocument: newCodeRef)
-                } catch let error as NSError {
-                    errorPointer?.pointee = error
-                    return nil
-                }
-                return nil
-            })
+            batch.updateData([
+                "joinCode": newCode,
+                "lastModified": FieldValue.serverTimestamp()
+            ], forDocument: circleRef)
+            batch.deleteDocument(oldCodeRef)
+            let index = FirestoreModels.FJoinCodeIndex(
+                careCircleID: circleID,
+                regeneratedAt: Date()
+            )
+            let payload = try Firestore.Encoder().encode(index)
+            batch.setData(payload, forDocument: newCodeRef)
+
+            #if DEBUG
+            print("[REGENERATE-DEBUG] batch.commit circle=\(circleID) old=\(oldCode) new=\(newCode)")
+            #endif
+            try await batch.commit()
+            #if DEBUG
+            print("[REGENERATE-DEBUG] commit succeeded for circle=\(circleID)")
+            #endif
         } catch {
+            #if DEBUG
+            let ns = error as NSError
+            print("[REGENERATE-DEBUG] commit threw: domain=\(ns.domain) code=\(ns.code) desc=\(ns.localizedDescription)")
+            #endif
             throw FirestoreServiceError.map(error)
         }
     }

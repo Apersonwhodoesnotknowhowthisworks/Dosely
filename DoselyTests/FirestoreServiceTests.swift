@@ -120,6 +120,64 @@ final class FirestoreServiceTests: XCTestCase {
         XCTAssertEqual(reloaded?.joinCode, newCode)
     }
 
+    /// Belt-and-suspenders for the bug we just fixed: after a regenerate,
+    /// the /joinCodes collection must contain EXACTLY ONE document
+    /// whose `careCircleID` is this circle. The previous transaction
+    /// implementation could leave the index out of sync with the
+    /// careCircle row; the new WriteBatch path commits all three writes
+    /// (delete old code, create new code, update circle) together.
+    func test_regenerateJoinCode_leavesExactlyOneIndexEntryForCircle() async throws {
+        guard await emulatorAvailable() else { return }
+        guard let db = service.db else { return }
+
+        let id = UUID().uuidString
+        let oldCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
+        let newCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
+
+        let circle = FirestoreModels.FCareCircle(
+            id: id,
+            name: "Single-Index Family",
+            joinCode: oldCode,
+            createdAt: Date(),
+            supervisorCount: 0,
+            lastModified: nil
+        )
+        try await service.createCareCircle(circle)
+
+        try await service.regenerateJoinCode(circleID: id, oldCode: oldCode, newCode: newCode)
+
+        // Query /joinCodes for every doc pointing at this circle. There
+        // must be exactly one — and its document id must match newCode.
+        let snap = try await db.collection(FirestoreService.Path.joinCodes)
+            .whereField("careCircleID", isEqualTo: id)
+            .getDocuments()
+        XCTAssertEqual(snap.documents.count, 1, "regenerate must leave exactly one /joinCodes index entry per circle")
+        XCTAssertEqual(snap.documents.first?.documentID, newCode)
+
+        let reloaded = try await service.loadCareCircle(circleID: id)
+        XCTAssertEqual(reloaded?.joinCode, newCode)
+    }
+
+    /// When Firebase isn't configured, `regenerateJoinCode` must throw
+    /// `.offline` rather than silently no-op — the silent-no-op was
+    /// indistinguishable from success and caused the UI to display a
+    /// new code that never reached Firestore.
+    func test_regenerateJoinCode_throwsOfflineWhenNotConfigured() async {
+        let unconfigured = FirestoreService()  // db == nil
+        do {
+            try await unconfigured.regenerateJoinCode(
+                circleID: UUID().uuidString,
+                oldCode: "111111",
+                newCode: "222222"
+            )
+            XCTFail("expected .offline when db is nil")
+        } catch FirestoreServiceError.offline {
+            // Expected.
+        } catch {
+            XCTFail("expected .offline, got \(error)")
+        }
+    }
+
     // MARK: - Two-device sync via listener
 
     func test_twoServiceInstances_observeEachOthersWrites() async throws {

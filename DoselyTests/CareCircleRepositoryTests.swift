@@ -182,16 +182,32 @@ final class CareCircleRepositoryTests: XCTestCase {
         XCTAssertEqual(result, .failure(.alreadyMember))
     }
 
-    func testRegenerateJoinCodeChangesIt() async throws {
+    /// With Firestore unconfigured the regenerate must throw `.offline`
+    /// rather than silently update local Core Data — the previous
+    /// "optimistic local write" behavior was the bug that produced UI
+    /// codes that didn't exist on the server. The happy-path "new code
+    /// differs from old" assertion lives in
+    /// `FirestoreServiceTests.test_regenerateJoinCode_isAtomic`, which
+    /// runs against the emulator.
+    func testRegenerateJoinCodeRequiresFirestore() async {
         let circle = await repo.createCareCircle(
             name: "X", foundingSupervisorFirebaseUID: "f", founderName: "F"
         )
         let original = circle.joinCode
         let founder = await personRepo.fetchSupervisor(firebaseUID: "f")!
-        let newCode = try await repo.regenerateJoinCode(
-            careCircleID: circle.id!, actorPersonID: founder.id!
-        )
-        XCTAssertNotEqual(newCode, original)
+        do {
+            _ = try await repo.regenerateJoinCode(
+                careCircleID: circle.id!, actorPersonID: founder.id!
+            )
+            XCTFail("Expected .offline when Firestore is unconfigured")
+        } catch let err as CareCircleEditError {
+            XCTAssertEqual(err, .offline)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
+        // Local Core Data must NOT have been mutated.
+        let refreshed = await repo.fetchCareCircle(id: circle.id!)
+        XCTAssertEqual(refreshed?.joinCode, original)
     }
 
     func testRegenerateJoinCodeRefusesSecondary() async {

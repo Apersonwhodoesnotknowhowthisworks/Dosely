@@ -396,7 +396,10 @@ final class CareCircleRepository {
 
     /// Regenerates the join code atomically across `/careCircles/{id}`,
     /// `/joinCodes/{old}` (deleted), and `/joinCodes/{new}` (created).
-    /// Mirrors to Core Data on success.
+    /// Mirrors to Core Data only after Firestore confirms — a failed
+    /// commit MUST NOT leave the UI showing a code that doesn't exist on
+    /// the server. `permissionDenied` and `offline` are surfaced
+    /// separately so the UI can give a precise message.
     func regenerateJoinCode(
         careCircleID: UUID,
         actorPersonID: UUID
@@ -415,11 +418,14 @@ final class CareCircleRepository {
                 oldCode: oldCode,
                 newCode: newCode
             )
+        } catch FirestoreServiceError.permissionDenied {
+            throw CareCircleEditError.permissionDenied
+        } catch FirestoreServiceError.offline {
+            throw CareCircleEditError.offline
         } catch {
-            // Couldn't write to Firestore (offline, perms). Surface
-            // offline so the caller can show an error rather than
-            // handing out a local-only code that isn't valid for
-            // cross-device joins.
+            // Any other error path: surface as offline so the caller
+            // shows an error rather than handing out a local-only code
+            // that isn't valid for cross-device joins.
             throw CareCircleEditError.offline
         }
 

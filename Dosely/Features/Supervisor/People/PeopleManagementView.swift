@@ -250,6 +250,7 @@ struct CircleSettingsSection: View {
     @State private var renameText: String = ""
     @State private var showingRenameAlert = false
     @State private var showingRegenAlert = false
+    @State private var regenerateErrorVisible = false
     @State private var joinCode: String?
     @State private var circleName: String = ""
 
@@ -306,6 +307,12 @@ struct CircleSettingsSection: View {
             Button(L("common.cancel"), role: .cancel) {}
         } message: {
             Text("supervisor.circle.regenerate.body")
+        }
+        .alert(L("settings.family.regenerate.error.title"),
+               isPresented: $regenerateErrorVisible) {
+            Button(L("common.ok"), role: .cancel) {}
+        } message: {
+            Text("settings.family.regenerate.error.body")
         }
     }
 
@@ -376,7 +383,10 @@ struct CircleSettingsSection: View {
             )
             await MainActor.run { joinCode = newCode }
         } catch {
-            // Same rationale as rename — see above.
+            // Firestore refused or was unreachable. Don't update the
+            // displayed code — leave it pointing at whatever Firestore
+            // last confirmed — and tell the user.
+            await MainActor.run { regenerateErrorVisible = true }
         }
     }
 }

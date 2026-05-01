@@ -295,6 +295,8 @@
 "settings.family.leave.permanently.action" = "Leave family";
 "settings.family.lastsupervisor.title" = "You're the only supervisor";
 "settings.family.lastsupervisor.body" = "This family relies on you. To leave, first invite another supervisor to take over, or delete the family entirely.";
+"settings.family.regenerate.error.title" = "Couldn't regenerate code";
+"settings.family.regenerate.error.body" = "Couldn't regenerate code. Please try again.";
 
 // MARK: - Supervisor dashboard
 "supervisor.tab.people" = "People";

@@ -298,6 +298,8 @@
 "settings.family.leave.permanently.action" = "ਪਰਿਵਾਰ ਛੱਡੋ";
 "settings.family.lastsupervisor.title" = "ਤੁਸੀਂ ਇਕੱਲੇ ਨਿਗਰਾਨ ਹੋ";
 "settings.family.lastsupervisor.body" = "ਇਹ ਪਰਿਵਾਰ ਤੁਹਾਡੇ ਉੱਤੇ ਨਿਰਭਰ ਹੈ। ਛੱਡਣ ਲਈ, ਪਹਿਲਾਂ ਕਿਸੇ ਹੋਰ ਨਿਗਰਾਨ ਨੂੰ ਜੋੜੋ ਜਾਂ ਪਰਿਵਾਰ ਨੂੰ ਪੂਰੀ ਤਰ੍ਹਾਂ ਮਿਟਾਉ।";
+"settings.family.regenerate.error.title" = "ਕੋਡ ਦੁਬਾਰਾ ਨਹੀਂ ਬਣ ਸਕਿਆ"; // REVIEW NEEDED
+"settings.family.regenerate.error.body" = "ਕੋਡ ਦੁਬਾਰਾ ਨਹੀਂ ਬਣ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
 
 // MARK: - Supervisor dashboard
 "supervisor.tab.people" = "ਪਰਿਵਾਰ";

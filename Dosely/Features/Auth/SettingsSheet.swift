@@ -18,6 +18,7 @@ struct SettingsSheet: View {
     @State private var primaryPromoteFirstAlertVisible = false
     @State private var familyName: String = ""
     @State private var joinCode: String = ""
+    @State private var regenerateErrorVisible = false
     private let careCircleRepo = CareCircleRepository()
 
     var body: some View {
@@ -92,6 +93,12 @@ struct SettingsSheet: View {
                 Button(L("common.ok"), role: .cancel) {}
             } message: {
                 Text("circle.leave.error.primarypromotefirst")
+            }
+            .alert(L("settings.family.regenerate.error.title"),
+                   isPresented: $regenerateErrorVisible) {
+                Button(L("common.ok"), role: .cancel) {}
+            } message: {
+                Text("settings.family.regenerate.error.body")
             }
             .sheet(isPresented: $showingLanguagePicker) {
                 LanguagePickerView(
@@ -377,9 +384,11 @@ struct SettingsSheet: View {
             )
             await MainActor.run { joinCode = newCode }
         } catch {
-            // The settings → family section is hidden for secondaries
-            // via the `isPrimary` check in `familySection`. If we get
-            // here, it's a network error — keep the existing code shown.
+            // Couldn't write to Firestore. The local Core Data row is
+            // intentionally left untouched, so the displayed code stays
+            // the last one Firestore confirmed. Tell the user instead of
+            // silently pretending the regenerate worked.
+            await MainActor.run { regenerateErrorVisible = true }
         }
     }
 
