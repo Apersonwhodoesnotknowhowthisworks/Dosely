@@ -305,6 +305,20 @@ Tests in `DoselyTests/PersonRepositoryTests.swift`: exactly-one-row from a clean
 
 The hazard is "create" methods that act like inserts when the rest of the layer treats Firestore as the source of truth. Once Firestore is the canonical store, every local write should be an upsert keyed on the canonical id — not a fresh insert and a hope that nothing else got there first. Worth scanning the rest of the repos for the same pattern next quiet hour.
 
+## May 1 — Dashboard selector listed co-supervisors as patients (commit `41f93cd`)
+
+The person-selector strip on the Today tab and the "All" combined-doses path both read `SupervisorDashboardViewModel.clients`. The filter, in `Dosely/Features/Supervisor/SupervisorDashboardViewModel.swift`, was:
+
+    .filter { $0.id != supervisorID }
+
+That excluded only the acting supervisor's row, not every supervisor in the circle. With two caregivers in the same family, the second one rendered next to Grandpa as if they were a patient — tappable, with their own (empty) doses screen.
+
+Fix is a role filter. Per the data model in `CLAUDE.md`, both `device_client` and `managed_client` are dose-targets; every supervisor flavor (primary, secondary, legacy) is a caregiver. Filter is now `$0.role == Roles.deviceClient || $0.role == Roles.managedClient`.
+
+Tests in `DoselyTests/SupervisorDashboardViewModelTests.swift`: two managed clients plus a co-supervisor reduces to two clients in the array; a secondary supervisor loading the dashboard gets the same client-only list (the previous filter would have leaked the primary in for them); and the "All" combined-doses path only ever surfaces medications belonging to the filtered clients.
+
+Same shape of mistake as the chooser fix three commits back — a filter that almost did the right thing but landed on the wrong key. The previous one filtered on object identity instead of role; this one filtered on a single id instead of a role class. The data layer has roles; the views should ask in those terms, not by exclusion of whoever happens to be running the screen.
+
 ## Still pending
 
 - Dark/light mode adaptive DSColors (queued — invisible text on real iPhone)
