@@ -372,4 +372,119 @@ final class PersonRepositoryTests: XCTestCase {
         )
         XCTAssertEqual(med.name, "Allowed")
     }
+
+    // MARK: - Duplicate-row regression
+    //
+    // The shipping bug: a managed client added through AddPersonFlow
+    // rendered as two rows on the People list. Same Firestore doc,
+    // two Core Data rows holding the same UUID. The Person entity has
+    // no uniqueness constraint, the Firestore /people listener fires
+    // off this device's own write, and the create path always-inserted
+    // a new view-context row instead of upserting. With a no-op
+    // FirestoreService no listener fires here, so the production race
+    // is simulated by pre-seeding a row at the id the create path is
+    // told to use, then asserting the create returns exactly one row
+    // (the original) and updates its fields.
+
+    func testCreateManagedClient_resultsInExactlyOneRowAtThatID() async throws {
+        let client = try await personRepo.createManagedClient(
+            name: "Grandpa",
+            photoData: nil,
+            language: "en",
+            in: circle,
+            actorPersonID: supervisor.id!
+        )
+        let request = NSFetchRequest<Person>(entityName: "Person")
+        request.predicate = NSPredicate(format: "id == %@", client.id! as CVarArg)
+        let rows = try stack.viewContext.fetch(request)
+        XCTAssertEqual(rows.count, 1,
+                       "createManagedClient must produce exactly one Person row at the client's id")
+    }
+
+    func testCreateManagedClient_upsertsWhenRowAlreadyExistsAtSameID() async throws {
+        // Simulate the SyncCoordinator listener already having mirrored
+        // the new row before the create path's own view-context insert
+        // gets a turn.
+        let knownID = UUID()
+        await stack.viewContext.perform { [self] in
+            let existing = Person(context: stack.viewContext)
+            existing.id = knownID
+            existing.name = "Listener-mirrored"
+            existing.role = Roles.managedClient
+            existing.languagePreference = "en"
+            existing.failedPinAttempts = 0
+            existing.careCircle = circle
+            try? stack.viewContext.save()
+        }
+
+        let client = try await personRepo.createManagedClient(
+            name: "Final",
+            photoData: nil,
+            language: "en",
+            in: circle,
+            actorPersonID: supervisor.id!,
+            personID: knownID
+        )
+
+        XCTAssertEqual(client.id, knownID,
+                       "create must reuse the supplied id rather than generating a fresh one")
+
+        let request = NSFetchRequest<Person>(entityName: "Person")
+        request.predicate = NSPredicate(format: "id == %@", knownID as CVarArg)
+        let rows = try stack.viewContext.fetch(request)
+        XCTAssertEqual(rows.count, 1,
+                       "create against a pre-existing row at the same id must upsert, not duplicate")
+        XCTAssertEqual(rows.first?.name, "Final",
+                       "the upsert must overwrite the pre-existing row's fields")
+    }
+
+    func testCreateDeviceClient_resultsInExactlyOneRowAtThatID() async throws {
+        let client = try await personRepo.createDeviceClient(
+            name: "Grandma",
+            photoData: nil,
+            pinPlaintext: "1234",
+            language: "en",
+            in: circle,
+            actorPersonID: supervisor.id!
+        )
+        let request = NSFetchRequest<Person>(entityName: "Person")
+        request.predicate = NSPredicate(format: "id == %@", client.id! as CVarArg)
+        let rows = try stack.viewContext.fetch(request)
+        XCTAssertEqual(rows.count, 1,
+                       "createDeviceClient must produce exactly one Person row at the client's id")
+    }
+
+    func testCreateDeviceClient_upsertsWhenRowAlreadyExistsAtSameID() async throws {
+        let knownID = UUID()
+        await stack.viewContext.perform { [self] in
+            let existing = Person(context: stack.viewContext)
+            existing.id = knownID
+            existing.name = "Listener-mirrored"
+            existing.role = Roles.deviceClient
+            existing.languagePreference = "en"
+            existing.failedPinAttempts = 0
+            existing.careCircle = circle
+            try? stack.viewContext.save()
+        }
+
+        let client = try await personRepo.createDeviceClient(
+            name: "Final",
+            photoData: nil,
+            pinPlaintext: "9999",
+            language: "en",
+            in: circle,
+            actorPersonID: supervisor.id!,
+            personID: knownID
+        )
+
+        XCTAssertEqual(client.id, knownID)
+
+        let request = NSFetchRequest<Person>(entityName: "Person")
+        request.predicate = NSPredicate(format: "id == %@", knownID as CVarArg)
+        let rows = try stack.viewContext.fetch(request)
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertEqual(rows.first?.name, "Final")
+        XCTAssertNotNil(rows.first?.pinHash,
+                        "the upsert must apply the new PIN hash, not leave the pre-existing row's")
+    }
 }

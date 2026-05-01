@@ -183,13 +183,16 @@ final class PersonRepository {
         pinPlaintext: String,
         language: String,
         in careCircle: CareCircle,
-        actorPersonID: UUID
+        actorPersonID: UUID,
+        // Defaulted so production callers don't have to pass it. Tests
+        // override so they can pre-seed a row at the same id and prove
+        // the create path upserts instead of duplicating.
+        personID: UUID = UUID()
     ) async throws -> Person {
         try await ensureCanWrite(actorPersonID: actorPersonID)
 
         let salt = PinHasher.generateSalt()
         let hash = PinHasher.hash(pin: pinPlaintext, salt: salt) ?? Data()
-        let personID = UUID()
         let circleID = careCircle.id ?? UUID()
 
         let fperson = FirestoreModels.FPerson(
@@ -208,7 +211,17 @@ final class PersonRepository {
         try? await firestore.upsertPerson(fperson)
 
         return await context.perform { [context] in
-            let person = Person(context: context)
+            // Upsert by id — the Firestore write above triggers the
+            // /people listener on this device, and `mirrorPeople` may
+            // have already inserted a Person row at this id by the
+            // time we get here. Always-inserting a fresh row produced
+            // two rows with the same UUID (no uniqueness constraint
+            // on the entity), which the People list rendered twice
+            // and the orphan-pruning sweep then deleted together.
+            let request = NSFetchRequest<Person>(entityName: "Person")
+            request.predicate = NSPredicate(format: "id == %@", personID as CVarArg)
+            request.fetchLimit = 1
+            let person = (try? context.fetch(request))?.first ?? Person(context: context)
             person.id = personID
             person.name = name
             person.photoData = photoData
@@ -229,11 +242,13 @@ final class PersonRepository {
         photoData: Data?,
         language: String,
         in careCircle: CareCircle,
-        actorPersonID: UUID
+        actorPersonID: UUID,
+        // See `createDeviceClient` — defaulted so production is
+        // unchanged; tests inject a known id.
+        personID: UUID = UUID()
     ) async throws -> Person {
         try await ensureCanWrite(actorPersonID: actorPersonID)
 
-        let personID = UUID()
         let circleID = careCircle.id ?? UUID()
 
         let fperson = FirestoreModels.FPerson(
@@ -252,7 +267,11 @@ final class PersonRepository {
         try? await firestore.upsertPerson(fperson)
 
         return await context.perform { [context] in
-            let person = Person(context: context)
+            // Upsert by id — see `createDeviceClient` for the rationale.
+            let request = NSFetchRequest<Person>(entityName: "Person")
+            request.predicate = NSPredicate(format: "id == %@", personID as CVarArg)
+            request.fetchLimit = 1
+            let person = (try? context.fetch(request))?.first ?? Person(context: context)
             person.id = personID
             person.name = name
             person.photoData = photoData
