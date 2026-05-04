@@ -8,9 +8,14 @@ struct TodayView: View {
     @State private var showingSettings = false
     @State private var detailDose: TodayDose?
     @State private var refreshErrorMessage: String?
+    @State private var confirmingEmergency = false
+    @State private var emergencySentToastVisible = false
+    private let alertsRepo: AlertsRepository
 
-    init(repository: MedicationRepository = MedicationRepository()) {
+    init(repository: MedicationRepository = MedicationRepository(),
+         alertsRepo: AlertsRepository = AlertsRepository()) {
         self.repository = repository
+        self.alertsRepo = alertsRepo
         _viewModel = StateObject(wrappedValue: TodayViewModel(repository: repository))
     }
 
@@ -43,6 +48,18 @@ struct TodayView: View {
                                               LocalizedFormatters.fullDateFormatter.string(from: Date()) as NSString))
 
                     content
+
+                    // Device clients (Grandpa logged in via PIN) get
+                    // a single-tap "I need help" button. Tap fans out
+                    // a fresh emergency alert to every supervisor in
+                    // the circle. Managed clients don't sign in
+                    // themselves, so the button is hidden for them.
+                    if isDeviceClient {
+                        emergencyButton
+                            .padding(.horizontal, DSSpacing.lg)
+                            .padding(.top, DSSpacing.lg)
+                            .padding(.bottom, DSSpacing.xl)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .top)
             }
@@ -99,6 +116,27 @@ struct TodayView: View {
         .sheet(isPresented: $showingSettings) {
             SettingsSheet()
         }
+        .alert(L("today.client.emergency.confirm.title"),
+               isPresented: $confirmingEmergency) {
+            Button(L("today.client.emergency.confirm.action"), role: .destructive) {
+                Task { await fireEmergencyAlert() }
+            }
+            Button(L("common.cancel"), role: .cancel) {}
+        } message: {
+            Text("today.client.emergency.confirm.body")
+        }
+        .overlay(alignment: .top) {
+            if emergencySentToastVisible {
+                Text("today.client.emergency.sent")
+                    .dsBodyRegular()
+                    .foregroundColor(.white)
+                    .padding(DSSpacing.md)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.dsSuccess)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: emergencySentToastVisible)
         .sheet(item: $detailDose) { dose in
             MedicationDetailView(
                 name: dose.medication.name ?? "",
@@ -148,6 +186,63 @@ struct TodayView: View {
     private func markTaken(_ dose: TodayDose) async {
         guard let personID = authService.currentPerson?.id else { return }
         await viewModel.markTaken(dose, loggedByPersonID: personID, personID: personID)
+    }
+
+    // MARK: - Emergency button
+
+    private var isDeviceClient: Bool {
+        authService.currentPerson?.role == Roles.deviceClient
+    }
+
+    private var emergencyButton: some View {
+        Button(action: { confirmingEmergency = true }) {
+            HStack(spacing: DSSpacing.sm) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .accessibilityHidden(true)
+                Text("today.client.emergency")
+                    .dsBodyLarge()
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, minHeight: 64)
+            .background(Color.dsDanger)
+            .cornerRadius(DSSpacing.rLg)
+        }
+        .accessibilityLabel(Text("today.client.emergency"))
+    }
+
+    private func fireEmergencyAlert() async {
+        guard let person = authService.currentPerson,
+              let personID = person.id,
+              let circleID = person.careCircle?.id else { return }
+        let alertID = UUID().uuidString
+        let alert = FirestoreModels.FAlert(
+            id: alertID,
+            type: FirestoreModels.AlertType.emergency,
+            personID: personID.uuidString,
+            medicationID: nil,
+            scheduledTime: nil,
+            createdAt: Date(),
+            payload: ["personName": person.name ?? ""],
+            acknowledgedBy: nil,
+            acknowledgedByName: nil,
+            acknowledgedAt: nil,
+            lastModified: nil
+        )
+        do {
+            _ = try await alertsRepo.createIfAbsent(alert, in: circleID)
+            await MainActor.run {
+                emergencySentToastVisible = true
+            }
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            await MainActor.run {
+                emergencySentToastVisible = false
+            }
+        } catch {
+            // The toast doesn't double as an error surface here —
+            // emergency button users shouldn't be hunting through copy.
+            // Silent fail is acceptable; the listener will surface the
+            // alert once network returns and the queued write replays.
+        }
     }
 
     private func skip(_ dose: TodayDose) async {

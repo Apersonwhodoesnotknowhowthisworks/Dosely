@@ -1,25 +1,6 @@
 import Foundation
 import SwiftUI
 
-/// One row in the AlertsCard. For Prompt 14 the data is stubbed with a
-/// fixed sample; Prompt 15 wires real signals (missed-dose rollups, low
-/// supply, PIN lockout, emergency button).
-struct DashboardAlert: Identifiable, Hashable {
-    enum Severity { case info, warning, danger }
-
-    let id: UUID
-    let title: String
-    let body: String
-    let severity: Severity
-
-    init(id: UUID = UUID(), title: String, body: String, severity: Severity) {
-        self.id = id
-        self.title = title
-        self.body = body
-        self.severity = severity
-    }
-}
-
 /// One person's adherence rollup for the current week.
 struct PersonAdherence: Identifiable, Hashable {
     let id: UUID                // == person.id
@@ -40,16 +21,25 @@ final class SupervisorDashboardViewModel: ObservableObject {
     @Published private(set) var clients: [Person] = []
     @Published private(set) var doses: [TodayDose] = []
     @Published private(set) var adherence: PersonAdherence?
-    @Published private(set) var alerts: [DashboardAlert] = []
+    @Published private(set) var alerts: [Alert] = []
     @Published private(set) var isLoaded = false
 
     private let medicationRepo: MedicationRepository
     private let personRepo: PersonRepository
+    private let alertsRepo: AlertsRepository
+    private let missedDoseDetector: MissedDoseDetector
+    private let weeklySummaryGenerator: WeeklySummaryGenerator
 
     init(medicationRepo: MedicationRepository = MedicationRepository(),
-         personRepo: PersonRepository = PersonRepository()) {
+         personRepo: PersonRepository = PersonRepository(),
+         alertsRepo: AlertsRepository = AlertsRepository(),
+         missedDoseDetector: MissedDoseDetector = MissedDoseDetector(),
+         weeklySummaryGenerator: WeeklySummaryGenerator = WeeklySummaryGenerator()) {
         self.medicationRepo = medicationRepo
         self.personRepo = personRepo
+        self.alertsRepo = alertsRepo
+        self.missedDoseDetector = missedDoseDetector
+        self.weeklySummaryGenerator = weeklySummaryGenerator
     }
 
     /// Loads the dashboard data for the supervisor.
@@ -81,15 +71,43 @@ final class SupervisorDashboardViewModel: ObservableObject {
             self.doses = await loadCombinedDoses(across: onlyClients, now: now)
             self.adherence = nil
         }
-        // No real-signal alerts yet — missed-dose rollups, low supply,
-        // PIN lockout, emergency button all live in the "Prompt 19"
-        // queue. Until they ship, the AlertsCard renders its
-        // "supervisor.alerts.empty" copy. The previous `stubAlerts`
-        // helper produced a hardcoded refill warning regardless of
-        // supply state, which gave supervisors a false signal.
-        self.alerts = []
+
+        // Run the detectors before reading the inbox so any new
+        // gaps surface in the same load. Both are idempotent — calls
+        // from sibling supervisor devices converge on a single doc
+        // via deterministic alert ids.
+        await missedDoseDetector.run(in: circleID, now: now)
+        await weeklySummaryGenerator.runIfDue(in: circleID, now: now)
+        self.alerts = await alertsRepo.fetchAlerts(in: circleID)
 
         self.isLoaded = true
+    }
+
+    /// First-to-acknowledge clears it for everyone. Hits the atomic
+    /// transaction in `AlertsRepository`; on success the listener
+    /// will reconcile the local mirror, but we also reload immediately
+    /// so the UI doesn't sit stale waiting for the snapshot.
+    func acknowledge(_ alert: Alert,
+                     supervisorID: UUID,
+                     supervisorFirebaseUID: String,
+                     supervisorName: String?,
+                     activePersonID: UUID?,
+                     circleID: UUID) async {
+        guard let docID = alert.docID else { return }
+        do {
+            try await alertsRepo.acknowledge(
+                alertID: docID,
+                in: circleID,
+                firebaseUID: supervisorFirebaseUID,
+                actorName: supervisorName
+            )
+        } catch {
+            // Surface nothing in the UI yet — the listener will reconcile
+            // when network returns. Reload below picks up any change.
+        }
+        await load(circleID: circleID,
+                   supervisorID: supervisorID,
+                   activePersonID: activePersonID)
     }
 
     func markTaken(_ dose: TodayDose,

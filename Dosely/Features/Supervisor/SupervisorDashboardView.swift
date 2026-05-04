@@ -114,6 +114,13 @@ struct SupervisorDashboardView: View {
         .task(id: refreshKey) {
             await reload()
         }
+        // Foreground re-runs `reload`, which fires the missed-dose
+        // detector and the weekly summary generator alongside the
+        // dose refresh. Without push, foreground is the most
+        // reliable signal that the supervisor wants fresh state.
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            Task { await reload() }
+        }
         .sheet(isPresented: $showingAdd) {
             // Sheet content must NEVER be empty — wrapping the body in
             // `if let target = pendingAddTargetPersonID` previously
@@ -187,7 +194,9 @@ struct SupervisorDashboardView: View {
                     }
                 }
 
-                AlertsCard(alerts: viewModel.alerts)
+                AlertsCard(alerts: viewModel.alerts) { alert in
+                    Task { await acknowledge(alert) }
+                }
 
                 if isPrimary {
                     if activePersonID != nil {
@@ -298,6 +307,23 @@ struct SupervisorDashboardView: View {
                              supervisorID: supervisorID,
                              activePersonID: activePersonID,
                              circleID: circleID)
+    }
+
+    private func acknowledge(_ alert: Alert) async {
+        guard
+            let supervisor = authService.currentPerson,
+            let supervisorID = supervisor.id,
+            let circleID = supervisor.careCircle?.id,
+            let firebaseUID = authService.currentUser?.uid
+        else { return }
+        await viewModel.acknowledge(
+            alert,
+            supervisorID: supervisorID,
+            supervisorFirebaseUID: firebaseUID,
+            supervisorName: supervisor.name,
+            activePersonID: activePersonID,
+            circleID: circleID
+        )
     }
 }
 
