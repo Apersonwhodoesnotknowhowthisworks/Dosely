@@ -728,6 +728,99 @@ final class FirestoreService {
         }
     }
 
+    // MARK: - Alerts
+
+    /// Same contract as `fetchPeople` etc. Throws `.offline` when the
+    /// SDK isn't configured rather than returning an empty array — the
+    /// pull-to-refresh path would otherwise mistake "couldn't ask" for
+    /// "no alerts" and prune the local mirror.
+    func fetchAlerts(circleID: String) async throws -> [FirestoreModels.FAlert] {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            let snap = try await db.collection(Path.alerts(circleID))
+                .order(by: "createdAt", descending: true)
+                .limit(to: 50)
+                .getDocuments()
+            return snap.documents.compactMap { try? $0.data(as: FirestoreModels.FAlert.self) }
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    /// Idempotent create. Used by `MissedDoseDetector` and
+    /// `WeeklySummaryGenerator` — multiple supervisor devices detecting
+    /// the same gap converge on the same `alertID`, and only the first
+    /// write commits. Subsequent writes raise `.alreadyExists`, which
+    /// the caller treats as success ("the alert is already there").
+    /// Returns `true` when this call wrote the doc, `false` when it
+    /// was already present.
+    @discardableResult
+    func createAlertIfAbsent(circleID: String,
+                             alert: FirestoreModels.FAlert) async throws -> Bool {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            var payload = try encode(alert)
+            payload["createdAt"] = FieldValue.serverTimestamp()
+            payload["lastModified"] = FieldValue.serverTimestamp()
+            // setData with merge: false on an existing doc errors;
+            // a get-then-write prelude avoids burning the SDK's local
+            // queue with a doomed write while still being race-safe
+            // because the rules-layer create blocks duplicate landings.
+            let ref = db.collection(Path.alerts(circleID)).document(alert.id)
+            let snap = try await ref.getDocument()
+            if snap.exists { return false }
+            try await ref.setData(payload)
+            return true
+        } catch let error as NSError where
+            error.domain == FirestoreErrorDomain &&
+            error.code == FirestoreErrorCode.alreadyExists.rawValue {
+            // A concurrent write from another device beat us by a hair.
+            // Treat as success — the alert is in the system either way.
+            return false
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    /// Atomic acknowledgement. Reads the doc inside a transaction; if
+    /// `acknowledgedBy` is already non-nil, returns silently (someone
+    /// else got there first — the listener will reconcile). Otherwise
+    /// stamps the caller's UID + name + server timestamp.
+    func acknowledgeAlert(circleID: String,
+                          alertID: String,
+                          firebaseUID: String,
+                          actorName: String?) async throws {
+        guard let db else { throw FirestoreServiceError.offline }
+        let ref = db.collection(Path.alerts(circleID)).document(alertID)
+        do {
+            _ = try await db.runTransaction({ (txn, errorPointer) -> Any? in
+                let snap: DocumentSnapshot
+                do {
+                    snap = try txn.getDocument(ref)
+                } catch let error as NSError {
+                    errorPointer?.pointee = error
+                    return nil
+                }
+                guard let data = snap.data() else { return nil }
+                if let existing = data["acknowledgedBy"] as? String, !existing.isEmpty {
+                    return nil  // someone else won the race
+                }
+                var update: [String: Any] = [
+                    "acknowledgedBy": firebaseUID,
+                    "acknowledgedAt": FieldValue.serverTimestamp(),
+                    "lastModified": FieldValue.serverTimestamp()
+                ]
+                if let actorName, !actorName.isEmpty {
+                    update["acknowledgedByName"] = actorName
+                }
+                txn.updateData(update, forDocument: ref)
+                return nil
+            })
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
     // MARK: - Orphan cleanup
 
     /// Lists every doc in `/joinCodes`. Each entry is `(code,

@@ -90,6 +90,14 @@ final class SyncCoordinator: ObservableObject {
             guard let self else { return }
             self.mirrorDoseLogs(logs, circleID: careCircleID)
         })
+
+        listeners.append(firestore.listen(
+            collectionPath: FirestoreService.Path.alerts(id),
+            as: FirestoreModels.FAlert.self
+        ) { [weak self] alerts in
+            guard let self else { return }
+            self.mirrorAlerts(alerts, circleID: careCircleID)
+        })
     }
 
     func stop() {
@@ -123,6 +131,7 @@ final class SyncCoordinator: ObservableObject {
         let resolvedMeds: [FirestoreModels.FMedication]
         let resolvedSchedules: [FirestoreModels.FDoseSchedule]
         let resolvedLogs: [FirestoreModels.FDoseLog]
+        let resolvedAlerts: [FirestoreModels.FAlert]
 
         do {
             // Concurrent fetches. Bail on the first failure rather than
@@ -132,12 +141,14 @@ final class SyncCoordinator: ObservableObject {
             async let medsTask = firestore.fetchMedications(circleID: id)
             async let schedulesTask = firestore.fetchDoseSchedules(circleID: id)
             async let logsTask = firestore.fetchDoseLogs(circleID: id)
+            async let alertsTask = firestore.fetchAlerts(circleID: id)
 
             resolvedCircle = try await circleTask
             resolvedPeople = try await peopleTask
             resolvedMeds = try await medsTask
             resolvedSchedules = try await schedulesTask
             resolvedLogs = try await logsTask
+            resolvedAlerts = try await alertsTask
         } catch FirestoreServiceError.offline {
             throw SyncRefreshError.offline
         } catch FirestoreServiceError.permissionDenied {
@@ -153,6 +164,7 @@ final class SyncCoordinator: ObservableObject {
         mirrorMedications(resolvedMeds, circleID: circleID)
         mirrorSchedules(resolvedSchedules, circleID: circleID)
         mirrorDoseLogs(resolvedLogs, circleID: circleID)
+        mirrorAlerts(resolvedAlerts, circleID: circleID)
     }
 
     // MARK: - Mirror helpers (Firestore → Core Data)
@@ -215,6 +227,24 @@ final class SyncCoordinator: ObservableObject {
             Self.deleteOrphanedDoseLogs(
                 keepIDs: logs.compactMap { UUID(uuidString: $0.id) },
                 personIDs: circlePeopleIDs,
+                in: ctx
+            )
+            try? ctx.save()
+        }
+    }
+
+    private func mirrorAlerts(_ alerts: [FirestoreModels.FAlert], circleID: UUID) {
+        stack.performBackgroundTask { ctx in
+            for alert in alerts {
+                alert.upsert(in: ctx, careCircleID: circleID)
+            }
+            // Prune local rows whose docID isn't in the snapshot — alerts
+            // shouldn't drift even though deletes are normally forbidden,
+            // because the orphan-cleanup migration can wipe an entire
+            // circle's collection.
+            Self.deleteOrphanedAlerts(
+                keepDocIDs: alerts.map { $0.id },
+                circleID: circleID,
                 in: ctx
             )
             try? ctx.save()
@@ -293,6 +323,21 @@ final class SyncCoordinator: ObservableObject {
                   let personID = log.medication?.personID,
                   personIDs.contains(personID) else { continue }
             if !keepSet.contains(id) { ctx.delete(log) }
+        }
+    }
+
+    private static func deleteOrphanedAlerts(
+        keepDocIDs: [String],
+        circleID: UUID,
+        in ctx: NSManagedObjectContext
+    ) {
+        let request = NSFetchRequest<Alert>(entityName: "Alert")
+        request.predicate = NSPredicate(format: "careCircle.id == %@", circleID as CVarArg)
+        let existing = (try? ctx.fetch(request)) ?? []
+        let keepSet = Set(keepDocIDs)
+        for alert in existing {
+            guard let docID = alert.docID, !keepSet.contains(docID) else { continue }
+            ctx.delete(alert)
         }
     }
 }

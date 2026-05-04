@@ -800,12 +800,19 @@ describe("Firestore security rules", () => {
     });
   });
 
-  // -- 11. Alerts: secondary supervisor authority ------------------------
+  // -- 11. Alerts: tightened authority + acknowledgement model -----------
+  //
+  // Coordination model: any supervisor reads, any supervisor creates,
+  // any supervisor acknowledges — but the acknowledgement is a single
+  // atomic write that can only be made by the acting user, and once
+  // landed, it can't be overwritten. Alerts are immutable history,
+  // so no deletes outside the orphan-cleanup escape hatch.
 
-  describe("alerts — secondary write authority", () => {
+  describe("alerts — tightened authority", () => {
     const circleID = "circle-alerts";
     const primary = { uid: "primary-a-uid", personID: "person-primary-a" };
     const secondary = { uid: "secondary-a-uid", personID: "person-secondary-a" };
+    const stranger = { uid: "stranger-a-uid", personID: "person-stranger-a" };
     const grandpa = { uid: "grandpa-a-uid", personID: "person-grandpa-a" };
 
     beforeEach(async () => {
@@ -819,54 +826,158 @@ describe("Firestore security rules", () => {
       });
     });
 
-    it("a secondary supervisor can create an alert", async () => {
+    it("a secondary supervisor can read alerts", async () => {
+      const alertID = "alert-readable";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID, type: "missedDose",
+          personID: grandpa.personID, createdAt: new Date(),
+        });
+      });
       const db = authedDb(secondary.uid);
-      const alertID = "alert-from-secondary";
+      await assertSucceeds(getDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`)));
+    });
+
+    it("a stranger CANNOT read alerts in someone else's circle", async () => {
+      const alertID = "alert-private";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID, type: "missedDose",
+          personID: grandpa.personID, createdAt: new Date(),
+        });
+      });
+      const db = authedDb(stranger.uid);
+      await assertFails(getDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`)));
+    });
+
+    it("a supervisor can create a pending alert", async () => {
+      const db = authedDb(secondary.uid);
+      const alertID = "alert-fresh";
       await assertSucceeds(
         setDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
           id: alertID,
+          type: "missedDose",
           personID: grandpa.personID,
-          kind: "missed_dose",
-          message: "Grandpa missed morning Lipitor",
-          createdAt: new Date(),
+          createdAt: serverTimestamp(),
+          acknowledgedBy: null,
         })
       );
     });
 
-    it("a secondary supervisor can acknowledge any alert in the circle", async () => {
+    it("a create with acknowledgedBy already set is denied", async () => {
+      const db = authedDb(secondary.uid);
+      const alertID = "alert-presetacked";
+      await assertFails(
+        setDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID,
+          type: "missedDose",
+          personID: grandpa.personID,
+          createdAt: serverTimestamp(),
+          acknowledgedBy: secondary.uid,  // pre-set ack — disallowed
+          acknowledgedAt: new Date(),
+        })
+      );
+    });
+
+    it("a create with createdAt skewed away from request.time is denied", async () => {
+      const db = authedDb(secondary.uid);
+      const alertID = "alert-timeskew";
+      // Plain `new Date()` doesn't equal request.time in the rules.
+      await assertFails(
+        setDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID,
+          type: "missedDose",
+          personID: grandpa.personID,
+          createdAt: new Date(2020, 0, 1),
+          acknowledgedBy: null,
+        })
+      );
+    });
+
+    it("a supervisor can acknowledge a pending alert as themselves", async () => {
       const alertID = "alert-to-ack";
       await testEnv.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
-          id: alertID,
-          personID: grandpa.personID,
-          kind: "missed_dose",
-          message: "test",
-          createdAt: new Date(),
+          id: alertID, type: "missedDose",
+          personID: grandpa.personID, createdAt: new Date(),
+          acknowledgedBy: null,
         });
       });
       const db = authedDb(secondary.uid);
       await assertSucceeds(
         updateDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
-          resolvedAt: new Date(),
+          acknowledgedBy: secondary.uid,
+          acknowledgedAt: serverTimestamp(),
         })
       );
     });
 
-    it("a secondary supervisor cannot delete an alert", async () => {
-      const alertID = "alert-to-delete";
+    it("a supervisor CANNOT acknowledge as someone else", async () => {
+      const alertID = "alert-spoof";
       await testEnv.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
-          id: alertID,
-          personID: grandpa.personID,
-          kind: "missed_dose",
-          message: "test",
-          createdAt: new Date(),
+          id: alertID, type: "missedDose",
+          personID: grandpa.personID, createdAt: new Date(),
+          acknowledgedBy: null,
         });
       });
       const db = authedDb(secondary.uid);
       await assertFails(
-        deleteDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`))
+        updateDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
+          acknowledgedBy: primary.uid,  // not the acting user
+          acknowledgedAt: serverTimestamp(),
+        })
       );
+    });
+
+    it("a supervisor CANNOT overwrite an existing acknowledgement", async () => {
+      const alertID = "alert-already-acked";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID, type: "missedDose",
+          personID: grandpa.personID, createdAt: new Date(),
+          acknowledgedBy: primary.uid,  // already ack'd by primary
+          acknowledgedAt: new Date(),
+        });
+      });
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        updateDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
+          acknowledgedBy: secondary.uid,
+          acknowledgedAt: serverTimestamp(),
+        })
+      );
+    });
+
+    it("a supervisor CANNOT change non-ack fields on an alert", async () => {
+      const alertID = "alert-immutable";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID, type: "missedDose",
+          personID: grandpa.personID, createdAt: new Date(),
+          acknowledgedBy: null,
+        });
+      });
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        updateDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
+          personID: primary.personID,  // not in the changed-keys allowlist
+        })
+      );
+    });
+
+    it("alerts cannot be deleted by any supervisor", async () => {
+      const alertID = "alert-immortal";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID, type: "missedDose",
+          personID: grandpa.personID, createdAt: new Date(),
+        });
+      });
+      const primaryDb = authedDb(primary.uid);
+      await assertFails(deleteDoc(doc(primaryDb, `careCircles/${circleID}/alerts/${alertID}`)));
+      const secondaryDb = authedDb(secondary.uid);
+      await assertFails(deleteDoc(doc(secondaryDb, `careCircles/${circleID}/alerts/${alertID}`)));
     });
   });
 

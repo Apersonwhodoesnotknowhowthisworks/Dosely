@@ -530,23 +530,65 @@ service cloud.firestore {
       }
 
       // ---------- /careCircles/{circleID}/alerts/{alertID} ----------
+      //
+      // Coordination model: "all supervisors get the same alert; first
+      // to acknowledge clears it for everyone." The doc id for missed-
+      // dose and weekly-summary alerts is deterministic (so concurrent
+      // detector runs converge on a single doc) and a fresh UUID for
+      // emergency taps. Both supervisor flavours can acknowledge —
+      // intentionally egalitarian.
 
       match /alerts/{alertID} {
-        allow read: if memberOf(circleID) || isOrphanFounder(circleID);
+        // Read: any supervisor of the circle. Device clients don't see
+        // the alerts feed in the UI, and at the Firestore level they
+        // share the supervisor's auth.uid anyway, so a supervisor-only
+        // gate is the right shape. `isOrphanFounder` is preserved for
+        // OrphanCircleCleanupMigration's tear-down sweep.
+        allow read: if isAnySupervisor(circleID) || isOrphanFounder(circleID);
 
-        // Create: any member (clients fire emergency alerts, secondary
-        // supervisors fire missed-dose alerts, primaries do both).
-        allow create: if memberOf(circleID) &&
-                      request.resource.data.id == alertID;
+        // Create: any supervisor of the circle. Two consistency
+        // checks:
+        //   - `id` field matches the doc path.
+        //   - `acknowledgedBy` is null at creation — alerts always
+        //     start in the pending state.
+        // `createdAt` is allowed to be either request.time (when the
+        // client passes a timestamp) or a server-resolved
+        // FieldValue.serverTimestamp() — the SDK normalizes the latter
+        // to request.time on the server side, so equality holds either
+        // way.
+        allow create: if isAnySupervisor(circleID) &&
+                      request.resource.data.id == alertID &&
+                      request.resource.data.createdAt == request.time &&
+                      (
+                        !('acknowledgedBy' in request.resource.data) ||
+                        request.resource.data.acknowledgedBy == null
+                      );
 
-        // Update: any supervisor flavour — secondaries are explicitly
-        // permitted to acknowledge alerts. Also a member acknowledging
-        // an alert that's about themselves.
-        allow update: if isAnySupervisor(circleID) ||
-                      (memberOf(circleID) && resource.data.personID == myPersonID(circleID));
+        // Update: any supervisor of the circle, but only the ack
+        // fields are allowed to change. Three additional constraints:
+        //   - existing `acknowledgedBy` must be null (no overwriting
+        //     someone else's ack — first writer wins).
+        //   - new `acknowledgedBy` must equal request.auth.uid (no
+        //     ack'ing on behalf of another supervisor).
+        //   - id, type, personID, createdAt, payload, etc. are all
+        //     immutable — diff().changedKeys() must be a subset of
+        //     [acknowledgedBy, acknowledgedByName, acknowledgedAt,
+        //     lastModified].
+        allow update: if isAnySupervisor(circleID) &&
+                      request.resource.data.diff(resource.data).changedKeys()
+                        .hasOnly(['acknowledgedBy', 'acknowledgedByName',
+                                  'acknowledgedAt', 'lastModified']) &&
+                      (
+                        !('acknowledgedBy' in resource.data) ||
+                        resource.data.acknowledgedBy == null
+                      ) &&
+                      request.resource.data.acknowledgedBy == request.auth.uid;
 
-        // Delete: primary, OR the founder cleaning up an orphan circle.
-        allow delete: if isPrimary(circleID) || isOrphanFounder(circleID);
+        // Delete: only the orphan-founder cleanup. Alerts are immutable
+        // history in the steady state — supervisors should never need
+        // to delete one. The cleanup migration is the single
+        // documented exception.
+        allow delete: if isOrphanFounder(circleID);
       }
 
       // ---------- /careCircles/{circleID}/familyContacts/{contactID} ----------

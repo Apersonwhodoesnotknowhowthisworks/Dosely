@@ -141,18 +141,40 @@ extension FirestoreModels {
         var lastModified: Date?
     }
 
-    /// Reserved for the supervisor-side alerts inbox (missed-dose,
-    /// PIN-lockout, low-supply). Each alert is keyed to a Person and an
-    /// optional Medication.
+    /// Supervisor-side alerts inbox. Three types ship right now:
+    /// `missedDose`, `emergency`, `weeklySummary`. Each alert is keyed
+    /// to a Person; missedDose adds medicationID + scheduledTime, the
+    /// rest live in `payload`. The doc id is deterministic for
+    /// missedDose and weeklySummary (so concurrent supervisor devices
+    /// detecting the same gap converge on a single doc) and a fresh
+    /// UUID for emergency.
+    ///
+    /// The acknowledgement model is "first to ack clears it for
+    /// everyone." `acknowledgedBy` is the Firebase UID of whoever ack'd
+    /// (nil while pending); `acknowledgedAt` is the server timestamp;
+    /// `acknowledgedByName` is denormalized so a device that hasn't
+    /// hydrated the supervisor's Person doc can still render
+    /// "Acknowledged by …" without an extra lookup.
     struct FAlert: Codable {
         var id: String
+        var type: String
         var personID: String
         var medicationID: String?
-        var kind: String
-        var message: String
+        var scheduledTime: Date?
         var createdAt: Date
-        var resolvedAt: Date?
+        var payload: [String: String]?
+        var acknowledgedBy: String?
+        var acknowledgedByName: String?
+        var acknowledgedAt: Date?
         var lastModified: Date?
+    }
+
+    /// Canonical strings for `FAlert.type`. Kept here so the
+    /// generators, the rules, and the views share one source.
+    enum AlertType {
+        static let missedDose = "missedDose"
+        static let emergency = "emergency"
+        static let weeklySummary = "weeklySummary"
     }
 
     /// Reserved for the family-contact list (doctor, pharmacy,
@@ -344,5 +366,87 @@ extension FirestoreModels.FDoseLog {
         log.actualTime = actualTime
         log.status = status
         return log
+    }
+}
+
+extension FirestoreModels.FAlert {
+    init(from alert: Alert, careCircleID: UUID) {
+        self.id = alert.docID ?? UUID().uuidString
+        self.type = alert.type ?? FirestoreModels.AlertType.missedDose
+        self.personID = (alert.personID ?? UUID()).uuidString
+        self.medicationID = alert.medicationID?.uuidString
+        self.scheduledTime = alert.scheduledTime
+        self.createdAt = alert.createdAt ?? Date()
+        self.payload = FirestoreModels.FAlert.decodePayload(alert.payloadJSON)
+        self.acknowledgedBy = alert.acknowledgedByFirebaseUID
+        self.acknowledgedByName = alert.acknowledgedByName
+        self.acknowledgedAt = alert.acknowledgedAt
+        self.lastModified = nil
+    }
+
+    @discardableResult
+    func upsert(in context: NSManagedObjectContext, careCircleID: UUID) -> Alert? {
+        let circleRequest = NSFetchRequest<CareCircle>(entityName: "CareCircle")
+        circleRequest.predicate = NSPredicate(format: "id == %@", careCircleID as CVarArg)
+        circleRequest.fetchLimit = 1
+        guard let circle = (try? context.fetch(circleRequest))?.first else { return nil }
+        guard let personUUID = UUID(uuidString: personID) else { return nil }
+
+        let request = NSFetchRequest<Alert>(entityName: "Alert")
+        request.predicate = NSPredicate(format: "docID == %@", id)
+        request.fetchLimit = 1
+        let alert = (try? context.fetch(request))?.first ?? Alert(context: context)
+        alert.docID = id
+        alert.type = type
+        alert.personID = personUUID
+        alert.medicationID = medicationID.flatMap { UUID(uuidString: $0) }
+        alert.scheduledTime = scheduledTime
+        alert.createdAt = createdAt
+        alert.payloadJSON = FirestoreModels.FAlert.encodePayload(payload)
+        alert.acknowledgedByFirebaseUID = acknowledgedBy
+        alert.acknowledgedByName = acknowledgedByName
+        alert.acknowledgedAt = acknowledgedAt
+        alert.careCircle = circle
+        return alert
+    }
+
+    static func encodePayload(_ payload: [String: String]?) -> String? {
+        guard let payload, !payload.isEmpty,
+              let data = try? JSONEncoder().encode(payload) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    static func decodePayload(_ json: String?) -> [String: String]? {
+        guard let json, let data = json.data(using: .utf8),
+              let map = try? JSONDecoder().decode([String: String].self, from: data) else {
+            return nil
+        }
+        return map
+    }
+}
+
+/// Helpers that mint the deterministic doc id for the two idempotent
+/// alert kinds. Consolidated so generators, repository methods, and
+/// tests all derive the same string from the same inputs.
+enum AlertID {
+    /// `missed-{personID}-{medicationID}-{epochMillis}` — concurrent
+    /// supervisor devices detecting the same missed dose all try to
+    /// write this exact doc, and Firestore's `setData(merge: false)`
+    /// (via `createIfAbsent`) ensures only the first lands.
+    static func missedDose(personID: UUID, medicationID: UUID, scheduledTime: Date) -> String {
+        let epoch = Int(scheduledTime.timeIntervalSince1970 * 1000)
+        return "missed-\(personID.uuidString)-\(medicationID.uuidString)-\(epoch)"
+    }
+
+    /// `weekly-{circleID}-{ISODateOfTheSundayThatEndsTheWeek}` — same
+    /// idempotency story, scoped to the circle. Two devices both
+    /// generating Sunday's summary write the same doc id; only one
+    /// commits.
+    static func weeklySummary(circleID: UUID, weekEndingSunday: Date,
+                              calendar: Calendar = .current) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+        let day = calendar.startOfDay(for: weekEndingSunday)
+        return "weekly-\(circleID.uuidString)-\(formatter.string(from: day))"
     }
 }

@@ -6,6 +6,7 @@
         <attribute name="joinCode" attributeType="String" defaultValueString=""/>
         <attribute name="name" attributeType="String" defaultValueString=""/>
         <attribute name="primarySupervisorPersonID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="alerts" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Alert" inverseName="careCircle" inverseEntity="Alert"/>
         <relationship name="people" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Person" inverseName="careCircle" inverseEntity="Person"/>
     </entity>
     <entity name="Person" representedClassName="Person" syncable="YES" codeGenerationType="class">
@@ -47,5 +48,18 @@
         <attribute name="scheduledTime" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="status" attributeType="String" defaultValueString="upcoming"/>
         <relationship name="medication" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Medication" inverseName="logs" inverseEntity="Medication"/>
+    </entity>
+    <entity name="Alert" representedClassName="Alert" syncable="YES" codeGenerationType="class">
+        <attribute name="acknowledgedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="acknowledgedByFirebaseUID" optional="YES" attributeType="String"/>
+        <attribute name="acknowledgedByName" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="docID" attributeType="String" defaultValueString=""/>
+        <attribute name="medicationID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="payloadJSON" optional="YES" attributeType="String"/>
+        <attribute name="personID" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="scheduledTime" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="type" attributeType="String" defaultValueString="missedDose"/>
+        <relationship name="careCircle" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CareCircle" inverseName="alerts" inverseEntity="CareCircle"/>
     </entity>
 </model>
