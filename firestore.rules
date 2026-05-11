@@ -461,6 +461,52 @@ service cloud.firestore {
             getAfter(/databases/$(database)/documents/careCircles/$(circleID)).data.get('primarySupervisorPersonID', '') != personID
           )
         );
+
+        // ---------- .../people/{personID}/medicalID/{medicalDocID} ----------
+        //
+        // Per-person medical info. Doc id MUST equal personID for
+        // deterministic addressing (one doc per person at a known
+        // path). Both supervisor flavours can read and edit —
+        // intentionally egalitarian; any caregiver might need to
+        // update info, and emergency responders care about freshness
+        // more than authorship.
+        //
+        // Delete is the orphan-cleanup escape hatch only; the
+        // cascading delete from the Person-removal path is what
+        // actually wipes a medical ID, and that's a regular delete
+        // of the parent doc plus this subcollection doc via a
+        // single PersonRepository call (not a Firestore batch).
+        // Lifecycle: the medicalID doc has the same lifetime as the
+        // Person doc.
+        match /medicalID/{medicalDocID} {
+          allow read: if isAnySupervisor(circleID) || isOrphanFounder(circleID);
+
+          allow create: if isAnySupervisor(circleID) &&
+                        medicalDocID == personID &&
+                        request.resource.data.personID == personID &&
+                        request.resource.data.id == personID &&
+                        request.resource.data.updatedAt == request.time;
+
+          allow update: if isAnySupervisor(circleID) &&
+                        medicalDocID == personID &&
+                        request.resource.data.personID == personID &&
+                        request.resource.data.id == personID &&
+                        request.resource.data.updatedAt == request.time;
+
+          // Delete is the cascade-from-Person-removal hatch.
+          // `PersonRepository.removePersonFromCircle` deletes the
+          // parent Person doc FIRST, then deletes this medical ID
+          // doc. The `!exists(parent)` check encodes that ordering at
+          // the rules layer — a supervisor can't strip a medical ID
+          // off a living Person via the API. The orphan-founder
+          // branch handles `OrphanCircleCleanupMigration`'s tear-down
+          // sweep, which deletes everything regardless of order.
+          allow delete: if isOrphanFounder(circleID) ||
+                        (
+                          isAnySupervisor(circleID) &&
+                          !exists(/databases/$(database)/documents/careCircles/$(circleID)/people/$(personID))
+                        );
+        }
       }
 
       // ---------- /careCircles/{circleID}/medications/{medicationID} ----------
@@ -521,6 +567,10 @@ service cloud.firestore {
       }
 
       // ---------- /careCircles/{circleID}/medicalProfiles/{profileID} ----------
+      //
+      // Pre-prompt-20 placeholder. Reserved for legacy docs that may
+      // exist on already-deployed devices. Post-prompt-20 medical info
+      // lives on the per-person nested path below.
 
       match /medicalProfiles/{profileID} {
         allow read: if memberOf(circleID) || isOrphanFounder(circleID);

@@ -981,6 +981,154 @@ describe("Firestore security rules", () => {
     });
   });
 
+  // -- 11.5. Medical ID: per-person, supervisor read+write ----------------
+  //
+  // Path: /careCircles/{circleID}/people/{personID}/medicalID/{personID}.
+  // Doc id must equal personID; both supervisor flavours can read and
+  // edit; updatedAt must be `request.time`; delete is the
+  // cascade-from-person-removal hatch only.
+
+  describe("medical ID — per-person caregiver authority", () => {
+    const circleID = "circle-medid";
+    const primary = { uid: "primary-m-uid", personID: "person-primary-m" };
+    const secondary = { uid: "secondary-m-uid", personID: "person-secondary-m" };
+    const stranger = { uid: "stranger-m-uid", personID: "person-stranger-m" };
+    const grandpa = { uid: "grandpa-m-uid", personID: "person-grandpa-m" };
+
+    beforeEach(async () => {
+      await seedCircle({
+        circleID,
+        joinCode: "950001",
+        supervisor: primary,
+        extraSupervisors: [secondary],
+        deviceClient: grandpa,
+        supervisorCount: 2,
+      });
+    });
+
+    function medicalDocPath(personID: string): string {
+      return `careCircles/${circleID}/people/${personID}/medicalID/${personID}`;
+    }
+
+    it("any supervisor can create a medical ID with doc id == personID", async () => {
+      const db = authedDb(secondary.uid);
+      await assertSucceeds(
+        setDoc(doc(db, medicalDocPath(grandpa.personID)), {
+          id: grandpa.personID,
+          personID: grandpa.personID,
+          allergies: ["Penicillin"],
+          conditions: [],
+          emergencyContacts: [],
+          bloodType: "O+",
+          notes: null,
+          updatedAt: serverTimestamp(),
+        })
+      );
+    });
+
+    it("a stranger CANNOT read someone else's medical ID", async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), medicalDocPath(grandpa.personID)), {
+          id: grandpa.personID, personID: grandpa.personID,
+          allergies: [], conditions: [], emergencyContacts: [],
+          updatedAt: new Date(),
+        });
+      });
+      const db = authedDb(stranger.uid);
+      await assertFails(getDoc(doc(db, medicalDocPath(grandpa.personID))));
+    });
+
+    it("any supervisor can read", async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), medicalDocPath(grandpa.personID)), {
+          id: grandpa.personID, personID: grandpa.personID,
+          allergies: [], conditions: [], emergencyContacts: [],
+          updatedAt: new Date(),
+        });
+      });
+      const secondaryDb = authedDb(secondary.uid);
+      await assertSucceeds(getDoc(doc(secondaryDb, medicalDocPath(grandpa.personID))));
+      const primaryDb = authedDb(primary.uid);
+      await assertSucceeds(getDoc(doc(primaryDb, medicalDocPath(grandpa.personID))));
+    });
+
+    it("a create with doc id != personID is denied", async () => {
+      const db = authedDb(secondary.uid);
+      // Doc id at path is grandpa.personID but the payload claims a
+      // different one — the rules enforce both match.
+      await assertFails(
+        setDoc(doc(db, medicalDocPath(grandpa.personID)), {
+          id: "some-other-id",
+          personID: grandpa.personID,
+          allergies: [], conditions: [], emergencyContacts: [],
+          updatedAt: serverTimestamp(),
+        })
+      );
+    });
+
+    it("a create with updatedAt skewed from request.time is denied", async () => {
+      const db = authedDb(secondary.uid);
+      await assertFails(
+        setDoc(doc(db, medicalDocPath(grandpa.personID)), {
+          id: grandpa.personID,
+          personID: grandpa.personID,
+          allergies: [], conditions: [], emergencyContacts: [],
+          updatedAt: new Date(2020, 0, 1),   // not request.time
+        })
+      );
+    });
+
+    it("a supervisor can update an existing medical ID", async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), medicalDocPath(grandpa.personID)), {
+          id: grandpa.personID, personID: grandpa.personID,
+          allergies: [], conditions: [], emergencyContacts: [],
+          updatedAt: new Date(),
+        });
+      });
+      const db = authedDb(secondary.uid);
+      await assertSucceeds(
+        setDoc(doc(db, medicalDocPath(grandpa.personID)), {
+          id: grandpa.personID,
+          personID: grandpa.personID,
+          allergies: ["Aspirin"],
+          conditions: ["Hypertension"],
+          emergencyContacts: [],
+          updatedAt: serverTimestamp(),
+        })
+      );
+    });
+
+    it("steady-state delete (parent Person still exists) is denied", async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), medicalDocPath(grandpa.personID)), {
+          id: grandpa.personID, personID: grandpa.personID,
+          allergies: [], conditions: [], emergencyContacts: [],
+          updatedAt: new Date(),
+        });
+      });
+      const db = authedDb(secondary.uid);
+      await assertFails(deleteDoc(doc(db, medicalDocPath(grandpa.personID))));
+    });
+
+    it("cascade delete after Person is gone is permitted", async () => {
+      // Seed the medical ID, then nuke the parent Person doc, then
+      // try the delete. The rule's `!exists(parent)` should let the
+      // delete through.
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), medicalDocPath(grandpa.personID)), {
+          id: grandpa.personID, personID: grandpa.personID,
+          allergies: [], conditions: [], emergencyContacts: [],
+          updatedAt: new Date(),
+        });
+        await deleteDoc(doc(ctx.firestore(),
+          `careCircles/${circleID}/people/${grandpa.personID}`));
+      });
+      const db = authedDb(secondary.uid);
+      await assertSucceeds(deleteDoc(doc(db, medicalDocPath(grandpa.personID))));
+    });
+  });
+
   // -- 12. promoteToPrimary: atomic role swap ----------------------------
 
   describe("promoteToPrimary atomic batch", () => {

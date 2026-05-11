@@ -127,9 +127,11 @@ extension FirestoreModels {
 // MARK: - Reserved subcollection shapes (not yet synced)
 
 extension FirestoreModels {
-    /// Reserved for the upcoming Emergency Medical ID feature. Holds
-    /// allergies, conditions, blood type, and an emergency contact. One
-    /// document per Person (`id == personID`).
+    /// Reserved placeholder from an earlier prompt. Superseded by
+    /// `FMedicalID` below — kept around so any legacy doc that landed
+    /// in `/careCircles/{id}/medicalProfiles` can still decode without
+    /// crashing the listener. The path itself is no longer written by
+    /// post-prompt-20 code.
     struct FMedicalProfile: Codable {
         var id: String
         var personID: String
@@ -139,6 +141,35 @@ extension FirestoreModels {
         var emergencyContactName: String?
         var emergencyContactPhone: String?
         var lastModified: Date?
+    }
+
+    /// Person-attached medical info supervisors and emergency responders
+    /// might need at a glance. One doc per Person at
+    /// `/careCircles/{circleID}/people/{personID}/medicalID/{personID}`
+    /// — doc id == personID for deterministic addressing.
+    ///
+    /// Both supervisor flavours can read and edit, intentionally —
+    /// any caregiver might need to update info, and emergency
+    /// responders care about freshness more than authorship.
+    struct FMedicalID: Codable {
+        var id: String              // == personID
+        var personID: String
+        var dateOfBirth: Date?
+        var bloodType: String?
+        var allergies: [String]
+        var conditions: [String]
+        var emergencyContacts: [FEmergencyContact]
+        var notes: String?
+        var updatedAt: Date
+    }
+
+    /// Inline value type on FMedicalID. Phone is a free-text field
+    /// — no validation, since paramedics need to dial whatever's
+    /// there and supervisors may enter shapes like "ext. 4321".
+    struct FEmergencyContact: Codable, Hashable {
+        var name: String
+        var relationship: String
+        var phone: String
     }
 
     /// Supervisor-side alerts inbox. Three types ship right now:
@@ -422,6 +453,79 @@ extension FirestoreModels.FAlert {
             return nil
         }
         return map
+    }
+}
+
+extension FirestoreModels.FMedicalID {
+    init(from local: MedicalID) {
+        let personUUID = local.personID ?? UUID()
+        self.id = personUUID.uuidString
+        self.personID = personUUID.uuidString
+        self.dateOfBirth = local.dateOfBirth
+        self.bloodType = local.bloodType
+        self.allergies = FirestoreModels.FMedicalID.decodeStringList(local.allergiesJSON)
+        self.conditions = FirestoreModels.FMedicalID.decodeStringList(local.conditionsJSON)
+        self.emergencyContacts = FirestoreModels.FMedicalID.decodeContacts(local.emergencyContactsJSON)
+        self.notes = local.notes
+        self.updatedAt = local.updatedAt ?? Date()
+    }
+
+    /// Upsert into the view context. Looks up an existing MedicalID
+    /// by personID, otherwise inserts. Resolves the Person row by id
+    /// — without that link the inverse relationship is dead weight.
+    @discardableResult
+    func upsert(in context: NSManagedObjectContext) -> MedicalID? {
+        guard let uuid = UUID(uuidString: personID) else { return nil }
+
+        let personRequest = NSFetchRequest<Person>(entityName: "Person")
+        personRequest.predicate = NSPredicate(format: "id == %@", uuid as CVarArg)
+        personRequest.fetchLimit = 1
+        let person = (try? context.fetch(personRequest))?.first
+
+        let request = NSFetchRequest<MedicalID>(entityName: "MedicalID")
+        request.predicate = NSPredicate(format: "personID == %@", uuid as CVarArg)
+        request.fetchLimit = 1
+        let row = (try? context.fetch(request))?.first ?? MedicalID(context: context)
+        row.personID = uuid
+        row.dateOfBirth = dateOfBirth
+        row.bloodType = bloodType
+        row.allergiesJSON = FirestoreModels.FMedicalID.encodeStringList(allergies)
+        row.conditionsJSON = FirestoreModels.FMedicalID.encodeStringList(conditions)
+        row.emergencyContactsJSON = FirestoreModels.FMedicalID.encodeContacts(emergencyContacts)
+        row.notes = notes
+        row.updatedAt = updatedAt
+        row.person = person
+        return row
+    }
+
+    // MARK: - JSON encode/decode for the three list-shaped fields
+
+    static func encodeStringList(_ values: [String]) -> String? {
+        guard !values.isEmpty,
+              let data = try? JSONEncoder().encode(values) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    static func decodeStringList(_ json: String?) -> [String] {
+        guard let json, let data = json.data(using: .utf8),
+              let values = try? JSONDecoder().decode([String].self, from: data) else {
+            return []
+        }
+        return values
+    }
+
+    static func encodeContacts(_ values: [FirestoreModels.FEmergencyContact]) -> String? {
+        guard !values.isEmpty,
+              let data = try? JSONEncoder().encode(values) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    static func decodeContacts(_ json: String?) -> [FirestoreModels.FEmergencyContact] {
+        guard let json, let data = json.data(using: .utf8),
+              let values = try? JSONDecoder().decode([FirestoreModels.FEmergencyContact].self, from: data) else {
+            return []
+        }
+        return values
     }
 }
 

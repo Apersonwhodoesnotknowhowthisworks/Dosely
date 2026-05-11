@@ -515,6 +515,13 @@ final class PersonRepository {
                 medicationID: medID.uuidString
             )
         }
+        // Tear down the person's medical ID alongside the Person doc.
+        // Rules deny update/create after the Person is gone, but the
+        // doc would otherwise sit orphaned forever.
+        try? await firestore.deleteMedicalID(
+            circleID: cascade.circleID.uuidString,
+            personID: cascade.personID.uuidString
+        )
     }
 
     // MARK: - Helpers

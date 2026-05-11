@@ -20,6 +20,18 @@
         <attribute name="pinSalt" optional="YES" attributeType="String"/>
         <attribute name="role" attributeType="String" defaultValueString="device_client"/>
         <relationship name="careCircle" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CareCircle" inverseName="people" inverseEntity="CareCircle"/>
+        <relationship name="medicalID" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="MedicalID" inverseName="person" inverseEntity="MedicalID"/>
+    </entity>
+    <entity name="MedicalID" representedClassName="MedicalID" syncable="YES" codeGenerationType="class">
+        <attribute name="allergiesJSON" optional="YES" attributeType="String"/>
+        <attribute name="bloodType" optional="YES" attributeType="String"/>
+        <attribute name="conditionsJSON" optional="YES" attributeType="String"/>
+        <attribute name="dateOfBirth" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="emergencyContactsJSON" optional="YES" attributeType="String"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="personID" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="person" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Person" inverseName="medicalID" inverseEntity="Person"/>
     </entity>
     <entity name="Medication" representedClassName="Medication" syncable="YES" codeGenerationType="class">
         <attribute name="currentSupply" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>

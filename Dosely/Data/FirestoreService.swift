@@ -99,6 +99,12 @@ final class FirestoreService {
         static func doseSchedules(_ circleID: String) -> String { "\(careCircle(circleID))/doseSchedules" }
         static func doseLogs(_ circleID: String) -> String { "\(careCircle(circleID))/doseLogs" }
         static func medicalProfiles(_ circleID: String) -> String { "\(careCircle(circleID))/medicalProfiles" }
+        /// `/careCircles/{circleID}/people/{personID}/medicalID/{personID}`
+        /// — nested under the person doc; doc id == personID for
+        /// deterministic addressing.
+        static func medicalID(_ circleID: String, personID: String) -> String {
+            "\(people(circleID))/\(personID)/medicalID/\(personID)"
+        }
         static func alerts(_ circleID: String) -> String { "\(careCircle(circleID))/alerts" }
         static func familyContacts(_ circleID: String) -> String { "\(careCircle(circleID))/familyContacts" }
         static func userMembership(_ firebaseUID: String) -> String { "\(userMemberships)/\(firebaseUID)" }
@@ -816,6 +822,53 @@ final class FirestoreService {
                 txn.updateData(update, forDocument: ref)
                 return nil
             })
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    // MARK: - Medical ID
+
+    /// Reads the per-person medical ID doc. Returns nil if it hasn't
+    /// been created yet — the editor renders an empty form against
+    /// nil. Throws `.offline` when the SDK isn't configured.
+    func fetchMedicalID(circleID: String, personID: String) async throws -> FirestoreModels.FMedicalID? {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            let snap = try await db.document(Path.medicalID(circleID, personID: personID)).getDocument()
+            guard snap.exists else { return nil }
+            return try decode(FirestoreModels.FMedicalID.self, from: snap)
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    /// Writes the medical ID. `setData` with no merge — every save
+    /// is a full replacement of the doc, which matches how the
+    /// editor surfaces the form (everything is editable, everything
+    /// is in the same payload). Always stamps `updatedAt` with the
+    /// server timestamp so the rules' time-skew check passes.
+    func upsertMedicalID(circleID: String,
+                         medicalID: FirestoreModels.FMedicalID) async throws {
+        guard let db else { throw FirestoreServiceError.offline }
+        do {
+            var payload = try encode(medicalID)
+            payload["updatedAt"] = FieldValue.serverTimestamp()
+            try await db
+                .document(Path.medicalID(circleID, personID: medicalID.personID))
+                .setData(payload)
+        } catch {
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
+    /// Removes a person's medical ID. Called from the person-removal
+    /// cascade in `PersonRepository.removePersonFromCircle` so the
+    /// orphaned doc doesn't sit forever.
+    func deleteMedicalID(circleID: String, personID: String) async throws {
+        guard let db else { return }
+        do {
+            try await db.document(Path.medicalID(circleID, personID: personID)).delete()
         } catch {
             throw FirestoreServiceError.map(error)
         }
