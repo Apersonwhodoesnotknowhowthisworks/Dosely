@@ -21,6 +21,7 @@ struct PersonDetailView: View {
     @State private var personMedications: [Medication] = []
     @State private var medicationsLoaded = false
     @State private var showingAddMedication = false
+    @State private var showingMedicalIDEditor = false
 
     let person: Person
     let personRepo: PersonRepository
@@ -69,6 +70,7 @@ struct PersonDetailView: View {
 
                     if !Roles.isAnySupervisor(person.role) {
                         medicationsSection
+                        medicalIDSection
                     }
 
                     if actorIsPrimary {
@@ -109,6 +111,11 @@ struct PersonDetailView: View {
                 }
                 .environmentObject(authService)
                 .environment(\.supervisorTargetPersonID, person.id)
+            }
+            .sheet(isPresented: $showingMedicalIDEditor) {
+                EditMedicalIDView()
+                    .environmentObject(authService)
+                    .environment(\.supervisorTargetPersonID, person.id)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -278,6 +285,35 @@ struct PersonDetailView: View {
         .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget, alignment: .leading)
         .padding(.vertical, DSSpacing.xs)
         .accessibilityElement(children: .combine)
+    }
+
+    private var medicalIDSection: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.sm) {
+            Text("supervisor.person.medicalid.title")
+                .dsBodyLarge()
+                .foregroundColor(.dsTextPrimary)
+            Text("supervisor.person.medicalid.subtitle")
+                .dsCaption()
+                .foregroundColor(.dsTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button(action: { showingMedicalIDEditor = true }) {
+                HStack(spacing: DSSpacing.sm) {
+                    Image(systemName: "cross.case.fill")
+                        .foregroundColor(.white)
+                        .accessibilityHidden(true)
+                    Text("supervisor.person.medicalid.edit")
+                        .dsBodyLarge()
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
+                .background(Color.dsDanger)
+                .cornerRadius(DSSpacing.rMd)
+            }
+            .accessibilityLabel(Text("supervisor.person.medicalid.edit"))
+        }
+        .padding(DSSpacing.md)
+        .background(Color.dsSurface)
+        .cornerRadius(DSSpacing.rLg)
     }
 
     private var promoteToPrimaryRow: some View {

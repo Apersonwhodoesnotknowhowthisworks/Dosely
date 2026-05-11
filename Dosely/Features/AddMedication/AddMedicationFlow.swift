@@ -254,12 +254,16 @@ struct AddMedicationTargetPicker: View {
 
     let onPick: (UUID) -> Void
     let onCancel: () -> Void
+    /// Override for callers that share this picker — e.g.
+    /// `EditMedicalIDView` reuses the same eligible-targets logic but
+    /// wants "Edit Medical ID for whom?" as the header.
+    var titleKey: String = "supervisor.addmed.picker.title"
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DSSpacing.sm) {
-                    Text("supervisor.addmed.picker.title")
+                    Text(LocalizedStringKey(titleKey))
                         .dsBodyRegular()
                         .foregroundColor(.dsTextSecondary)
                         .padding(.bottom, DSSpacing.xs)
@@ -285,7 +289,7 @@ struct AddMedicationTargetPicker: View {
                 .padding(DSSpacing.lg)
             }
             .background(Color.dsBackground.ignoresSafeArea())
-            .navigationTitle("supervisor.addmed.picker.title")
+            .navigationTitle(LocalizedStringKey(titleKey))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

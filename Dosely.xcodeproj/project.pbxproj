@@ -128,6 +128,8 @@
 		BFD0000000000000000000127 /* AlertsCardSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000127 /* AlertsCardSmokeTests.swift */; };
 		BFD0000000000000000000128 /* MedicalIDRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000128 /* MedicalIDRepository.swift */; };
 		BFD0000000000000000000129 /* MedicalIDRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000129 /* MedicalIDRepositoryTests.swift */; };
+		BFD000000000000000000012A /* EditMedicalIDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012A /* EditMedicalIDView.swift */; };
+		BFD000000000000000000012B /* EditMedicalIDViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012B /* EditMedicalIDViewTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -263,6 +265,8 @@
 		FRD0000000000000000000127 /* AlertsCardSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertsCardSmokeTests.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000128 /* MedicalIDRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalIDRepository.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000129 /* MedicalIDRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalIDRepositoryTests.swift; sourceTree = "<group>"; };
+		FRD000000000000000000012A /* EditMedicalIDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditMedicalIDView.swift; path = MedicalID/EditMedicalIDView.swift; sourceTree = "<group>"; };
+		FRD000000000000000000012B /* EditMedicalIDViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditMedicalIDViewTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -396,6 +400,7 @@
 				FRD0000000000000000000126 /* WeeklySummaryGeneratorTests.swift */,
 				FRD0000000000000000000127 /* AlertsCardSmokeTests.swift */,
 				FRD0000000000000000000129 /* MedicalIDRepositoryTests.swift */,
+				FRD000000000000000000012B /* EditMedicalIDViewTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -570,6 +575,7 @@
 				FRD00000000000000000000F1 /* SupervisorDashboardViewModel.swift */,
 				GRP0000000000000000000021 /* Components */,
 				GRP0000000000000000000022 /* People */,
+				FRD000000000000000000012A /* EditMedicalIDView.swift */,
 			);
 			path = Supervisor;
 			sourceTree = "<group>";
@@ -794,6 +800,7 @@
 				BFD0000000000000000000122 /* MissedDoseDetector.swift in Sources */,
 				BFD0000000000000000000123 /* WeeklySummaryGenerator.swift in Sources */,
 				BFD0000000000000000000128 /* MedicalIDRepository.swift in Sources */,
+				BFD000000000000000000012A /* EditMedicalIDView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -823,6 +830,7 @@
 				BFD0000000000000000000126 /* WeeklySummaryGeneratorTests.swift in Sources */,
 				BFD0000000000000000000127 /* AlertsCardSmokeTests.swift in Sources */,
 				BFD0000000000000000000129 /* MedicalIDRepositoryTests.swift in Sources */,
+				BFD000000000000000000012B /* EditMedicalIDViewTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

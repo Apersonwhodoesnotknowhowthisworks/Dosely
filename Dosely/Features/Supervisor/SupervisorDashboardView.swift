@@ -8,7 +8,8 @@ struct SupervisorDashboardView: View {
     @State private var activePersonID: UUID? = nil
     @State private var showingAdd = false
     @State private var showingSettings = false
-    @State private var showingMedicalIDPlaceholder = false
+    @State private var showingMedicalIDEditor = false
+    @State private var pendingMedicalIDTargetPersonID: UUID?
     @State private var detailDose: TodayDose?
     @State private var historyPersonIDOverride: UUID?
     @State private var pendingAddTargetPersonID: UUID?
@@ -144,11 +145,15 @@ struct SupervisorDashboardView: View {
                 pillPhotoData: dose.medication.pillPhotoData
             )
         }
-        .alert(L("supervisor.medicalid.placeholder.title"),
-               isPresented: $showingMedicalIDPlaceholder) {
-            Button(L("common.ok"), role: .cancel) {}
-        } message: {
-            Text("supervisor.medicalid.placeholder.body")
+        .sheet(isPresented: $showingMedicalIDEditor) {
+            // Same shape as the AddMedication sheet: always render
+            // EditMedicalIDView and let the in-flow picker handle the
+            // "no preselection" case. Wrapping in `if let target` was
+            // the pattern that produced the blank-white-sheet bug
+            // earlier this month.
+            EditMedicalIDView()
+                .environmentObject(authService)
+                .environment(\.supervisorTargetPersonID, pendingMedicalIDTargetPersonID)
         }
         .confirmationDialog(L("supervisor.addmed.picker.title"),
                             isPresented: $promptAddTargetPicker,
@@ -205,13 +210,13 @@ struct SupervisorDashboardView: View {
                                 pendingAddTargetPersonID = activePersonID
                                 showingAdd = true
                             },
-                            onEditMedicalID: { showingMedicalIDPlaceholder = true },
+                            onEditMedicalID: { handleEditMedicalIDTap() },
                             onSettings: { showingSettings = true }
                         )
                     } else {
                         QuickActionsCard(
                             onAddMedication: { promptAddTargetPicker = true },
-                            onEditMedicalID: { showingMedicalIDPlaceholder = true },
+                            onEditMedicalID: { handleEditMedicalIDTap() },
                             onSettings: { showingSettings = true }
                         )
                     }
@@ -307,6 +312,18 @@ struct SupervisorDashboardView: View {
                              supervisorID: supervisorID,
                              activePersonID: activePersonID,
                              circleID: circleID)
+    }
+
+    /// Always opens the editor sheet. When the dashboard has a person
+    /// selected, the editor jumps straight to the form; when "All" is
+    /// selected (`activePersonID == nil`), the editor's in-flow
+    /// `AddMedicationTargetPicker` lands as step 1. Same pattern as
+    /// `AddMedicationFlow` — keeping a single failure mode instead of
+    /// duplicating the picker between a confirmationDialog and the
+    /// sheet root.
+    private func handleEditMedicalIDTap() {
+        pendingMedicalIDTargetPersonID = activePersonID
+        showingMedicalIDEditor = true
     }
 
     private func acknowledge(_ alert: Alert) async {
