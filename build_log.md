@@ -366,6 +366,26 @@ Smoke tests in `DoselyTests/EditMedicalIDViewTests.swift` exercise the same shap
 
 The trap I keep dodging: making delete `false` everywhere reads safer than it is. Both the alerts work last week and this prompt nearly got blocked on it. The right shape is "delete denied in the steady state, permitted under a precisely encoded condition" — for alerts the condition is the orphan-founder cleanup; for medical IDs it's `!exists(parent)`. Rules can express the lifecycle invariant exactly when you let them.
 
+## May 13 — Medical ID save permission denied; encoded the error-collapse convention project-wide (commit `acd03c6`)
+
+Save from EditMedicalIDView came back permission-denied and the UI rendered "Couldn't save. Check your connection and try again." Wrong copy — it's a rules rejection, not a network issue. Same error-collapse pattern that hit regenerateJoinCode in `c3018c2` and joinCareCircle in `1f6455c`. Fourth time. Time to stop patching one repository at a time and write the convention down.
+
+The actual save failure came from the Codable-encode-then-override pattern in `upsertMedicalID`: `try encode(medicalID)` emits the FMedicalID with `updatedAt: Date(client)` as a Firestore Timestamp, then `payload["updatedAt"] = FieldValue.serverTimestamp()` overwrites it. Most SDK versions handle the override correctly, but the wire shape was a black box and the rule's `request.resource.data.updatedAt == request.time` check is unforgiving. Rewrote the payload as explicit dict construction with optional fields conditionally included. Same shape the rules tests have always verified; no more transient state between encode and ship.
+
+But the real work is the convention. `FirestoreServiceError` already had four distinct cases — `.permissionDenied`, `.offline`, `.notFound`, `.unknown(String)`. The collapse was happening UPSTREAM, in repository catch chains that dropped the four cases into one or two domain-error buckets, and in UI catch sites that used a single generic "couldn't save" message regardless. The fix isn't bigger error types; it's the discipline to translate one-to-one all the way to the user-visible string.
+
+Concrete changes:
+- `MedicalIDRepositoryError` enum with the four-case shape mirroring `FirestoreServiceError`. `MedicalIDRepository.save` now `catch`es each FirestoreServiceError case and rethrows the matching domain case. No more `catch { throw .offline }`.
+- `CareCircleEditError` gains `.unknown(String)`; regenerateJoinCode's previous "any other error → .offline" line — the very pattern this convention is meant to prevent — is gone. The detail string flows to `Logger` for post-hoc diagnosis.
+- `EditMedicalIDView.save` branches on the four cases and shows distinct copy. "This action was denied. Sign out and back in if you think you should have access." reads very differently from "Check your connection."
+- `FirestoreServiceError.map` writes every unmapped error to `Logger(subsystem: "com.medication.dosely", category: "firestore")` so a future investigation can use Console.app instead of attaching Xcode.
+- Every catch site that maps Firestore errors carries `// Distinct error codes per error-collapse convention — see build_log April 30 phantom join code entry.` Grep-friendly for the next reviewer.
+- `CLAUDE.md` gains an "Error-collapse convention" section under Coding conventions. Future Claude sessions inherit the rule via the loaded context — the cheapest possible enforcement.
+
+Tests in `DoselyTests/ErrorCollapseConventionTests.swift` are type-level guards: `FirestoreServiceError.map` distinctly maps the three Firestore codes, `.unknown` carries the diagnostic detail string, non-Firestore domain errors don't collapse to `.offline`, and each repository's domain error enum carries distinct `.permissionDenied` vs `.offline` cases. A "let's simplify the error type" PR would fail at compile time first and these tests second.
+
+Pattern-level note: shipping the same bug four times means the convention is missing, not that an engineer keeps making the same mistake. Patching one repo at a time is treating the symptom. Putting the rule in CLAUDE.md so it gets loaded into every future context, comment-marking every catch site so the rule travels with the code, and type-level tests so a future refactor fails loudly — all three, because any one of them on its own would have failed at least once already.
+
 ## Still pending
 
 - Dark/light mode adaptive DSColors (queued — invisible text on real iPhone)
