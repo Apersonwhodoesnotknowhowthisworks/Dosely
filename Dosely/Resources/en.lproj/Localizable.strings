@@ -354,7 +354,10 @@
 "supervisor.medicalid.notes.subtitle" = "Anything an emergency responder should know — uses a hearing aid, limited mobility, etc.";
 "supervisor.medicalid.remove" = "Remove";
 "supervisor.medicalid.save.error.title" = "Couldn't save";
-"supervisor.medicalid.save.error.body" = "Couldn't save the Medical ID. Check your connection and try again.";
+"supervisor.medicalid.save.error.permissiondenied" = "This action was denied. Sign out and back in if you think you should have access.";
+"supervisor.medicalid.save.error.offline" = "Couldn't reach the network. Check your connection and try again.";
+"supervisor.medicalid.save.error.notfound" = "Couldn't find this person. They may have been removed from the circle.";
+"supervisor.medicalid.save.error.unknown" = "Couldn't save the Medical ID. Please try again.";
 "supervisor.person.medicalid.title" = "Medical ID";
 "supervisor.person.medicalid.subtitle" = "Allergies, conditions, emergency contacts — what a caregiver or paramedic might need at a glance.";
 "supervisor.person.medicalid.edit" = "Edit Medical ID";

@@ -357,7 +357,10 @@
 "supervisor.medicalid.notes.subtitle" = "ਜੋ ਐਮਰਜੈਂਸੀ ਵਾਲੇ ਨੂੰ ਪਤਾ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ — ਸੁਣਨ ਦੀ ਮਸ਼ੀਨ ਵਰਤਦਾ ਹੈ, ਚੰਗੀ ਤਰ੍ਹਾਂ ਨਹੀਂ ਚੱਲ ਸਕਦਾ, ਆਦਿ।"; // REVIEW NEEDED
 "supervisor.medicalid.remove" = "ਹਟਾਓ"; // REVIEW NEEDED
 "supervisor.medicalid.save.error.title" = "ਸੇਵ ਨਹੀਂ ਹੋਇਆ"; // REVIEW NEEDED
-"supervisor.medicalid.save.error.body" = "Medical ID ਸੇਵ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
+"supervisor.medicalid.save.error.permissiondenied" = "ਇਹ ਕੰਮ ਮਨ੍ਹਾਂ ਕਰ ਦਿੱਤਾ। ਜੇ ਤੁਹਾਨੂੰ ਪਹੁੰਚ ਹੋਣੀ ਚਾਹੀਦੀ ਹੈ, ਸਾਈਨ-ਆਊਟ ਕਰਕੇ ਮੁੜ ਸਾਈਨ-ਇਨ ਕਰੋ।"; // REVIEW NEEDED
+"supervisor.medicalid.save.error.offline" = "ਨੈੱਟਵਰਕ ਨਾਲ ਜੁੜ ਨਹੀਂ ਸਕੇ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
+"supervisor.medicalid.save.error.notfound" = "ਇਹ ਮੈਂਬਰ ਨਹੀਂ ਮਿਲਿਆ। ਸ਼ਾਇਦ ਪਰਿਵਾਰ ਤੋਂ ਹਟਾ ਦਿੱਤਾ ਗਿਆ ਹੈ।"; // REVIEW NEEDED
+"supervisor.medicalid.save.error.unknown" = "Medical ID ਸੇਵ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
 "supervisor.person.medicalid.title" = "Medical ID"; // REVIEW NEEDED
 "supervisor.person.medicalid.subtitle" = "ਐਲਰਜੀਆਂ, ਬੀਮਾਰੀਆਂ, ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ — ਜੋ ਕਿਸੇ ਕੇਅਰਟੇਕਰ ਜਾਂ ਪੈਰਾਮੈਡਿਕ ਨੂੰ ਫ਼ੌਰਨ ਚਾਹੀਦਾ ਹੋਵੇ।"; // REVIEW NEEDED
 "supervisor.person.medicalid.edit" = "Medical ID ਸੋਧੋ"; // REVIEW NEEDED

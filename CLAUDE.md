@@ -70,6 +70,12 @@ Located in `Dosely/DesignSystem/`. Use these tokens everywhere — do not hardco
 - Every interactive element has an `.accessibilityLabel` and, where relevant, `.accessibilityHint`
 - Respect Dynamic Type: prefer semantic fonts (`.title`, `.body`) over fixed point sizes
 
+### Error-collapse convention (project-wide)
+
+Repositories MUST surface distinct error cases — `.permissionDenied`, `.offline`, `.notFound`, `.unknown(String)` — up to the UI. Never collapse a rules rejection into `.offline` (and never the reverse). The four-case taxonomy lives on `FirestoreServiceError`; each repo defines its own domain error mirroring the same shape and translates one-to-one in its `catch` chain. UI catch sites then branch on the case and show distinct copy: "you don't have access" for `.permissionDenied`, "check your connection" for `.offline`, etc. Permission-denied messaged as a connection error sends supervisors chasing a network bug that doesn't exist.
+
+This convention exists because the same trap shipped four separate times in April–May 2026 — regenerateJoinCode (`c3018c2`), joinCareCircle (`1f6455c`), medical-ID save (this prompt), and at least one other I'm forgetting. Every catch site that maps Firestore errors carries a comment referencing this section so the next reader sees the rule. `FirestoreServiceError.map` writes unmapped errors to `Logger(subsystem: "com.medication.dosely", category: "firestore")` so a future "what tripped this" investigation doesn't need Xcode attached.
+
 ## Workflow
 
 - Every change commits to git with a descriptive message

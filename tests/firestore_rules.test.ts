@@ -1111,6 +1111,28 @@ describe("Firestore security rules", () => {
       await assertFails(deleteDoc(doc(db, medicalDocPath(grandpa.personID))));
     });
 
+    /// Regression for the shape the Swift `upsertMedicalID` actually
+    /// puts on the wire after the May 13 rewrite — explicit-dict
+    /// construction with optional fields omitted when nil. The rule
+    /// must still pass with this shape; the previous Codable-encode-
+    /// then-override pattern was suspected of leaving a transient
+    /// `updatedAt: Date` mismatch.
+    it("the explicit-dict Swift payload shape passes the create rule", async () => {
+      const db = authedDb(secondary.uid);
+      // Note: bloodType, dateOfBirth, and notes are all omitted —
+      // matching the iOS code's conditional inclusion.
+      await assertSucceeds(
+        setDoc(doc(db, medicalDocPath(grandpa.personID)), {
+          id: grandpa.personID,
+          personID: grandpa.personID,
+          allergies: [],
+          conditions: [],
+          emergencyContacts: [],
+          updatedAt: serverTimestamp(),
+        })
+      );
+    });
+
     it("cascade delete after Person is gone is permitted", async () => {
       // Seed the medical ID, then nuke the parent Person doc, then
       // try the delete. The rule's `!exists(parent)` should let the

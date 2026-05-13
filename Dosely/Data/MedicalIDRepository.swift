@@ -1,6 +1,20 @@
 import CoreData
 import Foundation
 
+/// Domain errors the editor maps to user-facing copy. Mirrors the
+/// `FirestoreServiceError` shape one-to-one — repositories surface
+/// these distinct cases rather than collapsing everything to
+/// `.offline`, per the project-wide error-collapse convention
+/// (see build_log April 30 "Phantom join code bug" and May 13
+/// "Medical ID save permission denied"). A connection-error message
+/// on a rules rejection sends supervisors chasing the wrong cause.
+enum MedicalIDRepositoryError: Error, Equatable {
+    case permissionDenied
+    case offline
+    case notFound
+    case unknown(String)
+}
+
 /// Reads + writes the per-person `MedicalID`. Reads stay synchronous
 /// from Core Data so the editor renders instantly with the last-known
 /// state; writes hit Firestore first and the Core Data row is only
@@ -78,10 +92,22 @@ final class MedicalIDRepository {
             notes: trimmed(notes),
             updatedAt: Date()
         )
-        try await firestore.upsertMedicalID(
-            circleID: circleID.uuidString,
-            medicalID: payload
-        )
+        do {
+            try await firestore.upsertMedicalID(
+                circleID: circleID.uuidString,
+                medicalID: payload
+            )
+        } catch FirestoreServiceError.permissionDenied {
+            // Distinct error codes per error-collapse convention —
+            // see build_log April 30 phantom join code entry.
+            throw MedicalIDRepositoryError.permissionDenied
+        } catch FirestoreServiceError.offline {
+            throw MedicalIDRepositoryError.offline
+        } catch let FirestoreServiceError.unknown(detail) {
+            throw MedicalIDRepositoryError.unknown(detail)
+        } catch {
+            throw MedicalIDRepositoryError.unknown("\(error)")
+        }
         await context.perform { [context] in
             payload.upsert(in: context)
             try? context.save()

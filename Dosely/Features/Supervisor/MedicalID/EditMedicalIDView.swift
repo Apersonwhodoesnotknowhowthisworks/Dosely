@@ -28,7 +28,7 @@ struct EditMedicalIDView: View {
     @State private var notes: String = ""
     @State private var isLoaded: Bool = false
     @State private var isSaving: Bool = false
-    @State private var saveErrorVisible = false
+    @State private var saveErrorMessage: String?
 
     private let repository: MedicalIDRepository
 
@@ -96,10 +96,13 @@ struct EditMedicalIDView: View {
                 }
             }
             .alert(L("supervisor.medicalid.save.error.title"),
-                   isPresented: $saveErrorVisible) {
-                Button(L("common.ok"), role: .cancel) {}
+                   isPresented: Binding(
+                       get: { saveErrorMessage != nil },
+                       set: { if !$0 { saveErrorMessage = nil } }
+                   )) {
+                Button(L("common.ok"), role: .cancel) { saveErrorMessage = nil }
             } message: {
-                Text("supervisor.medicalid.save.error.body")
+                Text(saveErrorMessage ?? "")
             }
             .task(id: resolvedTargetPersonID) {
                 await loadExisting()
@@ -362,8 +365,27 @@ struct EditMedicalIDView: View {
                 notes: notes
             )
             await MainActor.run { dismiss() }
+        } catch let error as MedicalIDRepositoryError {
+            // Distinct error codes per error-collapse convention —
+            // see build_log April 30 phantom join code entry. The four
+            // cases produce four different bits of copy so the
+            // supervisor isn't sent chasing the wrong cause.
+            await MainActor.run {
+                saveErrorMessage = Self.userMessage(for: error)
+            }
         } catch {
-            await MainActor.run { saveErrorVisible = true }
+            await MainActor.run {
+                saveErrorMessage = L("supervisor.medicalid.save.error.unknown")
+            }
+        }
+    }
+
+    private static func userMessage(for error: MedicalIDRepositoryError) -> String {
+        switch error {
+        case .permissionDenied: return L("supervisor.medicalid.save.error.permissiondenied")
+        case .offline:          return L("supervisor.medicalid.save.error.offline")
+        case .notFound:         return L("supervisor.medicalid.save.error.notfound")
+        case .unknown:          return L("supervisor.medicalid.save.error.unknown")
         }
     }
 }

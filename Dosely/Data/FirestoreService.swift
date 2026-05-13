@@ -1,19 +1,31 @@
 import FirebaseCore
 import FirebaseFirestore
 import Foundation
+import OSLog
 
+/// The four error shapes every Firestore round-trip can produce.
+///
+/// **Project-wide convention** (see build_log April 30 — "Phantom
+/// join code bug" and May 13 — "Medical ID save permission denied"):
+/// repositories MUST surface these distinct cases up to the UI, never
+/// collapsing `.permissionDenied` into `.offline` or vice versa. A
+/// connection-error message on a rules rejection sends supervisors
+/// chasing the wrong cause. The mapping happens here once; every
+/// caller is responsible for branching on the case.
 enum FirestoreServiceError: Error, Equatable {
-    /// We're offline and the SDK couldn't reach the server. Acceptable —
-    /// the SDK queues the write and replays it on reconnect.
+    /// The SDK couldn't reach the server. Network-level failure or
+    /// the SDK isn't configured. Acceptable to retry, and the SDK
+    /// queues writes locally where possible.
     case offline
-    /// Security rules rejected the write. Surface to the UI; this
-    /// indicates a permission boundary, not a transient failure.
+    /// Security rules rejected the write. Surface to the UI as
+    /// "you don't have access" — NEVER as "check your connection."
     case permissionDenied
-    /// The document doesn't exist. Typically a join code that has been
-    /// regenerated.
+    /// The document doesn't exist. Typically a join code that has
+    /// been regenerated or a doc that was deleted.
     case notFound
-    /// Anything we don't classify. Wraps the underlying domain/code as a
-    /// debug string for logs.
+    /// Anything we don't classify. The string carries the domain/code
+    /// for diagnostics; `os_log` records it at map-time so a future
+    /// "what tripped this" investigation doesn't need Xcode attached.
     case unknown(String)
 
     static func map(_ error: Error) -> FirestoreServiceError {
@@ -27,11 +39,17 @@ enum FirestoreServiceError: Error, Equatable {
             case FirestoreErrorCode.notFound.rawValue:
                 return .notFound
             default:
-                return .unknown("FirestoreError(\(ns.code)): \(ns.localizedDescription)")
+                let detail = "FirestoreError(\(ns.code)): \(ns.localizedDescription)"
+                Self.logger.error("Unmapped Firestore error: \(detail, privacy: .public)")
+                return .unknown(detail)
             }
         }
-        return .unknown("\(ns.domain)(\(ns.code)): \(ns.localizedDescription)")
+        let detail = "\(ns.domain)(\(ns.code)): \(ns.localizedDescription)"
+        Self.logger.error("Unmapped error from Firestore call: \(detail, privacy: .public)")
+        return .unknown(detail)
     }
+
+    private static let logger = Logger(subsystem: "com.medication.dosely", category: "firestore")
 }
 
 /// Wrapper around the Firestore client. All shared family data flows
@@ -846,18 +864,53 @@ final class FirestoreService {
     /// Writes the medical ID. `setData` with no merge — every save
     /// is a full replacement of the doc, which matches how the
     /// editor surfaces the form (everything is editable, everything
-    /// is in the same payload). Always stamps `updatedAt` with the
-    /// server timestamp so the rules' time-skew check passes.
+    /// is in the same payload).
+    ///
+    /// Payload is built explicitly rather than through `Firestore.Encoder`
+    /// because the rules check is strict (`updatedAt == request.time`
+    /// AND `id == personID` AND `personID == personID`). The previous
+    /// encode-then-override pattern left a transient
+    /// `updatedAt: Date(client)` in the dict for the brief window
+    /// before the FieldValue sentinel overwrote it — most SDK versions
+    /// handle the override correctly, but the wire shape was harder to
+    /// reason about, and a single permission-denied on production
+    /// burnt enough hours to justify the verbose form. Optional fields
+    /// are conditionally included so a nil `notes` doesn't ship as
+    /// `null` (which the listener-side decode handles, but the
+    /// emergency-info display reads the field directly).
     func upsertMedicalID(circleID: String,
                          medicalID: FirestoreModels.FMedicalID) async throws {
         guard let db else { throw FirestoreServiceError.offline }
         do {
-            var payload = try encode(medicalID)
-            payload["updatedAt"] = FieldValue.serverTimestamp()
+            var payload: [String: Any] = [
+                "id": medicalID.personID,        // must equal personID per rules
+                "personID": medicalID.personID,  // must equal personID per rules
+                "allergies": medicalID.allergies,
+                "conditions": medicalID.conditions,
+                "emergencyContacts": medicalID.emergencyContacts.map { contact in
+                    [
+                        "name": contact.name,
+                        "relationship": contact.relationship,
+                        "phone": contact.phone
+                    ]
+                },
+                "updatedAt": FieldValue.serverTimestamp()
+            ]
+            if let dob = medicalID.dateOfBirth {
+                payload["dateOfBirth"] = Timestamp(date: dob)
+            }
+            if let bloodType = medicalID.bloodType, !bloodType.isEmpty {
+                payload["bloodType"] = bloodType
+            }
+            if let notes = medicalID.notes, !notes.isEmpty {
+                payload["notes"] = notes
+            }
             try await db
                 .document(Path.medicalID(circleID, personID: medicalID.personID))
                 .setData(payload)
         } catch {
+            // Distinct error codes per error-collapse convention —
+            // see build_log April 30 phantom join code entry.
             throw FirestoreServiceError.map(error)
         }
     }

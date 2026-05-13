@@ -130,6 +130,7 @@
 		BFD0000000000000000000129 /* MedicalIDRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000129 /* MedicalIDRepositoryTests.swift */; };
 		BFD000000000000000000012A /* EditMedicalIDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012A /* EditMedicalIDView.swift */; };
 		BFD000000000000000000012B /* EditMedicalIDViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012B /* EditMedicalIDViewTests.swift */; };
+		BFD000000000000000000012C /* ErrorCollapseConventionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012C /* ErrorCollapseConventionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -267,6 +268,7 @@
 		FRD0000000000000000000129 /* MedicalIDRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalIDRepositoryTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000012A /* EditMedicalIDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditMedicalIDView.swift; path = MedicalID/EditMedicalIDView.swift; sourceTree = "<group>"; };
 		FRD000000000000000000012B /* EditMedicalIDViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditMedicalIDViewTests.swift; sourceTree = "<group>"; };
+		FRD000000000000000000012C /* ErrorCollapseConventionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorCollapseConventionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -401,6 +403,7 @@
 				FRD0000000000000000000127 /* AlertsCardSmokeTests.swift */,
 				FRD0000000000000000000129 /* MedicalIDRepositoryTests.swift */,
 				FRD000000000000000000012B /* EditMedicalIDViewTests.swift */,
+				FRD000000000000000000012C /* ErrorCollapseConventionTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -831,6 +834,7 @@
 				BFD0000000000000000000127 /* AlertsCardSmokeTests.swift in Sources */,
 				BFD0000000000000000000129 /* MedicalIDRepositoryTests.swift in Sources */,
 				BFD000000000000000000012B /* EditMedicalIDViewTests.swift in Sources */,
+				BFD000000000000000000012C /* ErrorCollapseConventionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

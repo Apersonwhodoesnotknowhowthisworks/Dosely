@@ -34,6 +34,12 @@ enum CareCircleEditError: Error, Equatable {
     case invalidName
     case notFound
     case offline
+    /// Catch-all for anything else. The detail string carries the
+    /// domain/code for diagnostics. Per the error-collapse convention
+    /// (see build_log April 30 phantom join code entry), repos MUST
+    /// surface this distinctly rather than mapping to `.offline` —
+    /// otherwise a rules deploy slip-up reads as a network problem.
+    case unknown(String)
 }
 
 /// Care circle reads stay synchronous from Core Data (instant UI).
@@ -433,14 +439,17 @@ final class CareCircleRepository {
                 newCode: newCode
             )
         } catch FirestoreServiceError.permissionDenied {
+            // Distinct error codes per error-collapse convention —
+            // see build_log April 30 phantom join code entry.
             throw CareCircleEditError.permissionDenied
         } catch FirestoreServiceError.offline {
             throw CareCircleEditError.offline
+        } catch FirestoreServiceError.notFound {
+            throw CareCircleEditError.notFound
+        } catch let FirestoreServiceError.unknown(detail) {
+            throw CareCircleEditError.unknown(detail)
         } catch {
-            // Any other error path: surface as offline so the caller
-            // shows an error rather than handing out a local-only code
-            // that isn't valid for cross-device joins.
-            throw CareCircleEditError.offline
+            throw CareCircleEditError.unknown("\(error)")
         }
 
         return await context.perform { [context] in
