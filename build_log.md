@@ -386,6 +386,9 @@ Tests in `DoselyTests/ErrorCollapseConventionTests.swift` are type-level guards:
 
 Pattern-level note: shipping the same bug four times means the convention is missing, not that an engineer keeps making the same mistake. Patching one repo at a time is treating the symptom. Putting the rule in CLAUDE.md so it gets loaded into every future context, comment-marking every catch site so the rule travels with the code, and type-level tests so a future refactor fails loudly — all three, because any one of them on its own would have failed at least once already.
 
+## May 14
+- Testing Git Commits
+
 ## Still pending
 
 - Dark/light mode adaptive DSColors (queued — invisible text on real iPhone)
@@ -402,3 +405,6 @@ Pattern-level note: shipping the same bug four times means the convention is mis
 - Real-iPhone scan test with an actual prescription bottle (simulator can't capture frames)
 - Round 2 client testing — structured, with stopwatch and silent observation
 - Portfolio cleanup: empty A.2 prioritization body, A.3, B.1, B.4 wireframes, leftover duplicate A.1 page
+
+
+
