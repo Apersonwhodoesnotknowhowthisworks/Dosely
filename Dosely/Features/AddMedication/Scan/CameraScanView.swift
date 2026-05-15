@@ -14,7 +14,7 @@ final class CameraSessionModel: NSObject, ObservableObject {
     @Published var state: SessionState = .unconfigured
     @Published var hasFlash: Bool = false
     @Published var isFlashEnabled: Bool = false
-    @Published var isCapturing: Bool = false
+    @Published var isCapturing: Bool = false 
 
     let session = AVCaptureSession()
     private let photoOutput = AVCapturePhotoOutput()
