@@ -423,6 +423,33 @@ Files touched: `Dosely/Data/FirestoreService.swift`, `Dosely/Data/AlertsReposito
 
 Reflection: the only finding that actually MIGHT not have surfaced under the manual run alone is the reactivity gap. Test G as written has Aunt 1 initiating the swap herself, so the local Core Data write happens immediately, `PersonDetailView` dismisses, and on her next tab change to Today the view body re-renders — the bug would have been invisible. The remote-driven case (Aunt 2 promotes Aunt 1 while Aunt 1 is foreground on Today) is what manifests it, and that wasn't in any of the manual test scripts I'd written. The audit pulled it forward because the audit's question was "is the role read reactive?" not "does the script work?" — and the answer was no even though the script would have looked fine. The lesson worth keeping: scripted tests verify the happy path of the script, not the surrounding behavior. The audit is what surfaces the dark corners.
 
+## May 28 — tightened `isOrphanFounder`, cleared every pre-existing rules-test failure, deployed
+
+The helper at `firestore.rules:213` was over-permissive in the exact shape the May 27 "Discovered but not fixed" section diagnosed. The doc comment promised "founder anchor AND absence-of-membership"; the implementation only checked the founder anchor — the careCircle's `primarySupervisorPersonID` resolves to a Person doc whose `firebaseUID == request.auth.uid`. Every healthy primary supervisor satisfies that anchor as a side effect of being primary, so every `match` block that ORs `isOrphanFounder` in as an escape hatch was silently letting the primary do whatever the helper unlocked. The three rules-test failures named on May 27 all traced to the same root cause: `denies a sole supervisor from deleting their own Person doc` hits the Person delete rule at `firestore.rules:448`, whose `isOrphanFounder` short-circuits past the supervisorCount-and-primary-change checks; `denies the primary from leaving without atomically promoting a secondary` hits the same rule and the same short-circuit; `alerts cannot be deleted by any supervisor` hits the alert delete rule at `firestore.rules:641` which is gated exclusively on the helper. Three tests, one helper.
+
+The fix adds the missing conjunct:
+
+```
+(
+  !exists(/databases/$(database)/documents/userMemberships/$(request.auth.uid)) ||
+  get(/databases/$(database)/documents/userMemberships/$(request.auth.uid)).data.careCircleID != circleID
+)
+```
+
+The two flavours of absence cover the two operational shapes. The migration-time shape is the production case I most cared about — `OrphanCircleCleanupMigration` runs from the user's REAL circle, so their `/userMemberships.careCircleID` already points at someplace OTHER than the orphan they're tearing down; the second disjunct is what makes the helper still return true for the migration's deletes. The membership-doesn't-exist shape covers a wipe-or-never-written edge case. Updated the doc comment to spell out exactly what each disjunct is for, because the previous comment's drift from the code is what let this ship in the first place.
+
+Re-ran the full emulator suite. The three named failures all pass now. The fourth — `cascade delete after Person is gone is permitted` with the `Firestore has already been started` SDK error — turned out to be a test-isolation problem inside a single test body, not a rules issue. The failing test called `withSecurityRulesDisabled` with both a `setDoc` AND a `deleteDoc` on related paths inside the same admin callback, and the subsequent `authenticatedContext().firestore()` setting application tripped on a partially-torn-down admin Firestore lifecycle. Splitting the two admin operations into two separate `withSecurityRulesDisabled` calls — each completing before the next begins — cleared it. Same end state, no behavior change.
+
+Added two new positive tests for `isOrphanFounder` so the contract is explicitly pinned: one where the founder has NO `/userMemberships` row anywhere (proving the first disjunct works), one where a healthy primary's helper invocation returns false (the regression the May 27 backlog flagged, now proven false in the suite). Final pass count: 89 from the post-Prompt-18 baseline of 83. Three previously-failing tests flipped to passing, two new positive tests added, one test-isolation fix.
+
+Deployed at `2026-05-28 11:24 PDT` via `firebase deploy --only firestore:rules` from the repo root. The CLI confirmed "✔ Deploy complete!" against project `dosely-df5ca`. Recording the timestamp here so the next investigation has an audit trail against the Firebase Console's Published time — the rules-tests-pass-but-production-fails class of bug has bitten this project twice (April 30 phantom join code, May 27 medical-ID save) and the deploy line is what either confirms or refutes "is the live ruleset the one I'm looking at?"
+
+The pattern worth marking: `isOrphanFounder` is a helper-shaped predicate, and rules written as `match { allow delete: if helperX(...) }` mean the helper IS the entire correctness surface. Helper drift is the entire failure mode. The `delete: false` lazy-safe default doesn't have this problem because there's no helper to drift — but `delete: false` is the pattern section 14.4 of the handoff explicitly forbids, because legitimate cleanup needs a delete path. The right shape is "delete: deniedInSteadyState && permittedUnderPreciselyEncodedCondition," and writing that pattern costs you exactly one carefully-shaped helper per delete that can fire. Today's bug was helper drift between comment and code. The way it got caught was the May 27 audit pulling the test target's compile back up; the rules tests had been failing all along but the test target hadn't built since the `replaceSchedules`-private-method regression in `MissedDoseDetectorTests`. Two prompts in a row now where the real bug surfaced from looking at things that weren't on anyone's checklist — May 27's reactivity gap, today's helper drift. The checklist-driven audit is good for the obvious cases; the curiosity-driven audit is what finds the silent ones.
+
+Also pruned three entries from the "Still pending" trailer at the bottom of this file: the Prompt 18 e/f/g manual test plan (shipped in `b91728a` with the playbook at `docs/manual_tests_prompt18.md`), the Edit Medical ID screen item (shipped in `43a0b29` / `b2c1e87` / `acd03c6`, working on devices May 27 after the rules deploy), and the Prompt 19 real-time alerts item (shipped in `7faca6c` / `71f7746` / `eedbdbc`). Added a `<!-- Trailer last pruned 2026-05-28 -->` header note. Left every other trailer entry alone; in particular, the Face ID items and Prompt 10/11 backlog entries remain because their resolution status isn't unambiguous from the codebase alone.
+
+Files touched: `firestore.rules`, `tests/firestore_rules.test.ts`, `build_log.md`. The Swift app side is untouched — this was purely a rules-layer + tests + deploy + doc cleanup.
+
 ## Discovered but not fixed in this prompt
 
 These showed up while doing Prompt 18 work. None of them are caused by the changes in this prompt; they were always present, in some cases hidden by the test target's pre-existing compile failure.
@@ -439,14 +466,13 @@ None of these are in the e/f/g audit surface. They predate this prompt. The new 
 
 ## Still pending
 
+<!-- Trailer last pruned 2026-05-28 (commit will be linked after creation) -->
+
 - Dark/light mode adaptive DSColors (queued — invisible text on real iPhone)
 - Face ID setup prompt after sign-up (queued — alert never appears)
 - Face ID session-expired redesign — local-lock pattern (queued — biggest of the three Face ID issues)
 - Multi-photo / video capture for wrapped labels (queued — pill bottles wrap text around the cylinder)
 - Bundle ID alignment — update Firebase iOS app to `com.medication.dosely`, optionally retire the old `kSecAttrService` string in Keychain.swift
-- Prompt 18 manual test plan (steps a-g): primary/secondary badges, hidden affordances, alert acknowledgement, promote-to-primary swap
-- Edit Medical ID screen (still "Coming soon")
-- Prompt 19: real-time alerts (missed dose, emergency, weekly summary)
 - Punjabi re-attempt — confirm with the family which **script** they actually read before re-running Prompt 12 (grandparents don't read Gurmukhi); audio-first may be the right shape
 - Accessibility toggles polish (Prompt 10 was skipped — text-size override, high-contrast mode, voice readout helper)
 - Emergency Medical ID screen (Prompt 11 was skipped — lock-screen-accessible read-only ID for paramedics)

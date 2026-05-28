@@ -1234,13 +1234,21 @@ describe("Firestore security rules", () => {
     it("cascade delete after Person is gone is permitted", async () => {
       // Seed the medical ID, then nuke the parent Person doc, then
       // try the delete. The rule's `!exists(parent)` should let the
-      // delete through.
+      // delete through. Split into two `withSecurityRulesDisabled`
+      // calls because a single callback doing both setDoc AND deleteDoc
+      // on related paths tripped the "Firestore has already been
+      // started" SDK error when the test then constructed a fresh
+      // authenticatedContext — the symptom looked like a settings race
+      // on the admin instance's lifecycle. Each admin call here
+      // completes before the next starts.
       await testEnv.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(doc(ctx.firestore(), medicalDocPath(grandpa.personID)), {
           id: grandpa.personID, personID: grandpa.personID,
           allergies: [], conditions: [], emergencyContacts: [],
           updatedAt: new Date(),
         });
+      });
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
         await deleteDoc(doc(ctx.firestore(),
           `careCircles/${circleID}/people/${grandpa.personID}`));
       });
@@ -2089,6 +2097,69 @@ describe("Firestore security rules", () => {
       const db = authedDb(founder.uid);
       await assertFails(getDoc(doc(db, `careCircles/strangers-circle`)));
       await assertFails(deleteDoc(doc(db, `careCircles/strangers-circle`)));
+    });
+
+    // -- Positive coverage: helper returns true with NO membership row -----
+    //
+    // The two existing orphan-founder cleanup shapes assume the user
+    // has a `/userMemberships` row pointing at their REAL circle (the
+    // production case after `OrphanCircleCleanupMigration` runs). This
+    // test covers the other absence shape: the user has no
+    // `/userMemberships` row at all, but their Person doc still
+    // records them as the orphan's primary. Could arise from a wipe of
+    // /userMemberships or a never-written index doc on early app
+    // versions. The tightened helper's `!exists(membership)` branch
+    // is what permits this; without that conjunct the helper would
+    // still return true here too, but the test pins the explicit
+    // membership-absent shape so a future "let's simplify" rewrite
+    // can't drop the branch.
+    it("isOrphanFounder is true when the founder has NO /userMemberships row anywhere", async () => {
+      // Tear down the founder's /userMemberships pointing at realCircleID
+      // so they have no membership at all. Person docs in both circles
+      // remain intact.
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await deleteDoc(doc(ctx.firestore(), `userMemberships/${founder.uid}`));
+      });
+      const db = authedDb(founder.uid);
+      // Read on the orphan circle is gated on `memberOf(circleID) ||
+      // isOrphanFounder(circleID)`. memberOf is now false (no
+      // membership), so the read passes iff the helper returns true.
+      await assertSucceeds(getDoc(doc(db, `careCircles/${orphanCircleID}`)));
+      // Same for the delete — the careCircle root delete rule's
+      // `isOrphanFounder` branch carries the entire weight when
+      // `isPrimary` is false.
+      await assertSucceeds(deleteDoc(doc(db, `careCircles/${orphanCircleID}`)));
+    });
+
+    // -- Negative coverage: helper is FALSE in steady-state primary case ---
+    //
+    // This is the regression that motivated the May 28 tightening. The
+    // pre-fix helper returned true for any healthy primary because it
+    // only checked the founder anchor — and the founder anchor is
+    // always satisfied by a current primary as a side effect of being
+    // primary. The three rules-test failures named in the May 27
+    // build_log "Discovered but not fixed" section all traced to this.
+    // The explicit assertion here pins the contract so a future rewrite
+    // can't reintroduce the over-permissive shape without this test
+    // catching it.
+    it("isOrphanFounder is false for a healthy primary of their own circle", async () => {
+      // realCircleID has the founder as primary with a /userMemberships
+      // pointing at realCircleID — exactly the steady-state shape that
+      // was previously over-permissive.
+      const db = authedDb(founder.uid);
+
+      // The alerts delete rule is `allow delete: if isOrphanFounder(circleID)`
+      // with no other branch — the cleanest single-clause probe. If the
+      // helper is over-permissive, this delete succeeds; tightened, it
+      // fails.
+      const alertID = "alert-isPrimary-cannot-delete";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${realCircleID}/alerts/${alertID}`), {
+          id: alertID, type: "missedDose",
+          personID: founder.personID, createdAt: new Date(),
+        });
+      });
+      await assertFails(deleteDoc(doc(db, `careCircles/${realCircleID}/alerts/${alertID}`)));
     });
   });
 });

@@ -193,25 +193,42 @@ service cloud.firestore {
              );
     }
 
-    // True when the requester founded `circleID` (the careCircle's
-    // primarySupervisorPersonID resolves to a Person doc whose firebaseUID
-    // matches request.auth.uid) but does NOT currently have a
-    // /userMemberships entry pointing at that circle. This is the proof
-    // of authority used by `OrphanCircleCleanupMigration` to tear down
-    // care circles created during earlier debugging cycles where the
-    // founder flow accidentally re-ran. /userMemberships is keyed by
-    // firebaseUID and so can only point at ONE circle at a time — when
-    // the founder later created their "real" circle, /userMemberships
-    // was overwritten, but the orphan's Person doc still records them
-    // as the primary. That Person doc is the durable proof.
+    // True when the requester founded `circleID` AND does not currently
+    // belong to it via `/userMemberships`. Both conjuncts are required.
     //
-    // Safe because the Person doc create rule already gates both
-    // possible write paths: a primary onboarding someone, or a
-    // self-bootstrap where the requester owns /userMemberships AND
-    // claims auth.uid as firebaseUID. An attacker can't plant a Person
-    // doc claiming themselves as primary in a stranger's circle.
+    // Founder anchor: the careCircle's `primarySupervisorPersonID`
+    // resolves to a Person doc whose `firebaseUID == request.auth.uid`.
+    // That Person doc is the durable proof of "I founded this." An
+    // attacker can't plant such a doc — the Person create rule already
+    // requires either a primary onboarding the new row or a
+    // self-bootstrap whose own /userMemberships claims that exact
+    // (circleID, personID) and auth.uid.
+    //
+    // Absence-of-membership: the requester either has no
+    // `/userMemberships` row at all, OR their row points at a different
+    // circle. Without this conjunct, every healthy primary supervisor
+    // would satisfy `isOrphanFounder` of their own circle — which
+    // collapses every "delete is gated by `isOrphanFounder`" branch
+    // into "the primary can delete anything." Cost: silent regressions
+    // on the alerts-cannot-be-deleted, last-supervisor-protection, and
+    // primary-must-promote-before-leaving invariants. (See May 28
+    // build_log.)
+    //
+    // The two flavours of absence cover the two operational shapes:
+    //   1. The user has no membership at all — fresh state where
+    //      /userMemberships was wiped or never written.
+    //   2. The user's membership points at their *real* circle, not at
+    //      the orphan they're cleaning up. This is the production
+    //      `OrphanCircleCleanupMigration` shape: /userMemberships is
+    //      keyed by Firebase UID and can hold exactly one circle at a
+    //      time, so the migration runs from the user's real circle and
+    //      tears down separate orphans whose Person docs they founded.
     function isOrphanFounder(circleID) {
       return isSignedIn() &&
+             (
+               !exists(/databases/$(database)/documents/userMemberships/$(request.auth.uid)) ||
+               get(/databases/$(database)/documents/userMemberships/$(request.auth.uid)).data.careCircleID != circleID
+             ) &&
              exists(/databases/$(database)/documents/careCircles/$(circleID)) &&
              get(/databases/$(database)/documents/careCircles/$(circleID)).data.get('primarySupervisorPersonID', '') != '' &&
              exists(/databases/$(database)/documents/careCircles/$(circleID)/people/$(get(/databases/$(database)/documents/careCircles/$(circleID)).data.primarySupervisorPersonID)) &&
