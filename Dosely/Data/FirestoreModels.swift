@@ -550,6 +550,11 @@ enum AlertID {
                               calendar: Calendar = .current) -> String {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withFullDate]
+        // Render in the same zone the Sunday was computed in. The
+        // formatter otherwise defaults to GMT, which would label the
+        // local Sunday with a neighbouring date east of GMT — the id
+        // must reflect the calendar's local Sunday, not UTC's.
+        formatter.timeZone = calendar.timeZone
         let day = calendar.startOfDay(for: weekEndingSunday)
         return "weekly-\(circleID.uuidString)-\(formatter.string(from: day))"
     }

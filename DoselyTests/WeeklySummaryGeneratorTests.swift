@@ -53,7 +53,7 @@ final class WeeklySummaryGeneratorTests: XCTestCase {
     /// supervisors who open the app over Sunday lunch shouldn't get
     /// the digest yet.
     func testWeekEndingSundayGatedAtSixPM() {
-        let calendar = Calendar(identifier: .gregorian)
+        let calendar = gregorian()
         let sundayMorning = makeDate(year: 2026, month: 5, day: 3, hour: 9, calendar: calendar)
         let sundayDinner = makeDate(year: 2026, month: 5, day: 3, hour: 18, calendar: calendar)
         let mondayMorning = makeDate(year: 2026, month: 5, day: 4, hour: 9, calendar: calendar)
@@ -66,10 +66,34 @@ final class WeeklySummaryGeneratorTests: XCTestCase {
                      "Monday — already past, generator only runs Sunday")
     }
 
+    /// Pins the user-facing contract in LOCAL time, with an explicit
+    /// zone so the result is identical on any test machine (the prior
+    /// version built dates in UTC but evaluated in the machine's zone,
+    /// so it only passed on a UTC box). A grandparent in BC gets her
+    /// digest at *her* Sunday 6pm, not UTC's: Saturday 23:59 → not yet;
+    /// Sunday 18:00:00 → fires; the following Monday 09:00 → the gate
+    /// is a Sunday-only window so it declines again (the deterministic
+    /// id is what blocks a second write within the same Sunday).
+    func testGateFiresOnlyAtSundaySixPMLocal() {
+        let calendar = gregorian()  // America/Vancouver
+
+        let saturdayNight = makeDate(year: 2026, month: 5, day: 2, hour: 23, minute: 59, calendar: calendar)
+        XCTAssertNil(WeeklySummaryGenerator.weekEndingSunday(for: saturdayNight, calendar: calendar),
+                     "Saturday 23:59 local — the week hasn't ended yet")
+
+        let sundaySixPM = makeDate(year: 2026, month: 5, day: 3, hour: 18, minute: 0, calendar: calendar)
+        XCTAssertNotNil(WeeklySummaryGenerator.weekEndingSunday(for: sundaySixPM, calendar: calendar),
+                        "Sunday 18:00:00 local — the gate fires")
+
+        let mondayMorning = makeDate(year: 2026, month: 5, day: 4, hour: 9, calendar: calendar)
+        XCTAssertNil(WeeklySummaryGenerator.weekEndingSunday(for: mondayMorning, calendar: calendar),
+                     "Monday 09:00 local — Sunday-only window has closed; the deterministic id blocks a re-fire")
+    }
+
     /// `runIfDue` returns nil on a non-Sunday — generator silently
     /// declines to write.
     func testRunIfDueReturnsNilOnNonSunday() async {
-        let calendar = Calendar(identifier: .gregorian)
+        let calendar = gregorian()
         let monday = makeDate(year: 2026, month: 5, day: 4, hour: 19, calendar: calendar)
         let result = await generator.runIfDue(in: circle.id!, now: monday, calendar: calendar)
         XCTAssertNil(result)
@@ -79,7 +103,7 @@ final class WeeklySummaryGeneratorTests: XCTestCase {
     /// alert id keyed on the circle and the day-of-Sunday. Subsequent
     /// runs return the same id.
     func testRunIfDueProducesDeterministicAlertID() async {
-        let calendar = Calendar(identifier: .gregorian)
+        let calendar = gregorian()
         let sundayDinner = makeDate(year: 2026, month: 5, day: 3, hour: 19, calendar: calendar)
 
         let first = await generator.runIfDue(in: circle.id!, now: sundayDinner, calendar: calendar)
@@ -135,6 +159,20 @@ final class WeeklySummaryGeneratorTests: XCTestCase {
 
     // MARK: - Helpers
 
+    /// A gregorian calendar pinned to an explicit zone (the client's
+    /// real one — Vancouver). Used for both date construction and gate
+    /// evaluation so the two never disagree, which is exactly the bug
+    /// the prior `TimeZone.current` evaluation against UTC-built dates
+    /// introduced.
+    private func gregorian(in timeZone: TimeZone = TimeZone(identifier: "America/Vancouver")!) -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        return calendar
+    }
+
+    /// Builds the date in the SAME zone the gate will read it in
+    /// (`calendar.timeZone`), so "Sunday 6pm" means 6pm in that zone
+    /// regardless of where the test runs.
     private func makeDate(year: Int, month: Int, day: Int,
                           hour: Int, minute: Int = 0,
                           calendar: Calendar) -> Date {
@@ -144,7 +182,7 @@ final class WeeklySummaryGeneratorTests: XCTestCase {
         components.day = day
         components.hour = hour
         components.minute = minute
-        components.timeZone = TimeZone(secondsFromGMT: 0)
+        components.timeZone = calendar.timeZone
         return calendar.date(from: components)!
     }
 }

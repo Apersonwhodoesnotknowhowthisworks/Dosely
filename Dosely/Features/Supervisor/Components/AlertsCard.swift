@@ -45,12 +45,12 @@ struct AlertsCard: View {
 
     private func alertRow(_ alert: Alert) -> some View {
         HStack(alignment: .top, spacing: DSSpacing.sm) {
-            Image(systemName: iconName(for: alert))
-                .foregroundColor(severityColor(for: alert))
+            Image(systemName: Self.iconName(for: alert))
+                .foregroundColor(Self.severityColor(for: alert))
                 .frame(width: 24)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
-                Text(bodyText(for: alert))
+                Text(Self.bodyText(for: alert))
                     .dsBodyRegular()
                     .foregroundColor(.dsTextPrimary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -63,11 +63,12 @@ struct AlertsCard: View {
 
     @ViewBuilder
     private func ackRow(_ alert: Alert) -> some View {
-        if let name = alert.acknowledgedByName, !name.isEmpty {
+        switch Self.ackState(for: alert) {
+        case .acknowledged(let name):
             Text(L("supervisor.alerts.ackedby", name as NSString))
                 .dsCaption()
                 .foregroundColor(.dsTextSecondary)
-        } else if (alert.acknowledgedByFirebaseUID ?? "").isEmpty {
+        case .actionable:
             Button(action: { onAcknowledge(alert) }) {
                 Text("supervisor.alerts.ack")
                     .dsBodyRegular()
@@ -79,16 +80,38 @@ struct AlertsCard: View {
                     .cornerRadius(DSSpacing.rMd)
             }
             .accessibilityLabel(Text("supervisor.alerts.ack"))
-        } else {
+        case .acknowledgedByUnknown:
             Text("supervisor.alerts.ackedby.unknown")
                 .dsCaption()
                 .foregroundColor(.dsTextSecondary)
         }
     }
 
+    // MARK: - Ack state
+
+    /// The three mutually-exclusive states an alert's ack row can be
+    /// in. Pulled out of the view body so the branch is unit-testable
+    /// without walking SwiftUI's opaque UIView tree (which no longer
+    /// surfaces `Text` as `UILabel`s under recent iOS).
+    enum AckState: Equatable {
+        case acknowledged(name: String)
+        case actionable
+        case acknowledgedByUnknown
+    }
+
+    static func ackState(for alert: Alert) -> AckState {
+        if let name = alert.acknowledgedByName, !name.isEmpty {
+            return .acknowledged(name: name)
+        } else if (alert.acknowledgedByFirebaseUID ?? "").isEmpty {
+            return .actionable
+        } else {
+            return .acknowledgedByUnknown
+        }
+    }
+
     // MARK: - Type → presentation
 
-    private func iconName(for alert: Alert) -> String {
+    static func iconName(for alert: Alert) -> String {
         switch alert.type {
         case FirestoreModels.AlertType.missedDose:    return "clock.fill"
         case FirestoreModels.AlertType.emergency:     return "exclamationmark.triangle.fill"
@@ -97,7 +120,7 @@ struct AlertsCard: View {
         }
     }
 
-    private func severityColor(for alert: Alert) -> Color {
+    static func severityColor(for alert: Alert) -> Color {
         switch alert.type {
         case FirestoreModels.AlertType.emergency:     return .dsDanger
         case FirestoreModels.AlertType.missedDose:    return .dsWarning
@@ -106,13 +129,13 @@ struct AlertsCard: View {
         }
     }
 
-    private func bodyText(for alert: Alert) -> String {
+    static func bodyText(for alert: Alert) -> String {
         let payload = FirestoreModels.FAlert.decodePayload(alert.payloadJSON) ?? [:]
         switch alert.type {
         case FirestoreModels.AlertType.missedDose:
             let person = payload["personName"] ?? ""
             let med = payload["medicationName"] ?? ""
-            let time = formattedTime(alert.scheduledTime)
+            let time = Self.formattedTime(alert.scheduledTime)
             return L("supervisor.alerts.body.misseddose",
                      person as NSString,
                      time as NSString,
@@ -120,7 +143,7 @@ struct AlertsCard: View {
 
         case FirestoreModels.AlertType.emergency:
             let person = payload["personName"] ?? ""
-            let time = formattedTime(alert.createdAt)
+            let time = Self.formattedTime(alert.createdAt)
             return L("supervisor.alerts.body.emergency",
                      person as NSString,
                      time as NSString)
@@ -143,7 +166,7 @@ struct AlertsCard: View {
         }
     }
 
-    private func formattedTime(_ date: Date?) -> String {
+    static func formattedTime(_ date: Date?) -> String {
         guard let date else { return "" }
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"

@@ -81,9 +81,14 @@ final class MedicalIDRepositoryTests: XCTestCase {
 
     // MARK: - Write
 
-    /// Without Firestore, `save` MUST throw `.offline` and leave the
-    /// local row untouched. Emergency responders look at this field
-    /// — we don't claim a save landed when it didn't.
+    /// Without Firestore, `save` MUST throw the repository's OWN
+    /// `MedicalIDRepositoryError.offline` — not the underlying
+    /// `FirestoreServiceError.offline` — and leave the local row
+    /// untouched. Repositories translate the service error one-to-one
+    /// per the error-collapse convention; leaking the lower-layer type
+    /// would defeat the UI's branch-on-domain-case logic. Emergency
+    /// responders look at this field — we don't claim a save landed
+    /// when it didn't.
     func testSave_throwsOfflineAndLeavesLocalCacheUntouchedWhenFirestoreMissing() async {
         do {
             try await medicalIDRepo.save(
@@ -96,15 +101,46 @@ final class MedicalIDRepositoryTests: XCTestCase {
                 emergencyContacts: [],
                 notes: nil
             )
-            XCTFail("expected .offline without a configured Firestore client")
-        } catch FirestoreServiceError.offline {
-            // expected
+            XCTFail("expected MedicalIDRepositoryError.offline without a configured Firestore client")
+        } catch let serviceError as FirestoreServiceError {
+            XCTFail("""
+                repository leaked the underlying \(serviceError) — it must \
+                translate to MedicalIDRepositoryError per the error-collapse \
+                convention (CLAUDE.md). The UI branches on the domain case.
+                """)
+        } catch MedicalIDRepositoryError.offline {
+            // expected — the domain error, mapped one-to-one from
+            // FirestoreServiceError.offline by save's catch chain.
         } catch {
-            XCTFail("expected .offline, got \(error)")
+            XCTFail("expected MedicalIDRepositoryError.offline, got \(error)")
         }
 
         let row = await medicalIDRepo.fetchLocal(personID: grandpa.id!)
         XCTAssertNil(row, "local mirror must not exist after a failed remote write")
+    }
+
+    /// All four `MedicalIDRepositoryError` cases must stay mutually
+    /// distinct so `EditMedicalIDView` can branch each to its own
+    /// copy. Mirrors `ErrorCollapseConventionTests` — collapsing two
+    /// of these sends a supervisor chasing the wrong cause (a rules
+    /// rejection messaged as "check your connection"). `save`'s catch
+    /// chain maps each underlying `FirestoreServiceError` to the
+    /// matching case here; this pins that those targets stay separable.
+    func testMedicalIDRepositoryError_allFourCasesAreMutuallyDistinct() {
+        let cases: [MedicalIDRepositoryError] = [
+            .permissionDenied,
+            .offline,
+            .notFound,
+            .unknown("rules rejected the write")
+        ]
+        for (i, lhs) in cases.enumerated() {
+            for (j, rhs) in cases.enumerated() where i != j {
+                XCTAssertNotEqual(
+                    lhs, rhs,
+                    "MedicalIDRepositoryError cases must stay distinct so EditMedicalIDView branches per case — see error-collapse convention (build_log April 30)."
+                )
+            }
+        }
     }
 
     // MARK: - Round-trip via the codable shape
@@ -155,10 +191,15 @@ final class MedicalIDRepositoryTests: XCTestCase {
     /// fires after the Person doc is gone) — the local mirror is
     /// what we can assert on here.
     func testRemovePersonFromCircle_cascadesToMedicalIDRow() async throws {
+        // Capture up front: removePersonFromCircle deletes the grandpa
+        // managed object, after which grandpa.id faults to nil and any
+        // later grandpa.id! would crash.
+        let grandpaID = grandpa.id!
+
         await stack.viewContext.perform { [self] in
             let f = FirestoreModels.FMedicalID(
-                id: grandpa.id!.uuidString,
-                personID: grandpa.id!.uuidString,
+                id: grandpaID.uuidString,
+                personID: grandpaID.uuidString,
                 dateOfBirth: nil,
                 bloodType: "A+",
                 allergies: [],
@@ -172,11 +213,11 @@ final class MedicalIDRepositoryTests: XCTestCase {
         }
 
         try await personRepo.removePersonFromCircle(
-            personID: grandpa.id!,
+            personID: grandpaID,
             actingSupervisorID: supervisor.id!
         )
 
-        let row = await medicalIDRepo.fetchLocal(personID: grandpa.id!)
+        let row = await medicalIDRepo.fetchLocal(personID: grandpaID)
         XCTAssertNil(row,
                      "Person.medicalID has Cascade delete rule — removing the Person nukes the MedicalID")
     }
