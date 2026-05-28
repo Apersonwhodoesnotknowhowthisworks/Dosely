@@ -5,6 +5,7 @@ import SwiftUI
 /// add a medication to the wrong patient).
 struct QuickActionsCard: View {
     var onAddMedication: () -> Void
+    var onViewMedicalID: () -> Void
     var onEditMedicalID: () -> Void
     var onSettings: () -> Void
 
@@ -18,6 +19,10 @@ struct QuickActionsCard: View {
                       icon: "pill.fill",
                       tint: .dsPrimary,
                       action: onAddMedication)
+            actionRow(title: L("emergency.medicalid.view.action"),
+                      icon: "heart.text.square.fill",
+                      tint: .dsPrimary,
+                      action: onViewMedicalID)
             actionRow(title: L("supervisor.quickactions.medicalid"),
                       icon: "cross.case.fill",
                       tint: .dsDanger,

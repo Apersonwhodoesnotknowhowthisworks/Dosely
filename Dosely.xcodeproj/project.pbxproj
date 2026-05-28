@@ -131,6 +131,11 @@
 		BFD000000000000000000012A /* EditMedicalIDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012A /* EditMedicalIDView.swift */; };
 		BFD000000000000000000012B /* EditMedicalIDViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012B /* EditMedicalIDViewTests.swift */; };
 		BFD000000000000000000012C /* ErrorCollapseConventionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012C /* ErrorCollapseConventionTests.swift */; };
+		BFD000000000000000000012D /* EmergencyMedicalIDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012D /* EmergencyMedicalIDView.swift */; };
+		BFD000000000000000000012E /* EmergencyMedicalIDViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012E /* EmergencyMedicalIDViewModel.swift */; };
+		BFD000000000000000000012F /* EmergencyMedicalIDViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012F /* EmergencyMedicalIDViewModelTests.swift */; };
+		BFD0000000000000000000130 /* EmergencyMedicalIDViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000130 /* EmergencyMedicalIDViewTests.swift */; };
+		BFD0000000000000000000131 /* EmergencyMedicalIDLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000131 /* EmergencyMedicalIDLocalizationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -269,6 +274,11 @@
 		FRD000000000000000000012A /* EditMedicalIDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditMedicalIDView.swift; path = MedicalID/EditMedicalIDView.swift; sourceTree = "<group>"; };
 		FRD000000000000000000012B /* EditMedicalIDViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditMedicalIDViewTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000012C /* ErrorCollapseConventionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorCollapseConventionTests.swift; sourceTree = "<group>"; };
+		FRD000000000000000000012D /* EmergencyMedicalIDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EmergencyMedicalIDView.swift; path = MedicalID/EmergencyMedicalIDView.swift; sourceTree = "<group>"; };
+		FRD000000000000000000012E /* EmergencyMedicalIDViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EmergencyMedicalIDViewModel.swift; path = MedicalID/EmergencyMedicalIDViewModel.swift; sourceTree = "<group>"; };
+		FRD000000000000000000012F /* EmergencyMedicalIDViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyMedicalIDViewModelTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000130 /* EmergencyMedicalIDViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyMedicalIDViewTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000131 /* EmergencyMedicalIDLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyMedicalIDLocalizationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -404,6 +414,9 @@
 				FRD0000000000000000000129 /* MedicalIDRepositoryTests.swift */,
 				FRD000000000000000000012B /* EditMedicalIDViewTests.swift */,
 				FRD000000000000000000012C /* ErrorCollapseConventionTests.swift */,
+				FRD000000000000000000012F /* EmergencyMedicalIDViewModelTests.swift */,
+				FRD0000000000000000000130 /* EmergencyMedicalIDViewTests.swift */,
+				FRD0000000000000000000131 /* EmergencyMedicalIDLocalizationTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -579,6 +592,8 @@
 				GRP0000000000000000000021 /* Components */,
 				GRP0000000000000000000022 /* People */,
 				FRD000000000000000000012A /* EditMedicalIDView.swift */,
+				FRD000000000000000000012D /* EmergencyMedicalIDView.swift */,
+				FRD000000000000000000012E /* EmergencyMedicalIDViewModel.swift */,
 			);
 			path = Supervisor;
 			sourceTree = "<group>";
@@ -804,6 +819,8 @@
 				BFD0000000000000000000123 /* WeeklySummaryGenerator.swift in Sources */,
 				BFD0000000000000000000128 /* MedicalIDRepository.swift in Sources */,
 				BFD000000000000000000012A /* EditMedicalIDView.swift in Sources */,
+				BFD000000000000000000012D /* EmergencyMedicalIDView.swift in Sources */,
+				BFD000000000000000000012E /* EmergencyMedicalIDViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -835,6 +852,9 @@
 				BFD0000000000000000000129 /* MedicalIDRepositoryTests.swift in Sources */,
 				BFD000000000000000000012B /* EditMedicalIDViewTests.swift in Sources */,
 				BFD000000000000000000012C /* ErrorCollapseConventionTests.swift in Sources */,
+				BFD000000000000000000012F /* EmergencyMedicalIDViewModelTests.swift in Sources */,
+				BFD0000000000000000000130 /* EmergencyMedicalIDViewTests.swift in Sources */,
+				BFD0000000000000000000131 /* EmergencyMedicalIDLocalizationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

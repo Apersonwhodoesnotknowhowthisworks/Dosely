@@ -10,6 +10,7 @@ struct TodayView: View {
     @State private var refreshErrorMessage: String?
     @State private var confirmingEmergency = false
     @State private var emergencySentToastVisible = false
+    @State private var showingMedicalID = false
     private let alertsRepo: AlertsRepository
 
     init(repository: MedicationRepository = MedicationRepository(),
@@ -49,16 +50,23 @@ struct TodayView: View {
 
                     content
 
-                    // Device clients (Grandpa logged in via PIN) get
-                    // a single-tap "I need help" button. Tap fans out
-                    // a fresh emergency alert to every supervisor in
-                    // the circle. Managed clients don't sign in
-                    // themselves, so the button is hidden for them.
-                    if isDeviceClient {
-                        emergencyButton
-                            .padding(.horizontal, DSSpacing.lg)
-                            .padding(.top, DSSpacing.lg)
-                            .padding(.bottom, DSSpacing.xl)
+                    // Client action tiles. The blue Medical ID tile is a
+                    // read-only, paramedic-facing view of allergies /
+                    // conditions / contacts — deliberately distinct from
+                    // the red "I need help" alert button below (different
+                    // colour, icon, copy). The alert button stays
+                    // device-client-only (managed clients don't sign in
+                    // themselves); the Medical ID tile shows for any client.
+                    if isClientActor {
+                        VStack(spacing: DSSpacing.md) {
+                            medicalIDButton
+                            if isDeviceClient {
+                                emergencyButton
+                            }
+                        }
+                        .padding(.horizontal, DSSpacing.lg)
+                        .padding(.top, DSSpacing.lg)
+                        .padding(.bottom, DSSpacing.xl)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .top)
@@ -115,6 +123,11 @@ struct TodayView: View {
         }
         .sheet(isPresented: $showingSettings) {
             SettingsSheet()
+        }
+        .sheet(isPresented: $showingMedicalID) {
+            if let person = authService.currentPerson {
+                EmergencyMedicalIDView(person: person)
+            }
         }
         .alert(L("today.client.emergency.confirm.title"),
                isPresented: $confirmingEmergency) {
@@ -192,6 +205,30 @@ struct TodayView: View {
 
     private var isDeviceClient: Bool {
         authService.currentPerson?.role == Roles.deviceClient
+    }
+
+    /// Any non-supervisor actor — a device client or a managed client.
+    /// Delegates to the Medical ID eligibility rule so the client-tile
+    /// gate and the viewer share one definition: supervisors manage
+    /// their own emergency info elsewhere.
+    private var isClientActor: Bool {
+        EmergencyMedicalIDViewModel.isEligibleForMedicalID(role: authService.currentPerson?.role)
+    }
+
+    private var medicalIDButton: some View {
+        Button(action: { showingMedicalID = true }) {
+            HStack(spacing: DSSpacing.sm) {
+                Image(systemName: "heart.text.square.fill")
+                    .accessibilityHidden(true)
+                Text("emergency.medicalid.button.title")
+                    .dsBodyLarge()
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, minHeight: 64)
+            .background(Color.dsPrimary)
+            .cornerRadius(DSSpacing.rLg)
+        }
+        .accessibilityLabel(Text("emergency.medicalid.button.title"))
     }
 
     private var emergencyButton: some View {

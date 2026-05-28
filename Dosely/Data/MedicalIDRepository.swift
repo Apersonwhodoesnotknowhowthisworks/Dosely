@@ -48,6 +48,22 @@ final class MedicalIDRepository {
         }
     }
 
+    /// Synchronous sibling of `fetchLocal` for the read-only emergency
+    /// viewer, which builds its view model in `init` so a paramedic sees
+    /// the cached ID instantly — no loading flash, works fully offline.
+    /// Must be called on the main thread (the only caller is the
+    /// SwiftUI viewer, and `viewContext` is main-queue bound).
+    func fetchLocalSync(personID: UUID) -> MedicalID? {
+        var result: MedicalID?
+        context.performAndWait {
+            let request = NSFetchRequest<MedicalID>(entityName: "MedicalID")
+            request.predicate = NSPredicate(format: "personID == %@", personID as CVarArg)
+            request.fetchLimit = 1
+            result = (try? context.fetch(request))?.first
+        }
+        return result
+    }
+
     /// Hits Firestore for the current canonical state and mirrors it
     /// into Core Data on success. Returns the mirrored row, or nil
     /// if no doc exists yet (a brand-new person). Throws `.offline`

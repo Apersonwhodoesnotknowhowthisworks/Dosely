@@ -22,6 +22,7 @@ struct PersonDetailView: View {
     @State private var medicationsLoaded = false
     @State private var showingAddMedication = false
     @State private var showingMedicalIDEditor = false
+    @State private var showingMedicalIDViewer = false
 
     let person: Person
     let personRepo: PersonRepository
@@ -116,6 +117,9 @@ struct PersonDetailView: View {
                 EditMedicalIDView()
                     .environmentObject(authService)
                     .environment(\.supervisorTargetPersonID, person.id)
+            }
+            .sheet(isPresented: $showingMedicalIDViewer) {
+                EmergencyMedicalIDView(person: person)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -296,6 +300,23 @@ struct PersonDetailView: View {
                 .dsCaption()
                 .foregroundColor(.dsTextSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+            Button(action: { showingMedicalIDViewer = true }) {
+                HStack(spacing: DSSpacing.sm) {
+                    Image(systemName: "heart.text.square.fill")
+                        .foregroundColor(.dsDanger)
+                        .accessibilityHidden(true)
+                    Text("emergency.medicalid.view.action")
+                        .dsBodyLarge()
+                        .foregroundColor(.dsTextPrimary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.dsTextSecondary)
+                        .accessibilityHidden(true)
+                }
+                .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("emergency.medicalid.view.action"))
             Button(action: { showingMedicalIDEditor = true }) {
                 HStack(spacing: DSSpacing.sm) {
                     Image(systemName: "cross.case.fill")

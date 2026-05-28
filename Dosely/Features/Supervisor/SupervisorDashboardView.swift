@@ -10,6 +10,8 @@ struct SupervisorDashboardView: View {
     @State private var showingSettings = false
     @State private var showingMedicalIDEditor = false
     @State private var pendingMedicalIDTargetPersonID: UUID?
+    @State private var showingMedicalIDViewer = false
+    @State private var pendingMedicalIDViewerTargetPersonID: UUID?
     @State private var detailDose: TodayDose?
     @State private var historyPersonIDOverride: UUID?
     @State private var pendingAddTargetPersonID: UUID?
@@ -150,6 +152,10 @@ struct SupervisorDashboardView: View {
                 .environmentObject(authService)
                 .environment(\.supervisorTargetPersonID, pendingMedicalIDTargetPersonID)
         }
+        .sheet(isPresented: $showingMedicalIDViewer) {
+            MedicalIDViewerSheet(preselectedPersonID: pendingMedicalIDViewerTargetPersonID)
+                .environmentObject(authService)
+        }
         .confirmationDialog(L("supervisor.addmed.picker.title"),
                             isPresented: $promptAddTargetPicker,
                             titleVisibility: .visible) {
@@ -205,12 +211,14 @@ struct SupervisorDashboardView: View {
                                 pendingAddTargetPersonID = activePersonID
                                 showingAdd = true
                             },
+                            onViewMedicalID: { handleViewMedicalIDTap() },
                             onEditMedicalID: { handleEditMedicalIDTap() },
                             onSettings: { showingSettings = true }
                         )
                     } else {
                         QuickActionsCard(
                             onAddMedication: { promptAddTargetPicker = true },
+                            onViewMedicalID: { handleViewMedicalIDTap() },
                             onEditMedicalID: { handleEditMedicalIDTap() },
                             onSettings: { showingSettings = true }
                         )
@@ -321,6 +329,16 @@ struct SupervisorDashboardView: View {
         showingMedicalIDEditor = true
     }
 
+    /// Opens the read-only viewer. When a person is selected the viewer
+    /// opens straight to their card; when "All" is selected
+    /// (`activePersonID == nil`) the wrapper shows the shared target
+    /// picker first. Same "always render, pick in-flow" shape as the
+    /// editor so there is one failure mode, not a dialog plus a sheet.
+    private func handleViewMedicalIDTap() {
+        pendingMedicalIDViewerTargetPersonID = activePersonID
+        showingMedicalIDViewer = true
+    }
+
     private func acknowledge(_ alert: Alert) async {
         guard
             let supervisor = authService.currentPerson,
@@ -403,6 +421,40 @@ private struct SecondaryReadOnlyNotice: View {
             return L("supervisor.readonly.notice", name as NSString)
         }
         return L("supervisor.readonly.notice.unknown")
+    }
+}
+
+// MARK: - Medical ID viewer sheet (Quick Actions)
+
+/// Wraps the read-only `EmergencyMedicalIDView` for the dashboard's
+/// Quick Actions. When a person is already selected the viewer opens
+/// straight away; when "All" is selected it shows the shared
+/// `AddMedicationTargetPicker` first and resolves the pick to a Person
+/// before presenting the viewer. Mirrors the editor's "always render,
+/// pick in-flow" shape so there is a single failure mode.
+private struct MedicalIDViewerSheet: View {
+    @EnvironmentObject var authService: AuthService
+    @Environment(\.dismiss) private var dismiss
+    let preselectedPersonID: UUID?
+    @State private var pickedPersonID: UUID?
+
+    var body: some View {
+        if let person = resolvedPerson {
+            EmergencyMedicalIDView(person: person)
+        } else {
+            AddMedicationTargetPicker(
+                onPick: { pickedPersonID = $0 },
+                onCancel: { dismiss() },
+                titleKey: "emergency.medicalid.picker.title"
+            )
+        }
+    }
+
+    private var resolvedPerson: Person? {
+        guard let id = pickedPersonID ?? preselectedPersonID,
+              let people = authService.currentPerson?.careCircle?.people as? Set<Person>
+        else { return nil }
+        return people.first(where: { $0.id == id })
     }
 }
 

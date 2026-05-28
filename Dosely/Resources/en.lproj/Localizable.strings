@@ -460,3 +460,19 @@
 "sync.refresh.error.offline" = "Couldn't refresh. Check your connection and try again.";
 "sync.refresh.error.permissiondenied" = "Couldn't refresh. Please sign in again.";
 "sync.refresh.error.generic" = "Couldn't refresh. Please try again.";
+
+// MARK: - Emergency Medical ID (read-only paramedic view)
+"emergency.medicalid.button.title" = "Emergency Medical ID";
+"emergency.medicalid.view.action" = "View Emergency Medical ID";
+"emergency.medicalid.picker.title" = "Whose Medical ID?";
+"emergency.medicalid.viewer.title" = "Emergency Medical ID";
+"emergency.medicalid.empty.title" = "No emergency information saved yet.";
+"emergency.medicalid.empty.subtitle" = "Tap Edit on the supervisor's device to add.";
+"emergency.medicalid.section.allergies" = "Allergies";
+"emergency.medicalid.section.conditions" = "Conditions";
+"emergency.medicalid.section.contacts" = "Emergency contacts";
+"emergency.medicalid.section.notes" = "Notes";
+"emergency.medicalid.bloodtype.label" = "Blood type";
+"emergency.medicalid.dob" = "Born %@ · age %d";
+"emergency.medicalid.contact.call.a11yLabel" = "Call %@ at %@";
+"emergency.medicalid.contact.call.a11yHint" = "Opens the phone app to call.";

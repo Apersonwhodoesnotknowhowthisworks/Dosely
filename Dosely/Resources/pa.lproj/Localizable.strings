@@ -465,3 +465,19 @@
 "sync.refresh.error.offline" = "ਤਾਜ਼ਾ ਨਹੀਂ ਕਰ ਸਕੇ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
 "sync.refresh.error.permissiondenied" = "ਤਾਜ਼ਾ ਨਹੀਂ ਕਰ ਸਕੇ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਸਾਈਨ-ਇਨ ਕਰੋ।"; // REVIEW NEEDED
 "sync.refresh.error.generic" = "ਤਾਜ਼ਾ ਨਹੀਂ ਕਰ ਸਕੇ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
+
+// MARK: - Emergency Medical ID (read-only paramedic view)
+"emergency.medicalid.button.title" = "ਐਮਰਜੈਂਸੀ ਮੈਡੀਕਲ ਆਈਡੀ"; // REVIEW NEEDED
+"emergency.medicalid.view.action" = "ਐਮਰਜੈਂਸੀ ਮੈਡੀਕਲ ਆਈਡੀ ਵੇਖੋ"; // REVIEW NEEDED
+"emergency.medicalid.picker.title" = "ਕਿਸ ਦੀ ਮੈਡੀਕਲ ਆਈਡੀ?"; // REVIEW NEEDED
+"emergency.medicalid.viewer.title" = "ਐਮਰਜੈਂਸੀ ਮੈਡੀਕਲ ਆਈਡੀ"; // REVIEW NEEDED
+"emergency.medicalid.empty.title" = "ਹਾਲੇ ਕੋਈ ਐਮਰਜੈਂਸੀ ਜਾਣਕਾਰੀ ਸੇਵ ਨਹੀਂ ਕੀਤੀ।"; // REVIEW NEEDED
+"emergency.medicalid.empty.subtitle" = "ਜੋੜਨ ਲਈ ਨਿਗਰਾਨ ਦੇ ਫ਼ੋਨ 'ਤੇ ਐਡਿਟ ਦਬਾਓ।"; // REVIEW NEEDED
+"emergency.medicalid.section.allergies" = "ਐਲਰਜੀਆਂ"; // REVIEW NEEDED
+"emergency.medicalid.section.conditions" = "ਮੈਡੀਕਲ ਹਾਲਤਾਂ"; // REVIEW NEEDED
+"emergency.medicalid.section.contacts" = "ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ"; // REVIEW NEEDED
+"emergency.medicalid.section.notes" = "ਨੋਟਸ"; // REVIEW NEEDED
+"emergency.medicalid.bloodtype.label" = "ਖ਼ੂਨ ਦਾ ਗਰੁੱਪ"; // REVIEW NEEDED
+"emergency.medicalid.dob" = "ਜਨਮ %@ · ਉਮਰ %d"; // REVIEW NEEDED
+"emergency.medicalid.contact.call.a11yLabel" = "%@ ਨੂੰ %@ 'ਤੇ ਕਾਲ ਕਰੋ"; // REVIEW NEEDED
+"emergency.medicalid.contact.call.a11yHint" = "ਕਾਲ ਕਰਨ ਲਈ ਫ਼ੋਨ ਐਪ ਖੋਲ੍ਹਦਾ ਹੈ।"; // REVIEW NEEDED
