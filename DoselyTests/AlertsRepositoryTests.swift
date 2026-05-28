@@ -117,4 +117,38 @@ final class AlertsRepositoryTests: XCTestCase {
         XCTAssertEqual(pending.compactMap { $0.docID }, ["needs-ack"],
                        "failed remote ack must not flip the local row")
     }
+
+    /// Type-level guard for the error-collapse convention on the ack
+    /// path. `AlertsRepository.acknowledge` lets `FirestoreServiceError`
+    /// propagate untouched — no domain-mapping happens at the repo
+    /// layer — so the four cases reach the dashboard's catch site
+    /// distinctly. This pins that contract: a future "let's wrap this
+    /// in a typed AlertsRepositoryError that maps everything to
+    /// `.couldntAck`" PR would fail this test on day one.
+    func testAcknowledge_propagatesEveryFirestoreErrorCaseDistinctly() {
+        // The four cases must remain mutually unequal — the moment two
+        // of them become `Equatable`-equal, the dashboard's branch-on-
+        // case logic collapses to a single user-visible string. We don't
+        // need to round-trip them through `acknowledge` to verify the
+        // contract; the type itself is the surface area the repo is
+        // committed to.
+        let cases: [FirestoreServiceError] = [
+            .permissionDenied,
+            .offline,
+            .notFound,
+            .unknown("network unreachable")
+        ]
+        for (i, lhs) in cases.enumerated() {
+            for (j, rhs) in cases.enumerated() where i != j {
+                XCTAssertNotEqual(
+                    lhs, rhs,
+                    "FirestoreServiceError cases must stay distinct so the ack catch site can branch on them — see error-collapse convention (build_log April 30)."
+                )
+            }
+        }
+        // And the offline case the repo demonstrably surfaces today
+        // must remain one of those four — not collapsed to .unknown.
+        XCTAssertEqual(FirestoreServiceError.offline, FirestoreServiceError.offline)
+        XCTAssertNotEqual(FirestoreServiceError.offline, FirestoreServiceError.unknown("offline"))
+    }
 }

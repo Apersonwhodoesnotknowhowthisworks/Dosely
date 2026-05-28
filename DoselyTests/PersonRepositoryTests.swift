@@ -373,6 +373,70 @@ final class PersonRepositoryTests: XCTestCase {
         XCTAssertEqual(med.name, "Allowed")
     }
 
+    /// A primary cannot promote a supervisor who lives in a different
+    /// care circle. The preflight checks resolve the target's
+    /// `careCircle.id` and refuse anything that doesn't match the
+    /// actor's circle — same enforcement the rules layer carries.
+    func testPromoteToPrimaryRefusesTargetInDifferentCircle() async throws {
+        // Spin up a second circle with its own primary; use that primary
+        // as the foreign-target. The actor (`supervisor`) and the
+        // target (`otherPrimary`) live in different circles.
+        let otherCircle = await careCircleRepo.createCareCircle(
+            name: "Other", foundingSupervisorFirebaseUID: "other-uid", founderName: "Other"
+        )
+        let otherPrimary = await personRepo.fetchSupervisor(firebaseUID: "other-uid")!
+        XCTAssertNotEqual(circle.id, otherCircle.id)
+        XCTAssertNotEqual(supervisor.careCircle?.id, otherPrimary.careCircle?.id)
+
+        do {
+            try await personRepo.promoteToPrimary(
+                targetPersonID: otherPrimary.id!, actorPersonID: supervisor.id!
+            )
+            XCTFail("Expected invalidPromotionTarget for a cross-circle target")
+        } catch let err as PersonRepositoryError {
+            XCTAssertEqual(err, .invalidPromotionTarget)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
+    }
+
+    /// Type-level guard for the error-collapse convention on the
+    /// promote path. The two preflight failures must surface as
+    /// DISTINCT `PersonRepositoryError` cases — never the same
+    /// "generic" code that would force the UI to invent a single
+    /// catch-all string. See the May 13 build_log entry for the
+    /// project-wide rationale.
+    func testPromoteToPrimary_errorCasesAreDistinct() async {
+        let secondary = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        let client = try? await personRepo.createDeviceClient(
+            name: "Grandpa", photoData: nil, pinPlaintext: "1234",
+            language: "en", in: circle, actorPersonID: supervisor.id!
+        )
+
+        var notCurrentPrimaryThrown: PersonRepositoryError?
+        do {
+            try await personRepo.promoteToPrimary(
+                targetPersonID: secondary.id!, actorPersonID: secondary.id!
+            )
+        } catch let err as PersonRepositoryError {
+            notCurrentPrimaryThrown = err
+        } catch {}
+
+        var invalidTargetThrown: PersonRepositoryError?
+        do {
+            try await personRepo.promoteToPrimary(
+                targetPersonID: client!.id!, actorPersonID: supervisor.id!
+            )
+        } catch let err as PersonRepositoryError {
+            invalidTargetThrown = err
+        } catch {}
+
+        XCTAssertEqual(notCurrentPrimaryThrown, .notCurrentPrimary)
+        XCTAssertEqual(invalidTargetThrown, .invalidPromotionTarget)
+        XCTAssertNotEqual(notCurrentPrimaryThrown, invalidTargetThrown,
+                          "promote-to-primary failures must surface distinct codes per the error-collapse convention")
+    }
+
     // MARK: - Duplicate-row regression
     //
     // The shipping bug: a managed client added through AddPersonFlow

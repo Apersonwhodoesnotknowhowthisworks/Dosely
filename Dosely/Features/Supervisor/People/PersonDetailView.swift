@@ -487,17 +487,18 @@ struct PersonDetailView: View {
             )
             onChanged()
             dismiss()
-        } catch let err as PersonRepositoryError {
-            switch err {
-            case .notCurrentPrimary:
-                errorMessage = L("supervisor.promote.error.notprimary")
-            case .invalidPromotionTarget:
-                errorMessage = L("supervisor.promote.error.target")
-            default:
-                errorMessage = L("supervisor.promote.error.generic")
-            }
         } catch {
-            errorMessage = L("supervisor.promote.error.generic")
+            // Distinct error codes per error-collapse convention —
+            // see build_log April 30 phantom join code entry. The
+            // promotion can throw either `PersonRepositoryError`
+            // (preflight checks) or `FirestoreServiceError` (rules
+            // rejection / network); both branches surface distinct
+            // copy via `mapError`. Previously the catch dropped
+            // everything past `.notCurrentPrimary` /
+            // `.invalidPromotionTarget` into a single "generic"
+            // string, which is the same collapse the convention is
+            // meant to prevent.
+            errorMessage = mapError(error)
         }
     }
 
@@ -543,17 +544,30 @@ struct PersonDetailView: View {
     }
 
     private func mapError(_ error: Error) -> String {
-        guard let err = error as? PersonRepositoryError else {
-            return L("supervisor.person.error.generic")
+        // Distinct error codes per error-collapse convention — see
+        // build_log April 30 phantom join code entry. Both the
+        // domain repository error and the underlying Firestore error
+        // are surfaced one-to-one so a rules rejection never reads
+        // as "couldn't reach the server."
+        if let err = error as? PersonRepositoryError {
+            switch err {
+            case .lastSupervisor:           return L("supervisor.person.error.lastsupervisor")
+            case .permissionDenied:         return L("supervisor.person.error.notprimary")
+            case .invalidPin:               return L("supervisor.person.error.invalidpin")
+            case .invalidRoleTransition:    return L("supervisor.person.error.invalidrole")
+            case .notCurrentPrimary:        return L("supervisor.promote.error.notprimary")
+            case .invalidPromotionTarget:   return L("supervisor.promote.error.target")
+            case .notFound, .alreadyExists: return L("supervisor.person.error.generic")
+            }
         }
-        switch err {
-        case .lastSupervisor:           return L("supervisor.person.error.lastsupervisor")
-        case .permissionDenied:         return L("supervisor.person.error.notprimary")
-        case .invalidPin:               return L("supervisor.person.error.invalidpin")
-        case .invalidRoleTransition:    return L("supervisor.person.error.invalidrole")
-        case .notCurrentPrimary:        return L("supervisor.promote.error.notprimary")
-        case .invalidPromotionTarget:   return L("supervisor.promote.error.target")
-        case .notFound, .alreadyExists: return L("supervisor.person.error.generic")
+        if let err = error as? FirestoreServiceError {
+            switch err {
+            case .permissionDenied: return L("supervisor.person.error.notprimary")
+            case .offline:          return L("supervisor.person.error.offline")
+            case .notFound:         return L("supervisor.person.error.notfound")
+            case .unknown:          return L("supervisor.person.error.generic")
+            }
         }
+        return L("supervisor.person.error.generic")
     }
 }

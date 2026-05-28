@@ -1,5 +1,6 @@
 import CoreData
 import Foundation
+import OSLog
 
 /// Reads alerts from Core Data (kept fresh by `SyncCoordinator`'s
 /// listener), writes new alerts via `FirestoreService.createAlertIfAbsent`,
@@ -83,12 +84,38 @@ final class AlertsRepository {
                      in careCircleID: UUID,
                      firebaseUID: String,
                      actorName: String?) async throws {
-        try await firestore.acknowledgeAlert(
-            circleID: careCircleID.uuidString,
-            alertID: alertID,
-            firebaseUID: firebaseUID,
-            actorName: actorName
+        Self.logger.info(
+            "acknowledge: entry actor=\(firebaseUID, privacy: .public) alert=\(alertID, privacy: .public) circle=\(careCircleID.uuidString, privacy: .public)"
         )
+        do {
+            try await firestore.acknowledgeAlert(
+                circleID: careCircleID.uuidString,
+                alertID: alertID,
+                firebaseUID: firebaseUID,
+                actorName: actorName
+            )
+            Self.logger.info(
+                "acknowledge: Firestore success alert=\(alertID, privacy: .public)"
+            )
+        } catch let err as FirestoreServiceError {
+            // Log each distinct case under its own message so a Console
+            // filter on `com.medication.dosely:alerts` reads as a
+            // diagnosis trail rather than a wall of localizedDescription.
+            switch err {
+            case .permissionDenied:
+                Self.logger.error("acknowledge: permissionDenied alert=\(alertID, privacy: .public) — rules rejection")
+            case .offline:
+                Self.logger.error("acknowledge: offline alert=\(alertID, privacy: .public) — no network")
+            case .notFound:
+                Self.logger.error("acknowledge: notFound alert=\(alertID, privacy: .public) — doc missing")
+            case .unknown(let detail):
+                Self.logger.error("acknowledge: unknown alert=\(alertID, privacy: .public) — \(detail, privacy: .public)")
+            }
+            throw err
+        } catch {
+            Self.logger.error("acknowledge: non-Firestore error alert=\(alertID, privacy: .public) — \(String(describing: error), privacy: .public)")
+            throw error
+        }
         // Optimistically mirror locally — the listener will overwrite
         // with the server timestamp shortly. If the server-side write
         // turned into a no-op (race lost), the listener will correct
@@ -104,5 +131,8 @@ final class AlertsRepository {
             alert.acknowledgedAt = Date()
             try? context.save()
         }
+        Self.logger.info("acknowledge: Core Data mirror complete alert=\(alertID, privacy: .public)")
     }
+
+    private static let logger = Logger(subsystem: "com.medication.dosely", category: "alerts")
 }

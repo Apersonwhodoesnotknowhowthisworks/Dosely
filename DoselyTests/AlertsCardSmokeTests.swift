@@ -46,7 +46,7 @@ final class AlertsCardSmokeTests: XCTestCase {
             ackName: "Aunt Two"
         )
 
-        var ackedThisAlert: Alert?
+        var ackedThisAlert: Dosely.Alert?
         let card = AlertsCard(alerts: [pending, acked]) { tapped in
             ackedThisAlert = tapped
         }
@@ -96,11 +96,11 @@ final class AlertsCardSmokeTests: XCTestCase {
                            scheduledTime: Date?,
                            createdAt: Date,
                            ackUID: String? = nil,
-                           ackName: String? = nil) -> Alert {
+                           ackName: String? = nil) -> Dosely.Alert {
         let context = stack.viewContext
-        var made: Alert!
+        var made: Dosely.Alert!
         context.performAndWait {
-            let alert = Alert(context: context)
+            let alert = Dosely.Alert(context: context)
             alert.docID = UUID().uuidString
             alert.type = type
             alert.personID = personID

@@ -444,6 +444,8 @@
 "supervisor.person.error.permission" = "Only a supervisor in this circle can do that.";
 "supervisor.person.error.invalidpin" = "Please enter a valid PIN.";
 "supervisor.person.error.invalidrole" = "That role change isn't allowed.";
+"supervisor.person.error.offline" = "Couldn't reach the server. Check your connection and try again.";
+"supervisor.person.error.notfound" = "Couldn't find that record. It may have been removed by another supervisor.";
 
 // MARK: - Circle settings
 "supervisor.circle.title" = "Care circle";

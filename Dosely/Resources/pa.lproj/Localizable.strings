@@ -447,6 +447,10 @@
 "supervisor.person.error.permission" = "ਇਹ ਕੰਮ ਸਿਰਫ਼ ਇਸ ਪਰਿਵਾਰ ਦਾ ਨਿਗਰਾਨ ਕਰ ਸਕਦਾ ਹੈ।";
 "supervisor.person.error.invalidpin" = "ਠੀਕ PIN ਪਾਉ।";
 "supervisor.person.error.invalidrole" = "ਇਹ ਭੂਮਿਕਾ ਬਦਲਣ ਦੀ ਆਗਿਆ ਨਹੀਂ ਹੈ।";
+// REVIEW NEEDED — AI draft of "Couldn't reach the server. Check your connection and try again."
+"supervisor.person.error.offline" = "ਸਰਵਰ ਨਾਲ ਸੰਪਰਕ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਆਪਣਾ ਕੁਨੈਕਸ਼ਨ ਚੈਕ ਕਰ ਕੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
+// REVIEW NEEDED — AI draft of "Couldn't find that record. It may have been removed by another supervisor."
+"supervisor.person.error.notfound" = "ਉਹ ਰਿਕਾਰਡ ਨਹੀਂ ਮਿਲਿਆ। ਸ਼ਾਇਦ ਕਿਸੇ ਹੋਰ ਨਿਗਰਾਨ ਨੇ ਇਸਨੂੰ ਹਟਾ ਦਿੱਤਾ ਹੈ।";
 
 // MARK: - Circle settings
 "supervisor.circle.title" = "ਪਰਿਵਾਰ";

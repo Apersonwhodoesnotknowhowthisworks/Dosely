@@ -979,6 +979,104 @@ describe("Firestore security rules", () => {
       const secondaryDb = authedDb(secondary.uid);
       await assertFails(deleteDoc(doc(secondaryDb, `careCircles/${circleID}/alerts/${alertID}`)));
     });
+
+    // -- e1: first-write-wins across two supervisors -------------------
+    //
+    // Two supervisors on different devices both see the pending alert
+    // and both tap Acknowledge within seconds. The first write lands
+    // (the doc's acknowledgedBy flips from null to that uid); the
+    // second write now sees a non-null acknowledgedBy and must be
+    // rejected by the rules-layer "existing.acknowledgedBy == null"
+    // predicate. This is the security-layer enforcement of the "first
+    // to ack wins, second supervisor silently no-ops" promise that
+    // `FirestoreService.acknowledgeAlert`'s transaction relies on.
+    it("first-write-wins: a sequential second ack is rejected even by a different supervisor", async () => {
+      const alertID = "alert-race";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID, type: "missedDose",
+          personID: grandpa.personID, createdAt: new Date(),
+          acknowledgedBy: null,
+        });
+      });
+
+      // First ack — secondary wins the race.
+      const secondaryDb = authedDb(secondary.uid);
+      await assertSucceeds(
+        updateDoc(doc(secondaryDb, `careCircles/${circleID}/alerts/${alertID}`), {
+          acknowledgedBy: secondary.uid,
+          acknowledgedAt: serverTimestamp(),
+        })
+      );
+
+      // Second ack — primary loses the race; the rule now sees a
+      // non-null existing acknowledgedBy and must reject.
+      const primaryDb = authedDb(primary.uid);
+      await assertFails(
+        updateDoc(doc(primaryDb, `careCircles/${circleID}/alerts/${alertID}`), {
+          acknowledgedBy: primary.uid,
+          acknowledgedAt: serverTimestamp(),
+        })
+      );
+    });
+
+    // -- e2: legacy "supervisor" role can still ack --------------------
+    //
+    // Pre-`PrimaryRoleMigration` data carries role="supervisor". The
+    // `isAnySupervisor` helper in the rules treats that value as a
+    // transitional alias for primary, so an in-flight upgrade where
+    // one device has run the migration and another hasn't doesn't
+    // strand the legacy user with a frozen ack button.
+    it("a legacy 'supervisor' role can acknowledge a pending alert", async () => {
+      const legacyCircleID = "circle-alerts-legacy";
+      const legacy = { uid: "legacy-ack-uid", personID: "person-legacy-ack" };
+      const target = { uid: "client-legacy-uid", personID: "person-client-legacy" };
+      await seedCircle({
+        circleID: legacyCircleID,
+        joinCode: "930002",
+        supervisor: legacy,
+        deviceClient: target,
+        legacyRoles: true,
+      });
+      const alertID = "alert-legacy";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${legacyCircleID}/alerts/${alertID}`), {
+          id: alertID, type: "missedDose",
+          personID: target.personID, createdAt: new Date(),
+          acknowledgedBy: null,
+        });
+      });
+      const db = authedDb(legacy.uid);
+      await assertSucceeds(
+        updateDoc(doc(db, `careCircles/${legacyCircleID}/alerts/${alertID}`), {
+          acknowledgedBy: legacy.uid,
+          acknowledgedAt: serverTimestamp(),
+        })
+      );
+    });
+
+    // -- e3: a device client cannot ack --------------------------------
+    //
+    // Device clients see their own dose list but never the supervisor
+    // alerts feed in the UI; the rules layer enforces this regardless
+    // of any future UI bug that surfaces the card to a client.
+    it("a device client CANNOT acknowledge an alert", async () => {
+      const alertID = "alert-client-ack";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID, type: "missedDose",
+          personID: grandpa.personID, createdAt: new Date(),
+          acknowledgedBy: null,
+        });
+      });
+      const db = authedDb(grandpa.uid);
+      await assertFails(
+        updateDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
+          acknowledgedBy: grandpa.uid,
+          acknowledgedAt: serverTimestamp(),
+        })
+      );
+    });
   });
 
   // -- 11.5. Medical ID: per-person, supervisor read+write ----------------
@@ -1274,6 +1372,129 @@ describe("Firestore security rules", () => {
           }
         )
       );
+    });
+
+    // -- f1: missing target /userMemberships doc -----------------------
+    //
+    // Edge case from pre-`PrimaryRoleMigration` data: a supervisor's
+    // Person doc exists but their `/userMemberships` doc was lost (or
+    // never written by an early app version). The production
+    // `applyPrimaryAssignment` uses `setData(merge: true)` for the
+    // membership writes, but `buildPromotionBatch` mirrors the older
+    // `updateData` shape — which fails at the SDK level when the doc
+    // is absent. This pins that the "make sure to setData-merge or
+    // PrimaryRoleMigration runs first" assumption is real: a naive
+    // `update`-based promotion against legacy data refuses to commit.
+    it("a buildPromotionBatch with an `update` against a missing target membership refuses to commit", async () => {
+      // Delete target's membership AFTER beforeEach has seeded.
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await deleteDoc(doc(ctx.firestore(), `userMemberships/${secondary.uid}`));
+      });
+      const db = authedDb(primary.uid);
+      const batch = buildPromotionBatch(db, circleID, primary, secondary);
+      await assertFails(batch.commit());
+    });
+
+    // -- f2: a secondary CANNOT promote a peer -------------------------
+    //
+    // The existing "secondary cannot self-promote" case is just one
+    // shape of the same prohibition. This pins the rule that no
+    // secondary, regardless of who the target is, can initiate the
+    // promotion batch — `isPromotionBatch` reads `isPrimary(circleID)`
+    // for the actor pre-batch and that returns false here.
+    it("a secondary CANNOT promote a peer secondary to primary", async () => {
+      const peerCircleID = "circle-promote-peer";
+      const realPrimary = { uid: "real-primary-uid", personID: "person-real-primary" };
+      const actorSecondary = { uid: "actor-sec-uid", personID: "person-actor-sec" };
+      const targetSecondary = { uid: "target-sec-uid", personID: "person-target-sec" };
+      await seedCircle({
+        circleID: peerCircleID,
+        joinCode: "940002",
+        supervisor: realPrimary,
+        extraSupervisors: [actorSecondary, targetSecondary],
+        supervisorCount: 3,
+      });
+      const db = authedDb(actorSecondary.uid);
+      const batch = buildPromotionBatch(db, peerCircleID, realPrimary, targetSecondary);
+      await assertFails(batch.commit());
+    });
+
+    // -- f3: cross-circle promote ---------------------------------------
+    //
+    // The actor is primary of circle A; they try to promote a target
+    // who is a supervisor of circle B. The Person doc path
+    // (`careCircles/A/people/{targetID}`) doesn't exist for circle A's
+    // target — both updates land against docs the actor has no
+    // authority over. Rules reject before any write commits.
+    it("a primary CANNOT promote a target whose Person doc lives in a different circle", async () => {
+      const otherCircleID = "circle-promote-other";
+      const otherPrimary = { uid: "other-primary-uid", personID: "person-other-primary" };
+      const otherSecondary = { uid: "other-sec-uid", personID: "person-other-sec" };
+      await seedCircle({
+        circleID: otherCircleID,
+        joinCode: "940003",
+        supervisor: otherPrimary,
+        extraSupervisors: [otherSecondary],
+        supervisorCount: 2,
+      });
+      // Actor is primary of the original `circleID`. Target's Person
+      // doc lives under `otherCircleID`. Wire up a batch that points
+      // at the actor's own circle but names the foreign target.
+      const db = authedDb(primary.uid);
+      const batch = writeBatch(db);
+      batch.update(doc(db, `careCircles/${circleID}`), {
+        primarySupervisorPersonID: otherSecondary.personID,
+      });
+      // This Person doc does not exist under `circleID`.
+      batch.update(
+        doc(db, `careCircles/${circleID}/people/${otherSecondary.personID}`),
+        { role: "primary_supervisor" }
+      );
+      batch.update(doc(db, `careCircles/${circleID}/people/${primary.personID}`), {
+        role: "secondary_supervisor",
+      });
+      batch.update(doc(db, `userMemberships/${otherSecondary.uid}`), {
+        role: "primary_supervisor",
+      });
+      batch.update(doc(db, `userMemberships/${primary.uid}`), {
+        role: "secondary_supervisor",
+      });
+      await assertFails(batch.commit());
+    });
+
+    // -- g1: role transition + unrelated alert ack in the same batch ---
+    //
+    // The Step G concern: a single batch contains both the promote-
+    // to-primary writes AND an ack on a completely separate alert
+    // doc. Rules treat each write independently against its own
+    // rule. The ack write evaluates `isAnySupervisor(circleID)` on
+    // the actor's PRE-batch role (still primary at write time) and
+    // passes; the promote writes pass via `isPromotionBatch`. The
+    // batch commits.
+    //
+    // Documenting this in a test so a future reader doesn't try to
+    // "tighten" the rules to require single-purpose batches — that
+    // would break the legitimate UX case where a supervisor taps
+    // Acknowledge while the promotion they kicked off is still
+    // settling on the wire.
+    it("a single batch with both a promotion AND an unrelated ack commits", async () => {
+      const alertID = "alert-during-promotion";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID, type: "missedDose",
+          personID: secondary.personID,
+          createdAt: new Date(),
+          acknowledgedBy: null,
+        });
+      });
+      const db = authedDb(primary.uid);
+      const batch = buildPromotionBatch(db, circleID, primary, secondary);
+      // Tack the ack onto the same batch.
+      batch.update(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
+        acknowledgedBy: primary.uid,
+        acknowledgedAt: serverTimestamp(),
+      });
+      await assertSucceeds(batch.commit());
     });
   });
 

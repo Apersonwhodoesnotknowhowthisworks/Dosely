@@ -284,6 +284,9 @@ final class FirestoreService {
         supervisors: [(personID: String, firebaseUID: String?)]
     ) async throws {
         guard let db else { return }
+        Self.roleLogger.debug(
+            "applyPrimaryAssignment: batch starting circle=\(circleID, privacy: .public) newPrimary=\(newPrimaryPersonID, privacy: .public) supervisorRows=\(supervisors.count, privacy: .public)"
+        )
         do {
             let batch = db.batch()
             let circleRef = db.document(Path.careCircle(circleID))
@@ -291,6 +294,7 @@ final class FirestoreService {
                 "primarySupervisorPersonID": newPrimaryPersonID,
                 "lastModified": FieldValue.serverTimestamp()
             ], forDocument: circleRef)
+            Self.roleLogger.debug("applyPrimaryAssignment: write circle.primarySupervisorPersonID circle=\(circleID, privacy: .public)")
 
             for entry in supervisors {
                 let role = entry.personID == newPrimaryPersonID
@@ -303,6 +307,9 @@ final class FirestoreService {
                     "role": role,
                     "lastModified": FieldValue.serverTimestamp()
                 ], forDocument: personRef)
+                Self.roleLogger.debug(
+                    "applyPrimaryAssignment: write person.role personID=\(entry.personID, privacy: .public) role=\(role, privacy: .public)"
+                )
                 if let uid = entry.firebaseUID {
                     let membershipRef = db.document(Path.userMembership(uid))
                     // setData(merge: true): updates `role` on an existing
@@ -316,11 +323,21 @@ final class FirestoreService {
                         "role": role,
                         "joinedAt": FieldValue.serverTimestamp()
                     ], forDocument: membershipRef, merge: true)
+                    Self.roleLogger.debug(
+                        "applyPrimaryAssignment: write membership.role uid=\(uid, privacy: .public) role=\(role, privacy: .public)"
+                    )
                 }
             }
 
             try await batch.commit()
+            Self.roleLogger.info("applyPrimaryAssignment: success circle=\(circleID, privacy: .public) newPrimary=\(newPrimaryPersonID, privacy: .public)")
         } catch {
+            let ns = error as NSError
+            Self.roleLogger.error(
+                "applyPrimaryAssignment: batch failed circle=\(circleID, privacy: .public) domain=\(ns.domain, privacy: .public) code=\(ns.code, privacy: .public) desc=\(ns.localizedDescription, privacy: .public)"
+            )
+            // Distinct error codes per error-collapse convention —
+            // see build_log April 30 phantom join code entry.
             throw FirestoreServiceError.map(error)
         }
     }
@@ -816,8 +833,16 @@ final class FirestoreService {
                           actorName: String?) async throws {
         guard let db else { throw FirestoreServiceError.offline }
         let ref = db.collection(Path.alerts(circleID)).document(alertID)
+        Self.alertsLogger.debug("acknowledgeAlert: transaction start alert=\(alertID, privacy: .public)")
+        // Firestore transactions can retry up to 5 times. Counting the
+        // closure invocations gives visibility into "ack succeeded but
+        // UI didn't update" — a retry that lost the race writes nothing
+        // and the listener delivers the winning state.
+        let attemptCounter = AttemptCounter()
         do {
             _ = try await db.runTransaction({ (txn, errorPointer) -> Any? in
+                let attempt = attemptCounter.next()
+                Self.alertsLogger.debug("acknowledgeAlert: txn attempt #\(attempt, privacy: .public) alert=\(alertID, privacy: .public)")
                 let snap: DocumentSnapshot
                 do {
                     snap = try txn.getDocument(ref)
@@ -841,7 +866,25 @@ final class FirestoreService {
                 return nil
             })
         } catch {
+            // Distinct error codes per error-collapse convention —
+            // see build_log April 30 phantom join code entry.
             throw FirestoreServiceError.map(error)
+        }
+    }
+
+    private static let alertsLogger = Logger(subsystem: "com.medication.dosely", category: "alerts")
+    private static let roleLogger = Logger(subsystem: "com.medication.dosely", category: "role-transitions")
+
+    /// Tiny thread-safe counter for transaction retry visibility. The
+    /// runTransaction closure is invoked once per attempt and Firestore
+    /// may parallelize-then-retry; a Sendable lock is enough.
+    private final class AttemptCounter: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value: Int = 0
+        func next() -> Int {
+            lock.lock(); defer { lock.unlock() }
+            value += 1
+            return value
         }
     }
 

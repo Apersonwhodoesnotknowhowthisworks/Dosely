@@ -1,5 +1,6 @@
 import CoreData
 import Foundation
+import OSLog
 
 enum PersonRepositoryError: Error, Equatable {
     case notFound
@@ -113,6 +114,9 @@ final class PersonRepository {
         targetPersonID: UUID,
         actorPersonID: UUID
     ) async throws {
+        Self.roleLogger.info(
+            "promoteToPrimary: entry actor=\(actorPersonID.uuidString, privacy: .public) target=\(targetPersonID.uuidString, privacy: .public)"
+        )
         struct Plan {
             let circleID: UUID
             let oldPrimaryPersonID: UUID
@@ -121,39 +125,73 @@ final class PersonRepository {
             let newPrimaryFirebaseUID: String?
         }
 
-        let plan: Plan = try await context.perform { [context] in
-            guard let actor = Self.find(id: actorPersonID, in: context),
-                  let circle = actor.careCircle,
-                  let circleID = circle.id else {
-                throw PersonRepositoryError.notFound
+        let plan: Plan
+        do {
+            plan = try await context.perform { [context] in
+                guard let actor = Self.find(id: actorPersonID, in: context),
+                      let circle = actor.careCircle,
+                      let circleID = circle.id else {
+                    throw PersonRepositoryError.notFound
+                }
+                guard let primaryID = circle.primarySupervisorPersonID,
+                      primaryID == actorPersonID,
+                      Roles.isPrimarySupervisor(actor.role) else {
+                    throw PersonRepositoryError.notCurrentPrimary
+                }
+                guard let target = Self.find(id: targetPersonID, in: context),
+                      target.careCircle?.id == circleID,
+                      Roles.isAnySupervisor(target.role) else {
+                    throw PersonRepositoryError.invalidPromotionTarget
+                }
+                return Plan(
+                    circleID: circleID,
+                    oldPrimaryPersonID: actorPersonID,
+                    oldPrimaryFirebaseUID: actor.firebaseUID,
+                    newPrimaryPersonID: targetPersonID,
+                    newPrimaryFirebaseUID: target.firebaseUID
+                )
             }
-            guard let primaryID = circle.primarySupervisorPersonID,
-                  primaryID == actorPersonID,
-                  Roles.isPrimarySupervisor(actor.role) else {
-                throw PersonRepositoryError.notCurrentPrimary
+        } catch let err as PersonRepositoryError {
+            switch err {
+            case .notCurrentPrimary:
+                Self.roleLogger.error("promoteToPrimary: notCurrentPrimary actor=\(actorPersonID.uuidString, privacy: .public)")
+            case .invalidPromotionTarget:
+                Self.roleLogger.error("promoteToPrimary: invalidPromotionTarget target=\(targetPersonID.uuidString, privacy: .public)")
+            case .notFound:
+                Self.roleLogger.error("promoteToPrimary: notFound actor=\(actorPersonID.uuidString, privacy: .public)")
+            default:
+                Self.roleLogger.error("promoteToPrimary: preflight failed err=\(String(describing: err), privacy: .public)")
             }
-            guard let target = Self.find(id: targetPersonID, in: context),
-                  target.careCircle?.id == circleID,
-                  Roles.isAnySupervisor(target.role) else {
-                throw PersonRepositoryError.invalidPromotionTarget
-            }
-            return Plan(
-                circleID: circleID,
-                oldPrimaryPersonID: actorPersonID,
-                oldPrimaryFirebaseUID: actor.firebaseUID,
-                newPrimaryPersonID: targetPersonID,
-                newPrimaryFirebaseUID: target.firebaseUID
-            )
+            throw err
         }
 
-        try await firestore.applyPrimaryAssignment(
-            circleID: plan.circleID.uuidString,
-            newPrimaryPersonID: plan.newPrimaryPersonID.uuidString,
-            supervisors: [
-                (plan.oldPrimaryPersonID.uuidString, plan.oldPrimaryFirebaseUID),
-                (plan.newPrimaryPersonID.uuidString, plan.newPrimaryFirebaseUID)
-            ]
-        )
+        do {
+            try await firestore.applyPrimaryAssignment(
+                circleID: plan.circleID.uuidString,
+                newPrimaryPersonID: plan.newPrimaryPersonID.uuidString,
+                supervisors: [
+                    (plan.oldPrimaryPersonID.uuidString, plan.oldPrimaryFirebaseUID),
+                    (plan.newPrimaryPersonID.uuidString, plan.newPrimaryFirebaseUID)
+                ]
+            )
+            Self.roleLogger.info(
+                "promoteToPrimary: Firestore success circle=\(plan.circleID.uuidString, privacy: .public) newPrimary=\(plan.newPrimaryPersonID.uuidString, privacy: .public)"
+            )
+        } catch let err as FirestoreServiceError {
+            // Distinct error codes per error-collapse convention —
+            // see build_log April 30 phantom join code entry.
+            switch err {
+            case .permissionDenied:
+                Self.roleLogger.error("promoteToPrimary: Firestore permissionDenied — rules rejected the batch")
+            case .offline:
+                Self.roleLogger.error("promoteToPrimary: Firestore offline")
+            case .notFound:
+                Self.roleLogger.error("promoteToPrimary: Firestore notFound")
+            case .unknown(let detail):
+                Self.roleLogger.error("promoteToPrimary: Firestore unknown \(detail, privacy: .public)")
+            }
+            throw err
+        }
 
         await context.perform { [context] in
             guard let oldPrimary = Self.find(id: plan.oldPrimaryPersonID, in: context),
@@ -164,7 +202,12 @@ final class PersonRepository {
             circle.primarySupervisorPersonID = plan.newPrimaryPersonID
             try? context.save()
         }
+        Self.roleLogger.info(
+            "promoteToPrimary: Core Data mirror complete circle=\(plan.circleID.uuidString, privacy: .public)"
+        )
     }
+
+    private static let roleLogger = Logger(subsystem: "com.medication.dosely", category: "role-transitions")
 
     /// Throws `permissionDenied` if the actor isn't the primary
     /// supervisor of their circle. Used as the early gate inside any

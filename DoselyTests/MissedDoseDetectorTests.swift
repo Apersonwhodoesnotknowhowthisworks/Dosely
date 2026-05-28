@@ -140,10 +140,22 @@ final class MissedDoseDetectorTests: XCTestCase {
     func testTwoDistinctScheduleSlotsYieldTwoAlerts() async throws {
         let now = date(hour: 21, minute: 0, on: Date())
         let med = try await seedMedAndSchedule(timeOfDay: "08:00")
-        // Add a second schedule to the same med via the repo.
-        try await medRepo.replaceSchedules(
-            for: med.id!,
+        // Re-save the same medication with two schedules. `saveMedication`
+        // is the public update path; passing the existing id reuses the
+        // row and `Self.replaceSchedules` (private) wipes-and-rewrites
+        // the schedule set in one transaction. Replaces the older test
+        // call to `medRepo.replaceSchedules`, which was a private helper.
+        _ = try await medRepo.saveMedication(
+            personID: grandpa.id!,
             actorPersonID: supervisor.id!,
+            id: med.id!,
+            name: med.name ?? "Lipitor",
+            dose: med.dose ?? "10mg",
+            pillsPerDose: med.pillsPerDose,
+            foodRule: med.foodRule ?? "either",
+            notes: med.notes,
+            currentSupply: med.currentSupply,
+            pillPhotoData: med.pillPhotoData,
             schedules: [
                 ScheduleInput(timeOfDay: "08:00", daysOfWeek: 127),
                 ScheduleInput(timeOfDay: "20:00", daysOfWeek: 127)

@@ -1,3 +1,4 @@
+import CoreData
 import Foundation
 import SwiftUI
 
@@ -23,23 +24,47 @@ final class SupervisorDashboardViewModel: ObservableObject {
     @Published private(set) var adherence: PersonAdherence?
     @Published private(set) var alerts: [Alert] = []
     @Published private(set) var isLoaded = false
+    /// Reactive primary-supervisor flag for the acting user. Plain
+    /// `authService.currentPerson?.role` reads through @EnvironmentObject
+    /// don't invalidate the SwiftUI view when the underlying Core Data
+    /// row's `role` or its CareCircle's `primarySupervisorPersonID`
+    /// mutate — SwiftUI tracks the @Published wrapper, not nested
+    /// NSManagedObject property writes. Listener-driven promotions
+    /// (the other supervisor's device demotes us) therefore left the
+    /// dashboard's role badge, QuickActionsCard, and write affordances
+    /// in their pre-transition state until a tab change forced a
+    /// re-render. This property reads through Core Data each time the
+    /// viewContext fires `ObjectsDidChange`, which catches both
+    /// listener mirrors and direct viewContext writes.
+    @Published private(set) var actorIsPrimary: Bool = false
 
     private let medicationRepo: MedicationRepository
     private let personRepo: PersonRepository
     private let alertsRepo: AlertsRepository
     private let missedDoseDetector: MissedDoseDetector
     private let weeklySummaryGenerator: WeeklySummaryGenerator
+    private let stack: CoreDataStack
+    private var actorObserver: NSObjectProtocol?
+    private var actorPersonID: UUID?
 
     init(medicationRepo: MedicationRepository = MedicationRepository(),
          personRepo: PersonRepository = PersonRepository(),
          alertsRepo: AlertsRepository = AlertsRepository(),
          missedDoseDetector: MissedDoseDetector = MissedDoseDetector(),
-         weeklySummaryGenerator: WeeklySummaryGenerator = WeeklySummaryGenerator()) {
+         weeklySummaryGenerator: WeeklySummaryGenerator = WeeklySummaryGenerator(),
+         stack: CoreDataStack = .shared) {
         self.medicationRepo = medicationRepo
         self.personRepo = personRepo
         self.alertsRepo = alertsRepo
         self.missedDoseDetector = missedDoseDetector
         self.weeklySummaryGenerator = weeklySummaryGenerator
+        self.stack = stack
+    }
+
+    deinit {
+        if let actorObserver {
+            NotificationCenter.default.removeObserver(actorObserver)
+        }
     }
 
     /// Loads the dashboard data for the supervisor.
@@ -80,7 +105,38 @@ final class SupervisorDashboardViewModel: ObservableObject {
         await weeklySummaryGenerator.runIfDue(in: circleID, now: now)
         self.alerts = await alertsRepo.fetchAlerts(in: circleID)
 
+        self.actorIsPrimary = await personRepo.isPrimary(personID: supervisorID)
+        startObservingActor(personID: supervisorID)
+
         self.isLoaded = true
+    }
+
+    /// Begins (or re-targets) the Core Data observer that keeps
+    /// `actorIsPrimary` reactive to listener-driven mirrors of the
+    /// actor's Person row or CareCircle.primarySupervisorPersonID.
+    /// Idempotent for the same `personID` — calling with a new id
+    /// tears down the previous subscription first.
+    private func startObservingActor(personID: UUID) {
+        if actorPersonID == personID, actorObserver != nil { return }
+        if let actorObserver {
+            NotificationCenter.default.removeObserver(actorObserver)
+        }
+        actorPersonID = personID
+        let viewContext = stack.viewContext
+        actorObserver = NotificationCenter.default.addObserver(
+            forName: .NSManagedObjectContextObjectsDidChange,
+            object: viewContext,
+            queue: .main
+        ) { [weak self] _ in
+            // The notification fires on background-context merges into
+            // the view context too (because `automaticallyMergesChangesFromParent`
+            // is on) so listener-driven role flips reach us here.
+            Task { @MainActor [weak self] in
+                guard let self, let personID = self.actorPersonID else { return }
+                let next = await self.personRepo.isPrimary(personID: personID)
+                if next != self.actorIsPrimary { self.actorIsPrimary = next }
+            }
+        }
     }
 
     /// First-to-acknowledge clears it for everyone. Hits the atomic

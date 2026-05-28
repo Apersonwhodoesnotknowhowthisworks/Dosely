@@ -29,7 +29,9 @@ final class SupervisorDashboardViewModelTests: XCTestCase {
         careCircleRepo = CareCircleRepository(stack: stack, firestore: noFirestore)
         viewModel = SupervisorDashboardViewModel(
             medicationRepo: medRepo,
-            personRepo: personRepo
+            personRepo: personRepo,
+            alertsRepo: AlertsRepository(stack: stack, firestore: noFirestore),
+            stack: stack
         )
         circle = await careCircleRepo.createCareCircle(
             name: "Test", foundingSupervisorFirebaseUID: "uid-primary", founderName: "Primary"
@@ -184,5 +186,60 @@ final class SupervisorDashboardViewModelTests: XCTestCase {
             XCTAssertEqual(dose.medication.personID, grandpa.id,
                            "every combined-view dose must belong to a client, not a supervisor")
         }
+    }
+
+    // MARK: - Reactive role transitions
+    //
+    // The dashboard's `isPrimary` predicate drives the role badge, the
+    // QuickActionsCard's write affordances, and the read-only-mode
+    // notice. SwiftUI tracks the @Published wrapper, not nested
+    // NSManagedObject property writes; a listener-driven demote that
+    // mutates `Person.role` in place on the view context does NOT
+    // re-render the dashboard. The view model carries an
+    // `actorIsPrimary` mirror published from a Core Data observer so
+    // the badge and affordances move with the underlying state. This
+    // test pins the contract: a direct mutation on the view-context
+    // Person row is observed and the published flag flips.
+
+    func test_actorIsPrimary_flipsWhenActorRoleMutatesInCoreData() async throws {
+        _ = try await addManagedClient(name: "Grandpa")
+
+        await viewModel.load(circleID: circle.id!,
+                             supervisorID: primary.id!,
+                             activePersonID: nil)
+        XCTAssertTrue(viewModel.actorIsPrimary,
+                      "the founder is primary at load time")
+
+        // Simulate a listener-driven demote: the actor's Person.role
+        // flips to secondary_supervisor, and the CareCircle's
+        // primarySupervisorPersonID changes to the other supervisor.
+        let other = await addSecondarySupervisor(uid: "uid-co", name: "Co")
+        await stack.viewContext.perform { [self] in
+            primary.role = Roles.secondarySupervisor
+            other.role = Roles.primarySupervisor
+            circle.primarySupervisorPersonID = other.id
+            try? stack.viewContext.save()
+        }
+
+        // The observer is on the NSManagedObjectContextObjectsDidChange
+        // notification, which posts on .main; give the run loop a turn
+        // to deliver and re-evaluate before reading the published value.
+        let expectation = expectation(description: "actorIsPrimary flips")
+        Task { @MainActor in
+            // Poll briefly. The Core Data save fires the notification
+            // synchronously, the observer schedules a Task on @MainActor,
+            // and we need that task to land before asserting.
+            for _ in 0..<20 {
+                if viewModel.actorIsPrimary == false {
+                    expectation.fulfill()
+                    return
+                }
+                try? await Task.sleep(nanoseconds: 25_000_000)
+            }
+        }
+        await fulfillment(of: [expectation], timeout: 2.0)
+
+        XCTAssertFalse(viewModel.actorIsPrimary,
+                       "after a role transition on the actor's row, actorIsPrimary must reflect the new state without a manual reload")
     }
 }

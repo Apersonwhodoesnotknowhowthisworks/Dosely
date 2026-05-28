@@ -46,19 +46,14 @@ struct SupervisorDashboardView: View {
 
     // MARK: - Role gates
 
-    /// True iff `authService.currentPerson` is the primary supervisor of
-    /// their care circle. Drives the read-only-mode hide rules across
-    /// the dashboard.
-    private var isPrimary: Bool {
-        guard let person = authService.currentPerson,
-              let circle = person.careCircle,
-              let me = person.id else { return false }
-        if let primaryID = circle.primarySupervisorPersonID {
-            return primaryID == me
-        }
-        // Pre-`PrimaryRoleMigration` data — legacy `supervisor` is primary.
-        return Roles.isPrimarySupervisor(person.role)
-    }
+    /// True iff `authService.currentPerson` is the primary supervisor
+    /// of their care circle. Reads through `viewModel.actorIsPrimary`
+    /// so the value stays reactive to listener-driven role changes —
+    /// without that layer, a remote demotion does not invalidate
+    /// `authService.currentPerson?.role` reads through @EnvironmentObject
+    /// because SwiftUI tracks the @Published wrapper, not nested
+    /// NSManagedObject property writes.
+    private var isPrimary: Bool { viewModel.actorIsPrimary }
 
     /// Display name of the current primary supervisor (for the
     /// "Only X can change this" inline notice). Looks them up among

@@ -1,6 +1,7 @@
 import CoreData
 import FirebaseFirestore
 import Foundation
+import OSLog
 
 /// Result of a manual `SyncCoordinator.refresh` (pull-to-refresh).
 /// Callers map these to a localized inline banner; nothing else
@@ -234,6 +235,17 @@ final class SyncCoordinator: ObservableObject {
     }
 
     private func mirrorAlerts(_ alerts: [FirestoreModels.FAlert], circleID: UUID) {
+        // Log every snapshot's freshly-acknowledged rows. The promise
+        // the supervisor dashboard makes — "first to ack clears it for
+        // the other supervisor's device within seconds" — depends on
+        // exactly this code path. A missing log line on the second
+        // device is the diagnostic signal that the listener didn't
+        // deliver the remote update, even though Firestore committed.
+        for alert in alerts where alert.acknowledgedBy?.isEmpty == false {
+            Self.alertsLogger.debug(
+                "listener: remote ack received alert=\(alert.id, privacy: .public) by=\(alert.acknowledgedBy ?? "", privacy: .public)"
+            )
+        }
         stack.performBackgroundTask { ctx in
             for alert in alerts {
                 alert.upsert(in: ctx, careCircleID: circleID)
@@ -250,6 +262,8 @@ final class SyncCoordinator: ObservableObject {
             try? ctx.save()
         }
     }
+
+    private static let alertsLogger = Logger(subsystem: "com.medication.dosely", category: "alerts")
 
     // MARK: - Reconciliation helpers
 
