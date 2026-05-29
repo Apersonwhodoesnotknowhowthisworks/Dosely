@@ -68,6 +68,31 @@ struct DoseCardView: View {
                 .dsBodyRegular()
                 .foregroundColor(.dsTextSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+            daysLeftPill
+        }
+    }
+
+    /// Compact low-supply badge. Shows only when days-remaining is computable
+    /// (a scheduled med — as-needed meds return nil and show nothing) AND below
+    /// the refill threshold. It's a status badge, not a control: taps fall
+    /// through to the card's existing expand gesture.
+    @ViewBuilder
+    private var daysLeftPill: some View {
+        if RefillSupplyCalculator.isLow(for: dose.medication),
+           let days = RefillSupplyCalculator.daysRemaining(for: dose.medication) {
+            let daysText = String(Int(days.rounded()))
+            Text(L("refill.dosecard.daysleft", daysText as NSString))
+                .dsCaption()
+                .foregroundColor(.dsWarning)
+                .padding(.horizontal, DSSpacing.xs)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(Color.dsWarning.opacity(0.15)))
+                .fixedSize()
+                .accessibilityLabel(Text(L(
+                    "refill.dosecard.daysleft.a11yLabel",
+                    daysText as NSString,
+                    (dose.medication.name ?? "") as NSString
+                )))
         }
     }
 

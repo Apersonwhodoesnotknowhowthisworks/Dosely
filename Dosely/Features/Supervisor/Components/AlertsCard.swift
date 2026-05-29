@@ -51,6 +51,15 @@ struct AlertsCard: View {
                     .frame(width: 24)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                    // Refill alerts lead with a "Refill soon: {med}" headline so
+                    // the medication is named; other types are self-contained in
+                    // the body line and render unchanged.
+                    if alert.type == FirestoreModels.AlertType.refill {
+                        Text(Self.typeTitle(for: alert, language: currentAppLanguage()))
+                            .dsBodyLarge()
+                            .foregroundColor(.dsTextPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                     Text(Self.bodyText(for: alert))
                         .dsBodyRegular()
                         .foregroundColor(.dsTextPrimary)
@@ -136,6 +145,7 @@ struct AlertsCard: View {
         case FirestoreModels.AlertType.missedDose:    return "clock.fill"
         case FirestoreModels.AlertType.emergency:     return "exclamationmark.triangle.fill"
         case FirestoreModels.AlertType.weeklySummary: return "chart.bar.fill"
+        case FirestoreModels.AlertType.refill:        return "pills.fill"
         default:                                       return "bell.fill"
         }
     }
@@ -145,6 +155,7 @@ struct AlertsCard: View {
         case FirestoreModels.AlertType.emergency:     return .dsDanger
         case FirestoreModels.AlertType.missedDose:    return .dsWarning
         case FirestoreModels.AlertType.weeklySummary: return .dsPrimary
+        case FirestoreModels.AlertType.refill:        return .dsWarning
         default:                                       return .dsTextSecondary
         }
     }
@@ -185,6 +196,11 @@ struct AlertsCard: View {
             }
             return L("supervisor.alerts.body.weeklysummary.empty", in: language)
 
+        case FirestoreModels.AlertType.refill:
+            let days = payload["daysRemaining"] ?? ""
+            let runOut = payload["runOutDate"] ?? ""
+            return L("refill.alert.body", in: language, days as NSString, runOut as NSString)
+
         default:
             return ""
         }
@@ -196,6 +212,9 @@ struct AlertsCard: View {
         switch alert.type {
         case FirestoreModels.AlertType.emergency:     return L("voice.alert.title.emergency", in: language)
         case FirestoreModels.AlertType.weeklySummary: return L("voice.alert.title.weeklysummary", in: language)
+        case FirestoreModels.AlertType.refill:
+            let payload = FirestoreModels.FAlert.decodePayload(alert.payloadJSON) ?? [:]
+            return L("refill.alert.title", in: language, (payload["medicationName"] ?? "") as NSString)
         default:                                       return L("voice.alert.title.misseddose", in: language)
         }
     }

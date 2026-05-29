@@ -404,6 +404,82 @@ describe("Firestore security rules", () => {
     });
   });
 
+  // -- Refill: supply decrement + refill alert --------------------------
+
+  describe("refill warnings", () => {
+    const circleID = "circle-A";
+    const supervisor = { uid: "aunt1-uid", personID: "person-aunt1" };
+    const grandpa = { uid: "grandpa-uid", personID: "person-grandpa" };
+    const grandpaMedID = "med-grandpa-lipitor";
+    const supervisorMedID = "med-aunt1-bp";
+
+    beforeEach(async () => {
+      await seedCircle({ circleID, joinCode: "300002", supervisor, deviceClient: grandpa });
+      await seedMedication(circleID, grandpaMedID, grandpa.personID, "Lipitor");
+      await seedMedication(circleID, supervisorMedID, supervisor.personID, "Lisinopril");
+    });
+
+    it("device client CAN decrement currentSupply on THEIR OWN medication", async () => {
+      const db = authedDb(grandpa.uid);
+      await assertSucceeds(
+        updateDoc(doc(db, `careCircles/${circleID}/medications/${grandpaMedID}`), {
+          currentSupply: 29,
+          lastModified: serverTimestamp(),
+        })
+      );
+    });
+
+    it("device client CAN restore (increase) their own medication supply", async () => {
+      const db = authedDb(grandpa.uid);
+      await assertSucceeds(
+        updateDoc(doc(db, `careCircles/${circleID}/medications/${grandpaMedID}`), {
+          currentSupply: 31,
+          lastModified: serverTimestamp(),
+        })
+      );
+    });
+
+    it("device client CANNOT touch another person's medication supply", async () => {
+      const db = authedDb(grandpa.uid);
+      await assertFails(
+        updateDoc(doc(db, `careCircles/${circleID}/medications/${supervisorMedID}`), {
+          currentSupply: 29,
+          lastModified: serverTimestamp(),
+        })
+      );
+    });
+
+    it("device client CANNOT change a non-supply field on their medication", async () => {
+      const db = authedDb(grandpa.uid);
+      await assertFails(
+        updateDoc(doc(db, `careCircles/${circleID}/medications/${grandpaMedID}`), {
+          name: "Renamed",
+          lastModified: serverTimestamp(),
+        })
+      );
+    });
+
+    it("supervisor can create a refill alert", async () => {
+      const db = authedDb(supervisor.uid);
+      const alertID = "refill-med-grandpa-lipitor-2026-05-30";
+      await assertSucceeds(
+        setDoc(doc(db, `careCircles/${circleID}/alerts/${alertID}`), {
+          id: alertID,
+          type: "refill",
+          personID: grandpa.personID,
+          medicationID: grandpaMedID,
+          createdAt: serverTimestamp(),
+          payload: {
+            medicationName: "Lipitor",
+            daysRemaining: "5",
+            currentSupply: "5",
+            personName: "Grandpa",
+          },
+        })
+      );
+    });
+  });
+
   // -- 5. /familyContacts privacy ---------------------------------------
 
   describe("/familyContacts", () => {

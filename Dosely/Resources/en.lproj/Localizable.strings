@@ -504,3 +504,9 @@
 "voice.settings.rate.fast" = "Fast";
 "voice.settings.test.button" = "Test voice";
 "voice.settings.test.sample" = "This is Dosely speaking. You can adjust the speed.";
+
+// MARK: - Refill warnings
+"refill.alert.title" = "Refill soon: %@";
+"refill.alert.body" = "%@ days of supply remaining. Refill before %@.";
+"refill.dosecard.daysleft" = "%@ days left";
+"refill.dosecard.daysleft.a11yLabel" = "%@ days of %@ remaining. Tap to view details.";

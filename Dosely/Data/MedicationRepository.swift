@@ -231,6 +231,7 @@ final class MedicationRepository {
         struct LogPayload {
             let circleID: UUID
             let flog: FirestoreModels.FDoseLog
+            let supplyChange: (medicationID: String, delta: Int)?
         }
 
         let prepared: (DoseLog, LogPayload)? = await context.perform { [context] in
@@ -250,6 +251,25 @@ final class MedicationRepository {
                 return nil
             }
 
+            // Supply delta from the state TRANSITION for this scheduled time,
+            // not the new status alone. A "taken" log consumes one unit; if a
+            // prior "taken" already consumed it (a re-tap, or a notification +
+            // in-app double-log) the delta is 0; correcting away from taken
+            // restores one. Computed before inserting the new log so the new
+            // row doesn't count as its own "prior".
+            let priorTaken = Self.hasTakenLog(
+                medicationID: medicationID, scheduledTime: scheduledTime, in: context
+            )
+            let consumedBefore = priorTaken ? 1 : 0
+            let consumedAfter = (status == DoseStatus.taken.rawValue) ? 1 : 0
+            var supplyDelta = consumedBefore - consumedAfter   // -1 take, +1 restore, 0 none
+            // Floor at 0: never decrement below the locally-known supply. No
+            // upward cap on a restore — the user may have refilled in between.
+            if supplyDelta < 0 && med.currentSupply <= 0 { supplyDelta = 0 }
+            if supplyDelta != 0 {
+                med.currentSupply = Int16(max(0, Int(med.currentSupply) + supplyDelta))
+            }
+
             let log = DoseLog(context: context)
             log.id = UUID()
             log.scheduledTime = scheduledTime
@@ -258,17 +278,44 @@ final class MedicationRepository {
             log.loggedByPersonID = loggedByPersonID
             log.medication = med
             try? context.save()
+
             let flog = FirestoreModels.FDoseLog(from: log)
-            return (log, LogPayload(circleID: circleID, flog: flog))
+            let supplyChange: (medicationID: String, delta: Int)? =
+                supplyDelta != 0 ? (medicationID.uuidString, supplyDelta) : nil
+            return (log, LogPayload(circleID: circleID, flog: flog, supplyChange: supplyChange))
         }
 
         guard let prepared else { return nil }
         let (log, payload) = prepared
+        // The supply change rides in the SAME batch as the dose log so the two
+        // never diverge (Firestore-first; both commit or neither). `try?` keeps
+        // the existing offline-first contract: the SDK queues the batch and
+        // replays it on reconnect, so a logged dose surfaces locally at once.
         try? await firestore.upsertDoseLog(
             circleID: payload.circleID.uuidString,
-            log: payload.flog
+            log: payload.flog,
+            supplyChange: payload.supplyChange
         )
         return log
+    }
+
+    /// Whether a `taken` dose log already exists for this medication at this
+    /// scheduled time (within a minute, matching the detectors' tolerance).
+    /// Lets `logDose` derive the supply delta from the transition so a re-tap
+    /// never double-decrements and a correction restores exactly once.
+    private static func hasTakenLog(
+        medicationID: UUID, scheduledTime: Date, in context: NSManagedObjectContext
+    ) -> Bool {
+        let request = NSFetchRequest<DoseLog>(entityName: "DoseLog")
+        request.predicate = NSPredicate(
+            format: "medication.id == %@ AND status == %@",
+            medicationID as CVarArg, DoseStatus.taken.rawValue
+        )
+        let logs = (try? context.fetch(request)) ?? []
+        return logs.contains { log in
+            guard let t = log.scheduledTime else { return false }
+            return abs(t.timeIntervalSince(scheduledTime)) < 60
+        }
     }
 
     // MARK: - Helpers

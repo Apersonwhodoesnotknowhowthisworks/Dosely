@@ -106,10 +106,16 @@ struct TodayView: View {
             await SeedData.seedIfEmpty(using: repository, personID: personID, actorPersonID: personID)
             #endif
             await MissedDoseChecker(repository: repository).run(for: personID)
+            if let circleID = authService.currentPerson?.careCircle?.id {
+                await RefillAlertDetector().run(in: circleID)
+            }
             await viewModel.load(personID: personID)
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 5 * 60 * 1_000_000_000)
                 await MissedDoseChecker(repository: repository).run(for: personID)
+                if let circleID = authService.currentPerson?.careCircle?.id {
+                    await RefillAlertDetector().run(in: circleID)
+                }
                 await viewModel.load(personID: personID)
             }
         }
@@ -163,6 +169,9 @@ struct TodayView: View {
             guard let personID = authService.currentPerson?.id else { return }
             Task {
                 await MissedDoseChecker(repository: repository).run(for: personID)
+                if let circleID = authService.currentPerson?.careCircle?.id {
+                    await RefillAlertDetector().run(in: circleID)
+                }
                 await viewModel.load(personID: personID)
             }
         }

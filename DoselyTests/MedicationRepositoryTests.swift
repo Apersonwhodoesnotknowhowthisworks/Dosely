@@ -39,6 +39,74 @@ final class MedicationRepositoryTests: XCTestCase {
 
     private var personID: UUID { supervisor.id! }
 
+    // MARK: - Supply decrement / restore on dose log (refill warnings)
+
+    private func makeClientAndMed(supply: Int16, daysOfWeek: Int16 = 127) async throws -> Medication {
+        let client = try await personRepo.createManagedClient(
+            name: "Grandpa", photoData: nil, language: "en",
+            in: supervisor.careCircle!, actorPersonID: personID
+        )
+        return try await repo.saveMedication(
+            personID: client.id!, actorPersonID: personID,
+            name: "Lisinopril", dose: "10mg", pillsPerDose: 1, foodRule: "either",
+            notes: nil, currentSupply: supply, pillPhotoData: nil,
+            schedules: [ScheduleInput(timeOfDay: "08:00", daysOfWeek: daysOfWeek)]
+        )
+    }
+
+    private func supply(of medID: UUID) async -> Int16 {
+        await repo.fetchMedication(id: medID)?.currentSupply ?? -999
+    }
+
+    func test_logDoseTaken_decrementsSupplyByOne() async throws {
+        let med = try await makeClientAndMed(supply: 30)
+        _ = await repo.logDose(medicationID: med.id!, scheduledTime: Date(), actualTime: Date(),
+                               status: DoseStatus.taken.rawValue, loggedByPersonID: personID)
+        let remaining = await supply(of: med.id!)
+        XCTAssertEqual(remaining, 29)
+    }
+
+    func test_logDoseSkipped_doesNotDecrement() async throws {
+        let med = try await makeClientAndMed(supply: 30)
+        _ = await repo.logDose(medicationID: med.id!, scheduledTime: Date(), actualTime: nil,
+                               status: DoseStatus.skipped.rawValue, loggedByPersonID: personID)
+        let remaining = await supply(of: med.id!)
+        XCTAssertEqual(remaining, 30, "skipping a dose doesn't consume the pill")
+    }
+
+    func test_correctTakenToSkipped_restoresSupply() async throws {
+        let med = try await makeClientAndMed(supply: 30)
+        let scheduled = Date()
+        _ = await repo.logDose(medicationID: med.id!, scheduledTime: scheduled, actualTime: scheduled,
+                               status: DoseStatus.taken.rawValue, loggedByPersonID: personID)
+        let afterTaken = await supply(of: med.id!)
+        XCTAssertEqual(afterTaken, 29)
+        // Re-log the SAME scheduled time as skipped — a correction.
+        _ = await repo.logDose(medicationID: med.id!, scheduledTime: scheduled, actualTime: nil,
+                               status: DoseStatus.skipped.rawValue, loggedByPersonID: personID)
+        let afterCorrection = await supply(of: med.id!)
+        XCTAssertEqual(afterCorrection, 30, "correcting taken→skipped restores the unit")
+    }
+
+    func test_logDoseTaken_flooredAtZero() async throws {
+        let med = try await makeClientAndMed(supply: 0)
+        _ = await repo.logDose(medicationID: med.id!, scheduledTime: Date(), actualTime: Date(),
+                               status: DoseStatus.taken.rawValue, loggedByPersonID: personID)
+        let remaining = await supply(of: med.id!)
+        XCTAssertEqual(remaining, 0, "supply must not go negative")
+    }
+
+    func test_doubleTaken_doesNotDoubleDecrement() async throws {
+        let med = try await makeClientAndMed(supply: 30)
+        let scheduled = Date()
+        _ = await repo.logDose(medicationID: med.id!, scheduledTime: scheduled, actualTime: scheduled,
+                               status: DoseStatus.taken.rawValue, loggedByPersonID: personID)
+        _ = await repo.logDose(medicationID: med.id!, scheduledTime: scheduled, actualTime: scheduled,
+                               status: DoseStatus.taken.rawValue, loggedByPersonID: personID)
+        let remaining = await supply(of: med.id!)
+        XCTAssertEqual(remaining, 29, "re-logging the same taken dose must not decrement twice")
+    }
+
     // MARK: - saveMedication / fetchMedication / fetchAllMedications
 
     func testSaveCreatesMedication() async throws {

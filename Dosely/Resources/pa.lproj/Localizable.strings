@@ -509,3 +509,9 @@
 "voice.settings.rate.fast" = "ਤੇਜ਼"; // REVIEW NEEDED
 "voice.settings.test.button" = "ਆਵਾਜ਼ ਟੈਸਟ ਕਰੋ"; // REVIEW NEEDED
 "voice.settings.test.sample" = "ਇਹ ਡੋਜ਼ਲੀ ਬੋਲ ਰਹੀ ਹੈ। ਤੁਸੀਂ ਗਤੀ ਬਦਲ ਸਕਦੇ ਹੋ।"; // REVIEW NEEDED
+
+// MARK: - Refill warnings — all REVIEW NEEDED
+"refill.alert.title" = "ਜਲਦੀ ਰੀਫਿਲ ਕਰੋ: %@"; // REVIEW NEEDED
+"refill.alert.body" = "%@ ਦਿਨ ਦੀ ਸਪਲਾਈ ਬਾਕੀ ਹੈ। %@ ਤੋਂ ਪਹਿਲਾਂ ਰੀਫਿਲ ਕਰੋ।"; // REVIEW NEEDED
+"refill.dosecard.daysleft" = "%@ ਦਿਨ ਬਾਕੀ"; // REVIEW NEEDED
+"refill.dosecard.daysleft.a11yLabel" = "%@ ਦਿਨ ਦੀ %@ ਦੀ ਸਪਲਾਈ ਬਾਕੀ ਹੈ। ਵੇਰਵੇ ਵੇਖਣ ਲਈ ਟੈਪ ਕਰੋ।"; // REVIEW NEEDED

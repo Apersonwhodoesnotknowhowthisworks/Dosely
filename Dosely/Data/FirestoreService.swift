@@ -755,16 +755,41 @@ final class FirestoreService {
         }
     }
 
-    func upsertDoseLog(circleID: String, log: FirestoreModels.FDoseLog) async throws {
+    /// Writes the dose log and — when `supplyChange` is non-nil — adjusts the
+    /// medication's `currentSupply` by `supplyChange.delta` in the SAME
+    /// `WriteBatch`, via server-side `FieldValue.increment` (race-safe across
+    /// devices). Batching the two means a dose log can never land without its
+    /// supply change, or vice versa — a divergence would drift the refill
+    /// calculation off the real pill count, which is the bug class this whole
+    /// feature exists to avoid. The caller floors at 0 (it omits the change
+    /// when local supply is already 0); there is no upward cap on a restore.
+    func upsertDoseLog(circleID: String,
+                       log: FirestoreModels.FDoseLog,
+                       supplyChange: (medicationID: String, delta: Int)? = nil) async throws {
         guard let db else { return }
         do {
-            var payload = try encode(log)
-            payload["lastModified"] = FieldValue.serverTimestamp()
-            try await db
-                .collection(Path.doseLogs(circleID))
-                .document(log.id)
-                .setData(payload)
+            let batch = db.batch()
+            var logPayload = try encode(log)
+            logPayload["lastModified"] = FieldValue.serverTimestamp()
+            batch.setData(
+                logPayload,
+                forDocument: db.collection(Path.doseLogs(circleID)).document(log.id)
+            )
+            if let change = supplyChange, change.delta != 0 {
+                batch.updateData(
+                    [
+                        "currentSupply": FieldValue.increment(Int64(change.delta)),
+                        "lastModified": FieldValue.serverTimestamp()
+                    ],
+                    forDocument: db.collection(Path.medications(circleID)).document(change.medicationID)
+                )
+            }
+            try await batch.commit()
         } catch {
+            // Distinct error codes per the error-collapse convention — see
+            // build_log April 30 phantom join code entry. `.map` keeps
+            // .permissionDenied / .offline / .notFound / .unknown distinct so a
+            // rules rejection on the supply update doesn't read as a network blip.
             throw FirestoreServiceError.map(error)
         }
     }

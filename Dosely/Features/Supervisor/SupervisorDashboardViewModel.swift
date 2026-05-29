@@ -43,6 +43,7 @@ final class SupervisorDashboardViewModel: ObservableObject {
     private let alertsRepo: AlertsRepository
     private let missedDoseDetector: MissedDoseDetector
     private let weeklySummaryGenerator: WeeklySummaryGenerator
+    private let refillAlertDetector: RefillAlertDetector
     private let stack: CoreDataStack
     private var actorObserver: NSObjectProtocol?
     private var actorPersonID: UUID?
@@ -52,12 +53,14 @@ final class SupervisorDashboardViewModel: ObservableObject {
          alertsRepo: AlertsRepository = AlertsRepository(),
          missedDoseDetector: MissedDoseDetector = MissedDoseDetector(),
          weeklySummaryGenerator: WeeklySummaryGenerator = WeeklySummaryGenerator(),
+         refillAlertDetector: RefillAlertDetector = RefillAlertDetector(),
          stack: CoreDataStack = .shared) {
         self.medicationRepo = medicationRepo
         self.personRepo = personRepo
         self.alertsRepo = alertsRepo
         self.missedDoseDetector = missedDoseDetector
         self.weeklySummaryGenerator = weeklySummaryGenerator
+        self.refillAlertDetector = refillAlertDetector
         self.stack = stack
     }
 
@@ -103,6 +106,7 @@ final class SupervisorDashboardViewModel: ObservableObject {
         // via deterministic alert ids.
         await missedDoseDetector.run(in: circleID, now: now)
         await weeklySummaryGenerator.runIfDue(in: circleID, now: now)
+        await refillAlertDetector.run(in: circleID, now: now)
         self.alerts = await alertsRepo.fetchAlerts(in: circleID)
 
         self.actorIsPrimary = await personRepo.isPrimary(personID: supervisorID)

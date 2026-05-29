@@ -206,6 +206,11 @@ extension FirestoreModels {
         static let missedDose = "missedDose"
         static let emergency = "emergency"
         static let weeklySummary = "weeklySummary"
+        /// Supply for a scheduled medication has dropped below the
+        /// refill threshold. Payload carries medicationName, daysRemaining,
+        /// currentSupply, personName. Doc id is deterministic per
+        /// (medication, day) so concurrent supervisor devices converge.
+        static let refill = "refill"
     }
 
     /// Reserved for the family-contact list (doctor, pharmacy,
@@ -557,5 +562,19 @@ enum AlertID {
         formatter.timeZone = calendar.timeZone
         let day = calendar.startOfDay(for: weekEndingSunday)
         return "weekly-\(circleID.uuidString)-\(formatter.string(from: day))"
+    }
+
+    /// `refill-{medicationID}-{ISODateOfTheDayDetected}` — keyed to the day
+    /// so two supervisor devices detecting the same low supply on the same
+    /// day converge on one doc (`createIfAbsent` drops the loser). Rendered
+    /// in the calendar's zone for the same reason `weeklySummary` is: the
+    /// day label must match the local day the detector ran, not UTC's.
+    static func refill(medicationID: UUID, date: Date,
+                       calendar: Calendar = .current) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+        formatter.timeZone = calendar.timeZone
+        let day = calendar.startOfDay(for: date)
+        return "refill-\(medicationID.uuidString)-\(formatter.string(from: day))"
     }
 }

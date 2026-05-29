@@ -534,9 +534,27 @@ service cloud.firestore {
                       request.resource.data.id == medicationID &&
                       request.resource.data.personID is string &&
                       exists(/databases/$(database)/documents/careCircles/$(circleID)/people/$(request.resource.data.personID));
-        allow update: if isPrimary(circleID) &&
-                      request.resource.data.id == resource.data.id &&
-                      request.resource.data.personID == resource.data.personID;
+        // Update:
+        //   - Primary supervisor: any field (the medication editor). The
+        //     primary's batched supply decrement also lands here — it leaves
+        //     id and personID unchanged, so this branch already permits it.
+        //   - Device client: a currentSupply-only adjustment for THEIR OWN
+        //     medication. This is the supply decrement/restore that rides in
+        //     the same batch as a dose-log create (see logDose). Narrowed to
+        //     currentSupply (+ lastModified) so a client can't rename a med,
+        //     reassign its personID, or rewrite its schedule — those stay
+        //     primary-only. The personID match mirrors the doseLogs create
+        //     rule's "own medication" check.
+        allow update: if (
+                        isPrimary(circleID) &&
+                        request.resource.data.id == resource.data.id &&
+                        request.resource.data.personID == resource.data.personID
+                      ) || (
+                        isDeviceClient(circleID) &&
+                        resource.data.personID == myPersonID(circleID) &&
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['currentSupply', 'lastModified'])
+                      );
         allow delete: if isPrimary(circleID) || isOrphanFounder(circleID);
       }
 
