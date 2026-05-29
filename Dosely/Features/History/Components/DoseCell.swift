@@ -19,6 +19,7 @@ struct DoseCell: View {
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 16, height: 16)
+                    // Count-badge scrim under white text — appearance-agnostic (see DSColors audit note).
                     .background(Color.black.opacity(0.5))
                     .clipShape(Circle())
                     .offset(x: -4, y: 4)
@@ -34,6 +35,7 @@ struct DoseCell: View {
         case .allTaken: return .dsSuccess
         case .someLate: return .dsWarning
         case .missed:   return .dsDanger
+        // Empty/future cell — adaptive system gray (see DSColors audit note).
         case .empty, .future: return Color.gray.opacity(0.2)
         }
     }

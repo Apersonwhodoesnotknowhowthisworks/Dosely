@@ -63,6 +63,47 @@ final class DSColorsContrastTests: XCTestCase {
         assertContrast(.white, on: .dsWarning, mode: .dark, atLeast: 4.5)
     }
 
+    // MARK: - Adaptive guard (resolves differently between appearances)
+    //
+    // The regression these catch: a token gets wired to the same value in both
+    // appearances (e.g. someone copies the light hex into both arms of
+    // `adaptive(light:dark:)`). Contrast can still pass while the token has
+    // silently stopped adapting — which is exactly the "invisible text in dark
+    // mode" bug that started this whole effort. Every adaptive token must
+    // therefore resolve to a DIFFERENT CGColor under light vs dark traits.
+
+    func testBackgroundResolvesDifferentlyByAppearance() {
+        assertResolvesDifferently(.dsBackground)
+    }
+    func testSurfaceResolvesDifferentlyByAppearance() {
+        assertResolvesDifferently(.dsSurface)
+    }
+    func testTextPrimaryResolvesDifferentlyByAppearance() {
+        assertResolvesDifferently(.dsTextPrimary)
+    }
+    func testTextSecondaryResolvesDifferentlyByAppearance() {
+        assertResolvesDifferently(.dsTextSecondary)
+    }
+    func testPrimaryResolvesDifferentlyByAppearance() {
+        assertResolvesDifferently(.dsPrimary)
+    }
+    func testSuccessResolvesDifferentlyByAppearance() {
+        assertResolvesDifferently(.dsSuccess)
+    }
+    func testDangerResolvesDifferentlyByAppearance() {
+        assertResolvesDifferently(.dsDanger)
+    }
+
+    /// dsWarning is the documented exception: it's pinned to Tailwind amber-700
+    /// (#B45309) in BOTH appearances because that's the only weight that clears
+    /// white-on-fill ≥ 4.5:1 in each direction (light-mode #D69E2E failed at
+    /// 2.39:1 on the Snooze button). So unlike every other token it must resolve
+    /// IDENTICALLY — this test pins that intent so a future "make dsWarning adapt
+    /// too" change has to consciously re-check the white-on-warning floor first.
+    func testWarningResolvesIdenticallyByAppearance() {
+        assertResolvesIdentically(.dsWarning)
+    }
+
     // MARK: - Plumbing
 
     private func assertContrast(_ fg: Color,
@@ -79,6 +120,33 @@ final class DSColorsContrastTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(
             ratio, minimum,
             "Contrast \(String(format: "%.2f", ratio)):1 in \(modeName) mode is below WCAG floor \(minimum):1.",
+            file: file, line: line
+        )
+    }
+
+    private func assertResolvesDifferently(_ color: Color,
+                                           file: StaticString = #file,
+                                           line: UInt = #line) {
+        let light = UIColor(color).resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+        let dark  = UIColor(color).resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+        XCTAssertNotEqual(
+            light.cgColor, dark.cgColor,
+            "Token resolves to the same value in light and dark — it has stopped "
+            + "adapting, which is the dark-mode invisible-text bug this suite guards.",
+            file: file, line: line
+        )
+    }
+
+    private func assertResolvesIdentically(_ color: Color,
+                                           file: StaticString = #file,
+                                           line: UInt = #line) {
+        let light = UIColor(color).resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+        let dark  = UIColor(color).resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+        XCTAssertEqual(
+            light.cgColor, dark.cgColor,
+            "dsWarning is intentionally pinned to one value in both appearances "
+            + "(amber-700, for white-on-fill AA). If this fails the pin changed — "
+            + "re-verify white-on-warning ≥ 4.5:1 in both modes before shipping.",
             file: file, line: line
         )
     }

@@ -25,6 +25,7 @@ struct DoseCardView: View {
         .frame(minHeight: 80, alignment: .top)
         .background(Color.dsSurface)
         .cornerRadius(DSSpacing.rLg)
+        // Elevation shadow — black, fades against a dark surface by convention (see DSColors audit note).
         .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
         .contentShape(Rectangle())
         .onTapGesture {
@@ -199,6 +200,7 @@ struct DoseCardView: View {
         case .late:    return .dsWarning
         case .missed:  return .dsDanger
         case .skipped: return .dsTextSecondary
+        // Upcoming status — adaptive system gray (see DSColors audit note).
         case .upcoming: return Color.gray.opacity(0.3)
         }
     }

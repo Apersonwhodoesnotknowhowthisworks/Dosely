@@ -12,6 +12,7 @@ struct WeekPicker: View {
             Button(action: onBack) {
                 Image(systemName: "chevron.left")
                     .font(.title3.weight(.semibold))
+                    // Disabled arrow — adaptive system gray (see DSColors audit note).
                     .foregroundColor(canGoBack ? .dsPrimary : Color.gray.opacity(0.4))
                     .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
                     .background(Color.dsSurface)
@@ -28,6 +29,7 @@ struct WeekPicker: View {
             Button(action: onForward) {
                 Image(systemName: "chevron.right")
                     .font(.title3.weight(.semibold))
+                    // Disabled arrow — adaptive system gray (see DSColors audit note).
                     .foregroundColor(canGoForward ? .dsPrimary : Color.gray.opacity(0.4))
                     .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
                     .background(Color.dsSurface)

@@ -45,6 +45,7 @@ struct StepShell<Content: View>: View {
                             .dsBodyLarge()
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
+                            // Disabled fill — adaptive system gray, not a fixed literal (see DSColors audit note).
                             .background(primaryEnabled ? Color.dsPrimary : Color.gray.opacity(0.4))
                             .cornerRadius(DSSpacing.rMd)
                     }
@@ -68,6 +69,7 @@ struct StepShell<Content: View>: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2)
+                        // Progress-track fill — adaptive system gray (see DSColors audit note).
                         .fill(Color.gray.opacity(0.2))
                         .frame(height: 4)
                     RoundedRectangle(cornerRadius: 2)

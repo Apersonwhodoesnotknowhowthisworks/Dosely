@@ -202,6 +202,7 @@ struct CameraScanView: View {
 
     var body: some View {
         ZStack {
+            // Camera viewfinder backdrop — intentionally black regardless of appearance (see DSColors audit note).
             Color.black.ignoresSafeArea()
             switch model.state {
             case .unconfigured:

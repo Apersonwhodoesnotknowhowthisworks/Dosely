@@ -389,3 +389,25 @@ struct EditMedicalIDView: View {
         }
     }
 }
+
+// MARK: - Previews
+
+#if DEBUG
+#Preview("Edit Medical ID · form · dark") {
+    // Injecting a target id forces the form branch (skipping the picker) so the
+    // section chrome — dsSurface cards, the +Add rows, the danger-tinted remove
+    // controls — is visible in dark mode. The fields stay empty (no AuthService
+    // circle is wired in a preview), which is fine here: the point is the
+    // palette, not the content.
+    EditMedicalIDView()
+        .environmentObject(AuthService())
+        .environment(\.supervisorTargetPersonID, UUID())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Edit Medical ID · picker · light") {
+    EditMedicalIDView()
+        .environmentObject(AuthService())
+        .preferredColorScheme(.light)
+}
+#endif

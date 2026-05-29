@@ -147,8 +147,14 @@ struct DesignSystemPreview: View {
     }
 }
 
-#Preview("Design System") {
+#Preview("Design System · Light") {
     DesignSystemPreview()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Design System · Dark") {
+    DesignSystemPreview()
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Design System · XXL type") {

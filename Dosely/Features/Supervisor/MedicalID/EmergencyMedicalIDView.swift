@@ -246,3 +246,55 @@ struct EmergencyMedicalIDView: View {
         viewModel = EmergencyMedicalIDViewModel(medicalID: repository.fetchLocalSync(personID: pid))
     }
 }
+
+// MARK: - Previews
+
+#if DEBUG
+@MainActor
+private enum EmergencyMedicalIDPreviewFactory {
+    /// An in-memory stack seeded with one fully-populated Medical ID, returning
+    /// the Person + repository the viewer reads in `init`. Mirrors the fixture
+    /// in EmergencyMedicalIDViewTests so the preview walks the real
+    /// init → fetchLocalSync → decode path — the same one a paramedic hits.
+    static func populated() -> (Person, MedicalIDRepository) {
+        let stack = CoreDataStack(inMemory: true)
+        let repo = MedicalIDRepository(stack: stack, firestore: FirestoreService())
+        let ctx = stack.viewContext
+        let id = UUID()
+        let person = Person(context: ctx)
+        person.id = id
+        person.name = "Margaret Chen"
+        person.role = Roles.managedClient
+        let record = FirestoreModels.FMedicalID(
+            id: id.uuidString,
+            personID: id.uuidString,
+            dateOfBirth: nil,
+            bloodType: "O+",
+            allergies: ["Penicillin", "Sulfa drugs"],
+            conditions: ["Type 2 diabetes", "Atrial fibrillation"],
+            emergencyContacts: [
+                FirestoreModels.FEmergencyContact(
+                    name: "Aunt Bibi", relationship: "Daughter", phone: "555-0101"
+                )
+            ],
+            notes: "Hard of hearing on the left side. Wears a hearing aid.",
+            updatedAt: Date()
+        )
+        _ = record.upsert(in: ctx)
+        try? ctx.save()
+        return (person, repo)
+    }
+}
+
+#Preview("Emergency Medical ID · light") {
+    let (person, repo) = EmergencyMedicalIDPreviewFactory.populated()
+    return EmergencyMedicalIDView(person: person, repository: repo)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Emergency Medical ID · dark") {
+    let (person, repo) = EmergencyMedicalIDPreviewFactory.populated()
+    return EmergencyMedicalIDView(person: person, repository: repo)
+        .preferredColorScheme(.dark)
+}
+#endif

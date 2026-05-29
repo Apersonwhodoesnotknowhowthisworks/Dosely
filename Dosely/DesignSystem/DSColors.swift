@@ -1,6 +1,37 @@
 import SwiftUI
 import UIKit
 
+// MARK: - Sanctioned non-token color usages
+//
+// A periodic grep for `Color.red/blue/black/white/gray`, `Color(red:…)`,
+// `Color(hex:…)`, or `UIColor.…` outside this file is how we keep raw color
+// literals from rotting back into the app. As of the 2026-05-28 audit, every
+// hit outside DSColors falls into one of four categories that are deliberately
+// NOT design-system tokens — documented here, with the less-obvious sites also
+// tagged inline ("see DSColors audit note"), so a future grep doesn't re-flag
+// them:
+//
+//  1. White-on-fill — `.foregroundColor(.white)` and white pill backgrounds
+//     layered on a saturated DS fill (dsPrimary / dsDanger / dsSuccess /
+//     dsWarning). White is correct on all four in BOTH appearances; the
+//     contrast tests pin white-on-fill ≥ 4.5:1 in light AND dark. Because the
+//     fill is what adapts, the white is appearance-independent by design.
+//  2. Dimming scrims — `Color.black.opacity(0.1…0.55)` behind sheets and
+//     full-screen covers, count-badge backdrops, and the camera viewfinder's
+//     solid black. A scrim is meant to be black regardless of appearance;
+//     adapting it would defeat the dimming.
+//  3. Adaptive system grays — `Color.gray.opacity(…)` for disabled controls,
+//     empty/future history cells, and progress tracks. `Color.gray` is itself
+//     trait-reactive (it shifts light↔dark), so these are NOT fixed-literal
+//     bypasses; they already adapt. Left as-is rather than tokenized so their
+//     on-device appearance doesn't change.
+//  4. Card elevation shadows — `Color.black.opacity(0.06)`. Shadows fade to
+//     invisible against a dark surface by convention; in dark mode the
+//     dsSurface/dsBackground contrast carries separation instead.
+//
+// Anything that does NOT fit these four belongs as a DS token. Content text
+// and surfaces already route through the adaptive tokens below.
+
 extension Color {
 
     // MARK: - Brand & semantic tokens (adaptive)
