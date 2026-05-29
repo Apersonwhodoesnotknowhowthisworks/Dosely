@@ -45,20 +45,40 @@ struct AlertsCard: View {
 
     private func alertRow(_ alert: Alert) -> some View {
         HStack(alignment: .top, spacing: DSSpacing.sm) {
-            Image(systemName: Self.iconName(for: alert))
-                .foregroundColor(Self.severityColor(for: alert))
-                .frame(width: 24)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: DSSpacing.xs) {
-                Text(Self.bodyText(for: alert))
-                    .dsBodyRegular()
-                    .foregroundColor(.dsTextPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                ackRow(alert)
+            HStack(alignment: .top, spacing: DSSpacing.sm) {
+                Image(systemName: Self.iconName(for: alert))
+                    .foregroundColor(Self.severityColor(for: alert))
+                    .frame(width: 24)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                    Text(Self.bodyText(for: alert))
+                        .dsBodyRegular()
+                        .foregroundColor(.dsTextPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    ackRow(alert)
+                }
+                Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
+            .accessibilityElement(children: .combine)
+
+            // Speaker kept OUTSIDE the combined element above so VoiceOver can
+            // focus and trigger it as its own control.
+            ReadAloudButton { alertUtterance(alert) }
         }
-        .accessibilityElement(children: .combine)
+    }
+
+    /// Builds the readout for an alert: a short type title plus the body, with
+    /// an English fallback set when the active language is Punjabi.
+    private func alertUtterance(_ alert: Alert) -> VoiceUtterance {
+        let lang = currentAppLanguage()
+        let title = Self.typeTitle(for: alert, language: lang)
+        let body = Self.bodyText(for: alert, language: lang)
+        guard lang == "pa" else {
+            return .alert(title: title, body: body, language: lang)
+        }
+        return .alert(title: title, body: body, language: lang,
+                      fallbackTitle: Self.typeTitle(for: alert, language: "en"),
+                      fallbackBody: Self.bodyText(for: alert, language: "en"))
     }
 
     @ViewBuilder
@@ -129,40 +149,54 @@ struct AlertsCard: View {
         }
     }
 
+    /// Active-language body used by the row's `Text`. Delegates to the
+    /// language-parameterized form so the display path is unchanged.
     static func bodyText(for alert: Alert) -> String {
+        bodyText(for: alert, language: currentAppLanguage())
+    }
+
+    /// Renders the alert body in a SPECIFIC language. The voice readout needs
+    /// both the active language and an English fallback, so this can't assume
+    /// the active language the way a `Text` view can.
+    static func bodyText(for alert: Alert, language: String) -> String {
         let payload = FirestoreModels.FAlert.decodePayload(alert.payloadJSON) ?? [:]
         switch alert.type {
         case FirestoreModels.AlertType.missedDose:
             let person = payload["personName"] ?? ""
             let med = payload["medicationName"] ?? ""
             let time = Self.formattedTime(alert.scheduledTime)
-            return L("supervisor.alerts.body.misseddose",
-                     person as NSString,
-                     time as NSString,
-                     med as NSString)
+            return L("supervisor.alerts.body.misseddose", in: language,
+                     person as NSString, time as NSString, med as NSString)
 
         case FirestoreModels.AlertType.emergency:
             let person = payload["personName"] ?? ""
             let time = Self.formattedTime(alert.createdAt)
-            return L("supervisor.alerts.body.emergency",
-                     person as NSString,
-                     time as NSString)
+            return L("supervisor.alerts.body.emergency", in: language,
+                     person as NSString, time as NSString)
 
         case FirestoreModels.AlertType.weeklySummary:
             if let summary = payload["_summary"] {
                 let parts = summary.split(separator: "|").compactMap { Int($0) }
                 if parts.count == 2, parts[1] > 0 {
                     let percent = Int((Double(parts[0]) / Double(parts[1]) * 100).rounded())
-                    return L("supervisor.alerts.body.weeklysummary",
-                             parts[0] as NSNumber,
-                             parts[1] as NSNumber,
-                             percent as NSNumber)
+                    return L("supervisor.alerts.body.weeklysummary", in: language,
+                             parts[0] as NSNumber, parts[1] as NSNumber, percent as NSNumber)
                 }
             }
-            return L("supervisor.alerts.body.weeklysummary.empty")
+            return L("supervisor.alerts.body.weeklysummary.empty", in: language)
 
         default:
             return ""
+        }
+    }
+
+    /// Short spoken title prepended to the readout ("Missed dose", "Emergency",
+    /// "Weekly summary") so a listener hears the category before the detail.
+    static func typeTitle(for alert: Alert, language: String) -> String {
+        switch alert.type {
+        case FirestoreModels.AlertType.emergency:     return L("voice.alert.title.emergency", in: language)
+        case FirestoreModels.AlertType.weeklySummary: return L("voice.alert.title.weeklysummary", in: language)
+        default:                                       return L("voice.alert.title.misseddose", in: language)
         }
     }
 

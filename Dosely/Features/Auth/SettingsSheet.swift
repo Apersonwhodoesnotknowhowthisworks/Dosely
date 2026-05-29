@@ -5,6 +5,7 @@ struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("app_language") private var language: String = ""
     @AppStorage("force_light_mode") private var forceLightMode: Bool = false
+    @ObservedObject private var voice = VoiceReadoutService.shared
     @State private var biometricOn: Bool = false
     @State private var showingLanguagePicker = false
     @State private var confirmingLockSignOut = false
@@ -32,6 +33,7 @@ struct SettingsSheet: View {
                         if isSupervisor { familySection }
                         languageSection
                         lightModeSection
+                        voiceSection
                         if authService.biometricAvailable { biometricSection }
                         VStack(spacing: DSSpacing.md) {
                             lockSignOutButton
@@ -234,6 +236,67 @@ struct SettingsSheet: View {
         .background(Color.dsSurface)
         .cornerRadius(DSSpacing.rMd)
         .accessibilityLabel(Text("settings.lightmode.title"))
+    }
+
+    // MARK: - Voice readout
+
+    private var voiceSection: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.md) {
+            Text("voice.settings.section.title")
+                .dsTitleMedium()
+                .foregroundColor(.dsTextPrimary)
+
+            Toggle(isOn: $voice.isEnabled) {
+                Text("voice.settings.enabled.label")
+                    .dsBodyLarge()
+                    .foregroundColor(.dsTextPrimary)
+            }
+            .tint(.dsPrimary)
+            .frame(minHeight: DSSpacing.minTapTarget)
+            .accessibilityLabel(Text("voice.settings.enabled.label"))
+
+            HStack {
+                Text("voice.settings.rate.label")
+                    .dsBodyLarge()
+                    .foregroundColor(.dsTextPrimary)
+                Spacer()
+                Picker("", selection: $voice.rate) {
+                    ForEach(SpeechRate.allCases, id: \.self) { rate in
+                        Text(rate.localizedName).tag(rate)
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(.dsPrimary)
+            }
+            .frame(minHeight: DSSpacing.minTapTarget)
+            .disabled(!voice.isEnabled)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text("voice.settings.rate.label"))
+            .accessibilityValue(voice.rate.localizedName)
+
+            Button(action: testVoice) {
+                Text("voice.settings.test.button")
+                    .dsBodyLarge()
+                    .foregroundColor(.dsPrimary)
+                    .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DSSpacing.rMd)
+                            .stroke(Color.dsPrimary, lineWidth: 1.5)
+                    )
+            }
+            .disabled(!voice.isEnabled)
+            .accessibilityLabel(Text("voice.settings.test.button"))
+        }
+        .padding(DSSpacing.md)
+        .background(Color.dsSurface)
+        .cornerRadius(DSSpacing.rMd)
+    }
+
+    private func testVoice() {
+        let lang = currentAppLanguage()
+        voice.speak(.custom(L("voice.settings.test.sample"),
+                            language: lang,
+                            fallbackText: L("voice.settings.test.sample", in: "en")))
     }
 
     // MARK: - Family

@@ -481,3 +481,31 @@
 "emergency.medicalid.dob" = "ਜਨਮ %@ · ਉਮਰ %d"; // REVIEW NEEDED
 "emergency.medicalid.contact.call.a11yLabel" = "%@ ਨੂੰ %@ 'ਤੇ ਕਾਲ ਕਰੋ"; // REVIEW NEEDED
 "emergency.medicalid.contact.call.a11yHint" = "ਕਾਲ ਕਰਨ ਲਈ ਫ਼ੋਨ ਐਪ ਖੋਲ੍ਹਦਾ ਹੈ।"; // REVIEW NEEDED
+
+// MARK: - Voice readout (full VoiceReadoutService) — all REVIEW NEEDED
+"voice.readaloud.button.a11yLabel" = "ਉੱਚੀ ਪੜ੍ਹੋ"; // REVIEW NEEDED
+"voice.readaloud.button.a11yHint" = "ਇਸ ਕਾਰਡ ਦੀ ਸਮੱਗਰੀ ਉੱਚੀ ਪੜ੍ਹਦਾ ਹੈ।"; // REVIEW NEEDED
+"voice.readaloud.button.speaking" = "ਬੋਲ ਰਿਹਾ ਹੈ"; // REVIEW NEEDED
+"voice.dose.template" = "%@, %@, %@ ਵਜੇ।"; // REVIEW NEEDED
+"voice.dose.instruction.suffix" = "%@"; // REVIEW NEEDED
+"voice.dose.foodrule.with" = "ਖਾਣੇ ਨਾਲ ਲਓ।"; // REVIEW NEEDED
+"voice.dose.foodrule.without" = "ਖਾਣੇ ਤੋਂ ਬਿਨਾਂ ਲਓ।"; // REVIEW NEEDED
+"voice.alert.template" = "%@। %@।"; // REVIEW NEEDED
+"voice.alert.title.misseddose" = "ਖੁੰਝੀ ਖੁਰਾਕ"; // REVIEW NEEDED
+"voice.alert.title.emergency" = "ਐਮਰਜੈਂਸੀ"; // REVIEW NEEDED
+"voice.alert.title.weeklysummary" = "ਹਫ਼ਤਾਵਾਰੀ ਸਾਰ"; // REVIEW NEEDED
+"voice.medicalid.intro" = "%@ ਲਈ ਐਮਰਜੈਂਸੀ ਮੈਡੀਕਲ ਆਈਡੀ।"; // REVIEW NEEDED
+"voice.medicalid.dob" = "ਜਨਮ ਮਿਤੀ %@, ਉਮਰ %@ ਸਾਲ।"; // REVIEW NEEDED
+"voice.medicalid.bloodtype" = "ਖ਼ੂਨ ਦਾ ਗਰੁੱਪ %@।"; // REVIEW NEEDED
+"voice.medicalid.allergies.intro" = "ਇਨ੍ਹਾਂ ਤੋਂ ਐਲਰਜੀ:"; // REVIEW NEEDED
+"voice.medicalid.conditions.intro" = "ਮੈਡੀਕਲ ਹਾਲਤਾਂ:"; // REVIEW NEEDED
+"voice.medicalid.contacts.intro" = "ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ:"; // REVIEW NEEDED
+"voice.medicalid.contact.template" = "%@, %@"; // REVIEW NEEDED
+"voice.settings.section.title" = "ਆਵਾਜ਼ ਪੜ੍ਹਾਈ"; // REVIEW NEEDED
+"voice.settings.enabled.label" = "ਆਵਾਜ਼ ਪੜ੍ਹਾਈ"; // REVIEW NEEDED
+"voice.settings.rate.label" = "ਬੋਲਣ ਦੀ ਗਤੀ"; // REVIEW NEEDED
+"voice.settings.rate.slow" = "ਹੌਲੀ"; // REVIEW NEEDED
+"voice.settings.rate.normal" = "ਸਧਾਰਨ"; // REVIEW NEEDED
+"voice.settings.rate.fast" = "ਤੇਜ਼"; // REVIEW NEEDED
+"voice.settings.test.button" = "ਆਵਾਜ਼ ਟੈਸਟ ਕਰੋ"; // REVIEW NEEDED
+"voice.settings.test.sample" = "ਇਹ ਡੋਜ਼ਲੀ ਬੋਲ ਰਹੀ ਹੈ। ਤੁਸੀਂ ਗਤੀ ਬਦਲ ਸਕਦੇ ਹੋ।"; // REVIEW NEEDED

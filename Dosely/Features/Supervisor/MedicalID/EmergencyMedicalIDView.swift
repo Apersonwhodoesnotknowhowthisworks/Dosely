@@ -38,6 +38,16 @@ struct EmergencyMedicalIDView: View {
                     if viewModel.isEmptyState {
                         emptyStateCard
                     } else {
+                        ReadAloudButton(style: .prominent) {
+                            VoiceUtterance.medicalID(
+                                viewModel,
+                                personName: person.name ?? "",
+                                dateOfBirthText: viewModel.dateOfBirth.map {
+                                    LocalizedFormatters.dateFormatter(format: "MMMM d, yyyy").string(from: $0)
+                                },
+                                language: currentAppLanguage()
+                            )
+                        }
                         if viewModel.showBloodType { bloodTypeChip }
                         if viewModel.showAllergies {
                             listCard(titleKey: "emergency.medicalid.section.allergies",

@@ -73,7 +73,18 @@ struct DoseCardView: View {
 
     private var trailingColumn: some View {
         VStack(alignment: .trailing, spacing: DSSpacing.sm) {
-            statusDot
+            HStack(spacing: DSSpacing.xs) {
+                ReadAloudButton {
+                    VoiceUtterance.dose(
+                        medication: dose.medication.name ?? "",
+                        dose: dose.medication.dose ?? "",
+                        time: timeString,
+                        foodRule: dose.medication.foodRule,
+                        language: currentAppLanguage()
+                    )
+                }
+                statusDot
+            }
             actionArea
         }
     }

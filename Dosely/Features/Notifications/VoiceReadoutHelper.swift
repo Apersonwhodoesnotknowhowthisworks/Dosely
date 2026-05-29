@@ -1,30 +1,19 @@
 import Foundation
-import AVFoundation
 
-/// Minimal voice readout helper. The full VoiceReadoutService lands in a
-/// later accessibility prompt; this exists only to speak a localized
-/// reminder string when the app is in the foreground.
-///
-/// If no voice is installed for the requested language, logs a
-/// `[VOICE-DEBUG]` line and silently no-ops — never blocks the user.
+/// Thin compatibility shim. The real implementation is now
+/// `VoiceReadoutService` (queue, language fallback, rate/enable controls,
+/// audio session). This entry point survives only so the existing
+/// foreground-notification call site keeps working; it forwards the localized
+/// reminder body to the service as a `.custom` utterance in the active app
+/// language. New code should call `VoiceReadoutService.shared` directly.
 enum VoiceReadoutHelper {
-    private static let synthesizer = AVSpeechSynthesizer()
-
-    /// Speaks `text` using the voice that matches the current app language.
-    /// `pa` maps to `pa-IN` (the BCP-47 tag iOS recognises for Punjabi);
-    /// any other language falls back to `en-US`.
+    /// Speaks `text` (already localized) in the user's current app language.
+    /// Safe to call from any thread — hops to the main actor for the
+    /// `@MainActor` service.
     static func speak(_ text: String) {
         let lang = UserDefaults.standard.string(forKey: "app_language") ?? "en"
-        let voiceCode = lang == "pa" ? "pa-IN" : "en-US"
-
-        guard let voice = AVSpeechSynthesisVoice(language: voiceCode) else {
-            print("[VOICE-DEBUG] No installed voice for \(voiceCode); skipping speak. Text=\"\(text)\"")
-            return
+        Task { @MainActor in
+            VoiceReadoutService.shared.speak(.custom(text, language: lang))
         }
-
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = voice
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
-        synthesizer.speak(utterance)
     }
 }

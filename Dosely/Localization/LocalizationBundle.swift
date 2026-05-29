@@ -38,3 +38,21 @@ func L(_ key: String, _ args: CVarArg...) -> String {
     if args.isEmpty { return template }
     return String(format: template, arguments: args)
 }
+
+/// Localize a key in a SPECIFIC language's `.lproj`, independent of the active
+/// app language. The voice-readout builders need this: when the chosen language
+/// is `pa` they render BOTH the Punjabi segments and an English fallback set in
+/// one pass, so the service can speak English if no `pa-IN` voice is installed
+/// without the call site constructing two utterances. Falls back to the active
+/// language if the requested `.lproj` can't be loaded.
+func L(_ key: String, in language: String, _ args: CVarArg...) -> String {
+    let template: String
+    if let path = Bundle.main.path(forResource: language, ofType: "lproj"),
+       let bundle = Bundle(path: path) {
+        template = bundle.localizedString(forKey: key, value: nil, table: nil)
+    } else {
+        template = NSLocalizedString(key, comment: "")
+    }
+    if args.isEmpty { return template }
+    return String(format: template, arguments: args)
+}

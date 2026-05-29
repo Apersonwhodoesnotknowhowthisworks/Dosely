@@ -476,3 +476,31 @@
 "emergency.medicalid.dob" = "Born %@ · age %d";
 "emergency.medicalid.contact.call.a11yLabel" = "Call %@ at %@";
 "emergency.medicalid.contact.call.a11yHint" = "Opens the phone app to call.";
+
+// MARK: - Voice readout (full VoiceReadoutService)
+"voice.readaloud.button.a11yLabel" = "Read aloud";
+"voice.readaloud.button.a11yHint" = "Speaks the contents of this card.";
+"voice.readaloud.button.speaking" = "Speaking";
+"voice.dose.template" = "%@, %@, at %@.";
+"voice.dose.instruction.suffix" = "%@";
+"voice.dose.foodrule.with" = "Take with food.";
+"voice.dose.foodrule.without" = "Take without food.";
+"voice.alert.template" = "%@. %@.";
+"voice.alert.title.misseddose" = "Missed dose";
+"voice.alert.title.emergency" = "Emergency";
+"voice.alert.title.weeklysummary" = "Weekly summary";
+"voice.medicalid.intro" = "Emergency Medical ID for %@.";
+"voice.medicalid.dob" = "Date of birth %@, age %@ years.";
+"voice.medicalid.bloodtype" = "Blood type %@.";
+"voice.medicalid.allergies.intro" = "Allergic to:";
+"voice.medicalid.conditions.intro" = "Medical conditions:";
+"voice.medicalid.contacts.intro" = "Emergency contacts:";
+"voice.medicalid.contact.template" = "%@, %@";
+"voice.settings.section.title" = "Voice readout";
+"voice.settings.enabled.label" = "Voice readout";
+"voice.settings.rate.label" = "Speech rate";
+"voice.settings.rate.slow" = "Slow";
+"voice.settings.rate.normal" = "Normal";
+"voice.settings.rate.fast" = "Fast";
+"voice.settings.test.button" = "Test voice";
+"voice.settings.test.sample" = "This is Dosely speaking. You can adjust the speed.";
