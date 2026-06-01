@@ -528,3 +528,27 @@
 "interactions.banner.tap" = "ਵੇਖਣ ਲਈ ਟੈਪ ਕਰੋ।"; // REVIEW NEEDED
 "interactions.list.title" = "ਦਵਾਈਆਂ ਦੇ ਆਪਸੀ ਅਸਰ"; // REVIEW NEEDED
 "interactions.readaloud.template" = "%@ ਆਪਸੀ ਅਸਰ: %@ ਅਤੇ %@। %@ %@"; // REVIEW NEEDED
+
+// MARK: - Email adherence report — all REVIEW NEEDED
+"email.action.label" = "ਪਾਲਣਾ ਰਿਪੋਰਟ ਈਮੇਲ ਕਰੋ"; // REVIEW NEEDED
+"email.action.a11yHint" = "ਪਹਿਲਾਂ ਤੋਂ ਭਰੀ ਰਿਪੋਰਟ ਨਾਲ ਮੇਲ ਐਪ ਖੋਲ੍ਹਦਾ ਹੈ।"; // REVIEW NEEDED
+"email.subject.template" = "ਪਾਲਣਾ ਰਿਪੋਰਟ — %@ — %@"; // REVIEW NEEDED
+"email.body.header.title" = "ਪਾਲਣਾ ਰਿਪੋਰਟ"; // REVIEW NEEDED
+"email.body.header.patient" = "ਮਰੀਜ਼: %@"; // REVIEW NEEDED
+"email.body.header.period" = "ਮਿਆਦ: %@ – %@"; // REVIEW NEEDED
+"email.body.header.generatedby" = "ਤਿਆਰ ਕੀਤਾ: Dosely"; // REVIEW NEEDED
+"email.body.overall.title" = "ਕੁੱਲ ਪਾਲਣਾ: %d%% (%d/%d ਖ਼ੁਰਾਕਾਂ ਲਈਆਂ)"; // REVIEW NEEDED
+"email.body.medications.heading" = "ਦਵਾਈਆਂ"; // REVIEW NEEDED
+"email.body.medication.line" = "- %@ (%@)"; // REVIEW NEEDED
+"email.body.medication.adherence" = "  ਪਾਲਣਾ: %d%% (%d/%d)"; // REVIEW NEEDED
+"email.body.missed.heading" = "ਖੁੰਝੀਆਂ ਖ਼ੁਰਾਕਾਂ"; // REVIEW NEEDED
+"email.body.missed.empty" = "ਇਸ ਮਿਆਦ ਵਿੱਚ ਕੋਈ ਖ਼ੁਰਾਕ ਨਹੀਂ ਖੁੰਝੀ।"; // REVIEW NEEDED
+"email.body.missed.line" = "- %@ — ਨਿਯਤ %@"; // REVIEW NEEDED
+"email.body.disclaimer" = "ਇਹ ਰਿਪੋਰਟ Dosely ਦਵਾਈ-ਟ੍ਰੈਕਿੰਗ ਐਪ ਨੇ ਆਪੇ ਤਿਆਰ ਕੀਤੀ ਹੈ। ਪਾਲਣਾ ਪ੍ਰਤੀਸ਼ਤ ਐਪ ਵਿੱਚ ਦਰਜ ਕੀਤੀਆਂ ਖ਼ੁਰਾਕਾਂ 'ਤੇ ਆਧਾਰਿਤ ਹੈ ਅਤੇ ਬਿਨਾਂ ਦਰਜ ਕੀਤੇ ਲਈਆਂ ਦਵਾਈਆਂ ਨੂੰ ਸ਼ਾਇਦ ਨਾ ਦਰਸਾਵੇ। ਕਲੀਨਿਕਲ ਫ਼ੈਸਲਿਆਂ ਤੋਂ ਪਹਿਲਾਂ ਪੂਰੇ ਸੰਦਰਭ ਲਈ ਮਰੀਜ਼ ਜਾਂ ਦੇਖਭਾਲ ਕਰਨ ਵਾਲੇ ਨਾਲ ਚਰਚਾ ਕਰੋ।"; // REVIEW NEEDED
+"email.fallback.title" = "ਮੇਲ ਸੈੱਟ ਨਹੀਂ ਹੈ"; // REVIEW NEEDED
+"email.fallback.copy.button" = "ਕਲਿੱਪਬੋਰਡ 'ਤੇ ਕਾਪੀ ਕਰੋ"; // REVIEW NEEDED
+"email.fallback.copy.confirmation" = "ਕਾਪੀ ਹੋ ਗਿਆ"; // REVIEW NEEDED
+"email.fallback.done.button" = "ਹੋ ਗਿਆ"; // REVIEW NEEDED
+"email.result.sent.banner" = "ਰਿਪੋਰਟ ਭੇਜ ਦਿੱਤੀ।"; // REVIEW NEEDED
+"email.result.saved.banner" = "ਡ੍ਰਾਫ਼ਟ ਵਜੋਂ ਸੰਭਾਲੀ।"; // REVIEW NEEDED
+"email.result.failed.banner" = "ਰਿਪੋਰਟ ਨਹੀਂ ਭੇਜੀ ਜਾ ਸਕੀ। ਫੇਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED

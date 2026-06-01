@@ -1,3 +1,4 @@
+import MessageUI
 import SwiftUI
 
 /// Three-tab supervisor home: Today (this view), History (week grid for
@@ -17,6 +18,11 @@ struct SupervisorDashboardView: View {
     @State private var pendingAddTargetPersonID: UUID?
     @State private var promptAddTargetPicker = false
     @State private var todayRefreshError: String?
+    @State private var showingMailSheet = false
+    @State private var showingReportFallback = false
+    @State private var reportSubject = ""
+    @State private var reportBody = ""
+    @State private var emailResultBanner: String?
 
     private let medicationRepo: MedicationRepository
     private let personRepo: PersonRepository
@@ -167,6 +173,26 @@ struct SupervisorDashboardView: View {
             MedicalIDViewerSheet(preselectedPersonID: pendingMedicalIDViewerTargetPersonID)
                 .environmentObject(authService)
         }
+        .sheet(isPresented: $showingMailSheet) {
+            MailComposeView(subject: reportSubject, body: reportBody) { result in
+                showingMailSheet = false
+                handleMailResult(result)
+            }
+        }
+        .sheet(isPresented: $showingReportFallback) {
+            AdherenceReportFallbackView(reportBody: reportBody)
+        }
+        .overlay(alignment: .top) {
+            if let banner = emailResultBanner {
+                Text(banner)
+                    .dsBodyRegular()
+                    .foregroundColor(.white)
+                    .padding(DSSpacing.md)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.dsPrimary)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
         .confirmationDialog(L("supervisor.addmed.picker.title"),
                             isPresented: $promptAddTargetPicker,
                             titleVisibility: .visible) {
@@ -224,6 +250,7 @@ struct SupervisorDashboardView: View {
                             },
                             onViewMedicalID: { handleViewMedicalIDTap() },
                             onEditMedicalID: { handleEditMedicalIDTap() },
+                            onEmailReport: { handleEmailReportTap() },
                             onSettings: { showingSettings = true }
                         )
                     } else {
@@ -348,6 +375,53 @@ struct SupervisorDashboardView: View {
     private func handleViewMedicalIDTap() {
         pendingMedicalIDViewerTargetPersonID = activePersonID
         showingMedicalIDViewer = true
+    }
+
+    private func handleEmailReportTap() {
+        guard let personID = activePersonID else { return }
+        Task { await prepareReport(for: personID) }
+    }
+
+    /// Build + format the last-7-days adherence report for the selected
+    /// patient, then route to the Mail compose sheet — or the copy-to-clipboard
+    /// fallback when no Mail account is configured.
+    private func prepareReport(for personID: UUID) async {
+        let now = Date()
+        let calendar = Calendar.current
+        let start = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: now)) ?? now
+        let range = start...now
+        let name = viewModel.clients.first(where: { $0.id == personID })?.name ?? ""
+        let meds = await medicationRepo.fetchAllMedications(for: personID)
+        let logs = await medicationRepo.fetchDoseLogs(for: nil, personID: personID, from: start, to: now)
+        let report = AdherenceReport.build(patientName: name, medications: meds, doseLogs: logs, in: range)
+        let formatter = AdherenceReportFormatter(language: currentAppLanguage())
+        reportSubject = formatter.subject(for: report)
+        reportBody = formatter.plainTextBody(for: report)
+        if MailComposeView.canSendMail {
+            showingMailSheet = true
+        } else {
+            showingReportFallback = true
+        }
+    }
+
+    private func handleMailResult(_ result: Result<MFMailComposeResult, Error>) {
+        switch result {
+        case .success(.sent):              showEmailBanner(L("email.result.sent.banner"))
+        case .success(.saved):             showEmailBanner(L("email.result.saved.banner"))
+        case .success(.cancelled):         break
+        case .success(.failed), .failure:  showEmailBanner(L("email.result.failed.banner"))
+        case .success:                     break   // any future MFMailComposeResult case
+        }
+    }
+
+    private func showEmailBanner(_ text: String) {
+        withAnimation(.easeInOut(duration: 0.2)) { emailResultBanner = text }
+        Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.2)) { emailResultBanner = nil }
+            }
+        }
     }
 
     private func acknowledge(_ alert: Alert) async {

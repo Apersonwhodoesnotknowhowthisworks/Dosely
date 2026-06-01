@@ -7,6 +7,9 @@ struct QuickActionsCard: View {
     var onAddMedication: () -> Void
     var onViewMedicalID: () -> Void
     var onEditMedicalID: () -> Void
+    /// nil → the email row is hidden (e.g. the "All" view, where there's no
+    /// single patient to report on).
+    var onEmailReport: (() -> Void)? = nil
     var onSettings: () -> Void
 
     var body: some View {
@@ -27,6 +30,13 @@ struct QuickActionsCard: View {
                       icon: "cross.case.fill",
                       tint: .dsDanger,
                       action: onEditMedicalID)
+            if let onEmailReport {
+                actionRow(title: L("email.action.label"),
+                          icon: "envelope.fill",
+                          tint: .dsPrimary,
+                          hint: L("email.action.a11yHint"),
+                          action: onEmailReport)
+            }
             actionRow(title: L("supervisor.quickactions.settings"),
                       icon: "gearshape.fill",
                       tint: .dsTextSecondary,
@@ -41,6 +51,7 @@ struct QuickActionsCard: View {
     private func actionRow(title: String,
                            icon: String,
                            tint: Color,
+                           hint: String? = nil,
                            action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: DSSpacing.md) {
@@ -60,5 +71,6 @@ struct QuickActionsCard: View {
             .frame(minHeight: DSSpacing.minTapTarget)
         }
         .accessibilityLabel(Text(title))
+        .accessibilityHint(hint.map { Text($0) } ?? Text(""))
     }
 }
