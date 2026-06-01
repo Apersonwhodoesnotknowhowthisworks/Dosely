@@ -547,3 +547,11 @@
 "email.result.sent.banner" = "Report sent.";
 "email.result.saved.banner" = "Saved as draft.";
 "email.result.failed.banner" = "Couldn't send the report. Try again.";
+
+// MARK: - Accessibility
+"accessibility.section.title" = "Accessibility";
+"accessibility.highcontrast.title" = "Higher contrast";
+"accessibility.highcontrast.subtitle" = "Adds extra contrast for text and buttons.";
+"accessibility.largertext.title" = "Larger text";
+"accessibility.largertext.subtitle" = "Use larger text throughout the app, even if iOS settings are set smaller.";
+"accessibility.systemnote" = "System settings may already provide these. This adds on top, never reduces.";

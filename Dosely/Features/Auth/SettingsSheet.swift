@@ -5,6 +5,8 @@ struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("app_language") private var language: String = ""
     @AppStorage("force_light_mode") private var forceLightMode: Bool = false
+    @AppStorage("force_high_contrast") private var forceHighContrast: Bool = false
+    @AppStorage("force_larger_text") private var forceLargerText: Bool = false
     @ObservedObject private var voice = VoiceReadoutService.shared
     @State private var biometricOn: Bool = false
     @State private var showingLanguagePicker = false
@@ -33,6 +35,7 @@ struct SettingsSheet: View {
                         if isSupervisor { familySection }
                         languageSection
                         lightModeSection
+                        accessibilitySection
                         voiceSection
                         if authService.biometricAvailable { biometricSection }
                         VStack(spacing: DSSpacing.md) {
@@ -297,6 +300,54 @@ struct SettingsSheet: View {
         voice.speak(.custom(L("voice.settings.test.sample"),
                             language: lang,
                             fallbackText: L("voice.settings.test.sample", in: "en")))
+    }
+
+    // MARK: - Accessibility
+
+    private var accessibilitySection: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.md) {
+            Text("accessibility.section.title")
+                .dsTitleMedium()
+                .foregroundColor(.dsTextPrimary)
+
+            Toggle(isOn: $forceHighContrast) {
+                VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                    Text("accessibility.highcontrast.title")
+                        .dsBodyLarge()
+                        .foregroundColor(.dsTextPrimary)
+                    Text("accessibility.highcontrast.subtitle")
+                        .dsBodyRegular()
+                        .foregroundColor(.dsTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .tint(.dsPrimary)
+            .frame(minHeight: DSSpacing.minTapTarget)
+            .accessibilityLabel(Text("accessibility.highcontrast.title"))
+
+            Toggle(isOn: $forceLargerText) {
+                VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                    Text("accessibility.largertext.title")
+                        .dsBodyLarge()
+                        .foregroundColor(.dsTextPrimary)
+                    Text("accessibility.largertext.subtitle")
+                        .dsBodyRegular()
+                        .foregroundColor(.dsTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .tint(.dsPrimary)
+            .frame(minHeight: DSSpacing.minTapTarget)
+            .accessibilityLabel(Text("accessibility.largertext.title"))
+
+            Text("accessibility.systemnote")
+                .dsCaption()
+                .foregroundColor(.dsTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(DSSpacing.md)
+        .background(Color.dsSurface)
+        .cornerRadius(DSSpacing.rMd)
     }
 
     // MARK: - Family

@@ -18,6 +18,7 @@
 		BFD0000000000000000000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000005 /* Assets.xcassets */; };
 		BFD0000000000000000000006 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000006 /* Preview Assets.xcassets */; };
 		BFD0000000000000000000010 /* DSColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000010 /* DSColors.swift */; };
+		BFD0000000000000000000220 /* AccessibilityScaling.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000220 /* AccessibilityScaling.swift */; };
 		BFD0000000000000000000011 /* DSTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000011 /* DSTypography.swift */; };
 		BFD0000000000000000000012 /* DSSpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000012 /* DSSpacing.swift */; };
 		BFD0000000000000000000013 /* DesignSystemPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000013 /* DesignSystemPreview.swift */; };
@@ -87,6 +88,7 @@
 		BFD00000000000000000000C0 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = GRP0000000000000000000017 /* Localizable.strings */; };
 		BFD00000000000000000000C1 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = GRP0000000000000000000018 /* Localizable.stringsdict */; };
 		BFD00000000000000000000D0 /* DSColorsContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000D0 /* DSColorsContrastTests.swift */; };
+		BFD0000000000000000000221 /* AccessibilityToggleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000221 /* AccessibilityToggleTests.swift */; };
 		BFD00000000000000000000E0 /* PinHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000E0 /* PinHasher.swift */; };
 		BFD00000000000000000000E1 /* PersonRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000E1 /* PersonRepository.swift */; };
 		BFD00000000000000000000E2 /* CareCircleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000E2 /* CareCircleRepository.swift */; };
@@ -177,6 +179,7 @@
 		FRD0000000000000000000007 /* Dosely.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Dosely.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FRD0000000000000000000008 /* Dosely.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Dosely.xcdatamodel; sourceTree = "<group>"; };
 		FRD0000000000000000000010 /* DSColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSColors.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000220 /* AccessibilityScaling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityScaling.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000011 /* DSTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSTypography.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000012 /* DSSpacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSSpacing.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000013 /* DesignSystemPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystemPreview.swift; sourceTree = "<group>"; };
@@ -249,6 +252,7 @@
 		FRD00000000000000000000C2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		FRD00000000000000000000C3 /* pa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = pa; path = pa.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		FRD00000000000000000000D0 /* DSColorsContrastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSColorsContrastTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000221 /* AccessibilityToggleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityToggleTests.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000E0 /* PinHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinHasher.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000E1 /* PersonRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonRepository.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000E2 /* CareCircleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareCircleRepository.swift; sourceTree = "<group>"; };
@@ -389,6 +393,7 @@
 			isa = PBXGroup;
 			children = (
 				FRD0000000000000000000010 /* DSColors.swift */,
+				FRD0000000000000000000220 /* AccessibilityScaling.swift */,
 				FRD0000000000000000000011 /* DSTypography.swift */,
 				FRD0000000000000000000012 /* DSSpacing.swift */,
 				FRD0000000000000000000013 /* DesignSystemPreview.swift */,
@@ -439,6 +444,7 @@
 				FRD0000000000000000000094 /* OpenFDAContentParserTests.swift */,
 				FRD00000000000000000000A5 /* PrescriptionParserTests.swift */,
 				FRD00000000000000000000D0 /* DSColorsContrastTests.swift */,
+				FRD0000000000000000000221 /* AccessibilityToggleTests.swift */,
 				FRD00000000000000000000E4 /* PersonRepositoryTests.swift */,
 				FRD00000000000000000000E5 /* CareCircleRepositoryTests.swift */,
 				FRD00000000000000000000E6 /* CareCircleMigrationTests.swift */,
@@ -793,6 +799,7 @@
 				BFD0000000000000000000001 /* DoselyApp.swift in Sources */,
 				BFD0000000000000000000003 /* Persistence.swift in Sources */,
 				BFD0000000000000000000010 /* DSColors.swift in Sources */,
+				BFD0000000000000000000220 /* AccessibilityScaling.swift in Sources */,
 				BFD0000000000000000000011 /* DSTypography.swift in Sources */,
 				BFD0000000000000000000012 /* DSSpacing.swift in Sources */,
 				BFD0000000000000000000013 /* DesignSystemPreview.swift in Sources */,
@@ -902,6 +909,7 @@
 				BFD0000000000000000000094 /* OpenFDAContentParserTests.swift in Sources */,
 				BFD00000000000000000000A5 /* PrescriptionParserTests.swift in Sources */,
 				BFD00000000000000000000D0 /* DSColorsContrastTests.swift in Sources */,
+				BFD0000000000000000000221 /* AccessibilityToggleTests.swift in Sources */,
 				BFD00000000000000000000E4 /* PersonRepositoryTests.swift in Sources */,
 				BFD00000000000000000000E5 /* CareCircleRepositoryTests.swift in Sources */,
 				BFD00000000000000000000E6 /* CareCircleMigrationTests.swift in Sources */,

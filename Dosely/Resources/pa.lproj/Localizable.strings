@@ -552,3 +552,11 @@
 "email.result.sent.banner" = "ਰਿਪੋਰਟ ਭੇਜ ਦਿੱਤੀ।"; // REVIEW NEEDED
 "email.result.saved.banner" = "ਡ੍ਰਾਫ਼ਟ ਵਜੋਂ ਸੰਭਾਲੀ।"; // REVIEW NEEDED
 "email.result.failed.banner" = "ਰਿਪੋਰਟ ਨਹੀਂ ਭੇਜੀ ਜਾ ਸਕੀ। ਫੇਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
+
+// MARK: - Accessibility — all REVIEW NEEDED
+"accessibility.section.title" = "ਪਹੁੰਚਯੋਗਤਾ"; // REVIEW NEEDED
+"accessibility.highcontrast.title" = "ਵੱਧ ਕੰਟ੍ਰਾਸਟ"; // REVIEW NEEDED
+"accessibility.highcontrast.subtitle" = "ਟੈਕਸਟ ਅਤੇ ਬਟਨਾਂ ਲਈ ਵਾਧੂ ਕੰਟ੍ਰਾਸਟ ਜੋੜਦਾ ਹੈ।"; // REVIEW NEEDED
+"accessibility.largertext.title" = "ਵੱਡਾ ਟੈਕਸਟ"; // REVIEW NEEDED
+"accessibility.largertext.subtitle" = "ਪੂਰੀ ਐਪ ਵਿੱਚ ਵੱਡਾ ਟੈਕਸਟ ਵਰਤੋ, ਭਾਵੇਂ iOS ਸੈਟਿੰਗਾਂ ਛੋਟੀਆਂ ਰੱਖੀਆਂ ਹੋਣ।"; // REVIEW NEEDED
+"accessibility.systemnote" = "ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ ਇਹ ਪਹਿਲਾਂ ਹੀ ਦੇ ਸਕਦੀਆਂ ਹਨ। ਇਹ ਉਸ ਉੱਤੇ ਜੋੜਦਾ ਹੈ, ਕਦੇ ਘਟਾਉਂਦਾ ਨਹੀਂ।"; // REVIEW NEEDED
