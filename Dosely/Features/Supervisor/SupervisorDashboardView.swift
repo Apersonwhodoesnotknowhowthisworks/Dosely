@@ -78,6 +78,16 @@ struct SupervisorDashboardView: View {
                                    activePersonID: $activePersonID)
                         .padding(.bottom, DSSpacing.xs)
 
+                    if !viewModel.interactions.isEmpty {
+                        NavigationLink {
+                            InteractionsListView(interactions: viewModel.interactions)
+                        } label: {
+                            InteractionBanner(interactions: viewModel.interactions)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, DSSpacing.lg)
+                    }
+
                     Text(LocalizedFormatters.fullDateFormatter.string(from: Date()))
                         .dsBodyLarge()
                         .foregroundColor(.dsTextSecondary)
@@ -139,7 +149,8 @@ struct SupervisorDashboardView: View {
             MedicationDetailView(
                 name: dose.medication.name ?? "",
                 dose: dose.medication.dose ?? "",
-                pillPhotoData: dose.medication.pillPhotoData
+                pillPhotoData: dose.medication.pillPhotoData,
+                patientPersonID: dose.medication.personID
             )
         }
         .sheet(isPresented: $showingMedicalIDEditor) {

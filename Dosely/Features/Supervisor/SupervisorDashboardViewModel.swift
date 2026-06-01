@@ -23,6 +23,11 @@ final class SupervisorDashboardViewModel: ObservableObject {
     @Published private(set) var doses: [TodayDose] = []
     @Published private(set) var adherence: PersonAdherence?
     @Published private(set) var alerts: [Alert] = []
+    /// Cross-medication interactions for the currently-selected single patient
+    /// (empty in the "All" view, where pairwise interactions don't apply).
+    /// Recomputed on every `load`, so adding or removing a medication and
+    /// reloading surfaces or clears the banner.
+    @Published private(set) var interactions: [DrugInteraction] = []
     @Published private(set) var isLoaded = false
     /// Reactive primary-supervisor flag for the acting user. Plain
     /// `authService.currentPerson?.role` reads through @EnvironmentObject
@@ -95,9 +100,12 @@ final class SupervisorDashboardViewModel: ObservableObject {
         if let activePersonID {
             self.doses = await loadDoses(for: activePersonID, now: now)
             self.adherence = await computeAdherence(for: activePersonID, in: onlyClients, now: now)
+            let meds = await medicationRepo.fetchAllMedications(for: activePersonID)
+            self.interactions = DrugInteractionService.shared.allInteractionsFor(patient: meds)
         } else {
             self.doses = await loadCombinedDoses(across: onlyClients, now: now)
             self.adherence = nil
+            self.interactions = []
         }
 
         // Run the detectors before reading the inbox so any new

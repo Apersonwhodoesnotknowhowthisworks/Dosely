@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-05-31",
+  "_source_note": "Every pair is sourced from FDA prescribing information / DailyMed labeling or standard clinical interaction references. Drug names are lowercased generics matching drug_info.json conventions. Severity: informational (worth knowing) / moderate (warrants monitoring) / severe (avoid or close prescriber consultation).",
+  "interactions": [
+    {
+      "drugA": "warfarin",
+      "drugB": "aspirin",
+      "severity": "severe",
+      "description": "Taking warfarin with aspirin combines an anticoagulant and an antiplatelet, sharply raising the risk of serious bleeding, including stomach and brain bleeds.",
+      "recommendation": "Only combine under a prescriber's explicit direction (some heart conditions require both). Watch for unusual bruising, black stools, or bleeding that won't stop, and report them right away."
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "ibuprofen",
+      "severity": "severe",
+      "description": "Ibuprofen and other NSAIDs add antiplatelet and stomach-lining effects on top of warfarin's blood thinning, greatly increasing bleeding risk.",
+      "recommendation": "Avoid this combination. For pain or fever, acetaminophen is usually a safer choice while on warfarin. Check with the prescriber before any change."
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "naproxen",
+      "severity": "severe",
+      "description": "Naproxen, like other NSAIDs, increases bleeding risk and stomach irritation when taken with warfarin.",
+      "recommendation": "Avoid. Prefer acetaminophen for pain relief on warfarin, and ask the prescriber before adding any anti-inflammatory."
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "amiodarone",
+      "severity": "severe",
+      "description": "Amiodarone slows the breakdown of warfarin, which can raise the INR and bleeding risk substantially, sometimes for weeks.",
+      "recommendation": "The warfarin dose usually must be reduced and the INR checked more often when amiodarone is started or stopped. This combination needs prescriber supervision."
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "omeprazole",
+      "severity": "moderate",
+      "description": "Omeprazole can slow warfarin's breakdown and modestly raise the INR, increasing bleeding risk in some people.",
+      "recommendation": "Check the INR after starting or stopping omeprazole and watch for easy bruising or bleeding. Tell the prescriber both medicines are in use."
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "levothyroxine",
+      "severity": "moderate",
+      "description": "Thyroid hormone speeds the body's use of clotting factors, which can strengthen warfarin's effect and raise the INR, especially when the thyroid dose changes.",
+      "recommendation": "Expect closer INR monitoring whenever the levothyroxine dose is adjusted. Report any new bruising or bleeding."
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "sertraline",
+      "severity": "moderate",
+      "description": "SSRIs such as sertraline reduce platelet function and can increase the INR, adding to warfarin's bleeding risk.",
+      "recommendation": "Monitor for bruising and bleeding and check the INR after starting sertraline. Keep the prescriber informed of both medicines."
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "tramadol",
+      "severity": "moderate",
+      "description": "Tramadol has been reported to raise the INR in people taking warfarin, increasing bleeding risk.",
+      "recommendation": "Check the INR after tramadol is started and watch for bleeding. Ask the prescriber about non-interacting pain options."
+    },
+    {
+      "drugA": "lisinopril",
+      "drugB": "spironolactone",
+      "severity": "moderate",
+      "description": "Both lisinopril and spironolactone raise serum potassium, so together they increase the risk of hyperkalemia, particularly with reduced kidney function.",
+      "recommendation": "Have potassium and kidney function checked periodically. Muscle weakness or an irregular heartbeat needs prompt review."
+    },
+    {
+      "drugA": "lisinopril",
+      "drugB": "potassium chloride",
+      "severity": "moderate",
+      "description": "Potassium supplements added to an ACE inhibitor like lisinopril can push potassium too high, risking dangerous hyperkalemia.",
+      "recommendation": "Only take potassium supplements (or potassium-based salt substitutes) if the prescriber has directed it, with periodic potassium checks."
+    },
+    {
+      "drugA": "lisinopril",
+      "drugB": "ibuprofen",
+      "severity": "moderate",
+      "description": "NSAIDs such as ibuprofen can blunt lisinopril's blood-pressure-lowering effect and, especially alongside a diuretic, strain the kidneys.",
+      "recommendation": "Limit NSAID use; prefer acetaminophen for everyday pain. If an NSAID is needed regularly, ask the prescriber to monitor blood pressure and kidney function."
+    },
+    {
+      "drugA": "lisinopril",
+      "drugB": "lithium",
+      "severity": "severe",
+      "description": "ACE inhibitors like lisinopril reduce the kidneys' clearance of lithium, which can raise lithium to toxic levels.",
+      "recommendation": "This combination requires close lithium-level monitoring under prescriber supervision. Tremor, confusion, or vomiting can signal lithium toxicity and need urgent attention."
+    },
+    {
+      "drugA": "lisinopril",
+      "drugB": "amlodipine",
+      "severity": "informational",
+      "description": "Lisinopril and amlodipine both lower blood pressure and are often prescribed together on purpose; the combined effect can occasionally cause dizziness or low blood pressure.",
+      "recommendation": "Usually an intended combination. Rise slowly from sitting or lying down, and mention any persistent dizziness to the prescriber."
+    },
+    {
+      "drugA": "atorvastatin",
+      "drugB": "clarithromycin",
+      "severity": "severe",
+      "description": "Clarithromycin strongly blocks the enzyme that clears atorvastatin, raising statin levels and the risk of severe muscle injury (rhabdomyolysis).",
+      "recommendation": "Avoid the combination; the prescriber may pause the statin during a clarithromycin course or choose a different antibiotic. Report unexplained muscle pain, weakness, or dark urine immediately."
+    },
+    {
+      "drugA": "atorvastatin",
+      "drugB": "diltiazem",
+      "severity": "moderate",
+      "description": "Diltiazem slows the breakdown of atorvastatin, raising statin levels and the chance of muscle-related side effects.",
+      "recommendation": "Watch for muscle aches or weakness. The prescriber may keep the atorvastatin dose on the lower side when diltiazem is also used."
+    },
+    {
+      "drugA": "atorvastatin",
+      "drugB": "amlodipine",
+      "severity": "informational",
+      "description": "Amlodipine can modestly raise atorvastatin levels, but the combination is common and usually well tolerated.",
+      "recommendation": "No routine change needed. Report any new or unexplained muscle pain or weakness to the prescriber."
+    },
+    {
+      "drugA": "simvastatin",
+      "drugB": "amlodipine",
+      "severity": "moderate",
+      "description": "Amlodipine raises simvastatin levels enough that high simvastatin doses increase the risk of muscle injury.",
+      "recommendation": "Simvastatin is generally limited to 20 mg per day when taken with amlodipine. Report unexplained muscle pain, tenderness, or weakness."
+    },
+    {
+      "drugA": "metoprolol",
+      "drugB": "diltiazem",
+      "severity": "moderate",
+      "description": "A beta blocker (metoprolol) with a non-dihydropyridine calcium channel blocker (diltiazem) can add up to slow the heart too much, causing low heart rate or AV block.",
+      "recommendation": "Monitor heart rate and watch for dizziness, fainting, or unusual fatigue. This pairing needs prescriber oversight."
+    },
+    {
+      "drugA": "digoxin",
+      "drugB": "amiodarone",
+      "severity": "severe",
+      "description": "Amiodarone markedly raises digoxin levels, which can cause digoxin toxicity (nausea, visual changes, dangerous heart rhythms).",
+      "recommendation": "The digoxin dose is usually cut substantially when amiodarone is added, with digoxin levels monitored. Report nausea, vision changes, or palpitations promptly."
+    },
+    {
+      "drugA": "digoxin",
+      "drugB": "furosemide",
+      "severity": "moderate",
+      "description": "Furosemide can lower potassium, and low potassium makes the heart more sensitive to digoxin, raising the risk of digoxin toxicity.",
+      "recommendation": "Have potassium checked periodically; the prescriber may recommend potassium intake or monitoring. Report muscle weakness, nausea, or an irregular heartbeat."
+    },
+    {
+      "drugA": "lithium",
+      "drugB": "hydrochlorothiazide",
+      "severity": "severe",
+      "description": "Thiazide diuretics like hydrochlorothiazide reduce lithium clearance, which can raise lithium to toxic levels.",
+      "recommendation": "Requires close lithium-level monitoring under prescriber supervision. Tremor, confusion, slurred speech, or vomiting can signal toxicity and need urgent care."
+    },
+    {
+      "drugA": "sertraline",
+      "drugB": "tramadol",
+      "severity": "severe",
+      "description": "Combining an SSRI (sertraline) with tramadol raises serotonin and can trigger serotonin syndrome, and both can lower the seizure threshold.",
+      "recommendation": "Avoid together when possible. Agitation, sweating, tremor, fast heart rate, or confusion can signal serotonin syndrome and need urgent attention. Ask the prescriber about safer pain options."
+    },
+    {
+      "drugA": "clopidogrel",
+      "drugB": "omeprazole",
+      "severity": "moderate",
+      "description": "Omeprazole blocks an enzyme that activates clopidogrel, which can reduce clopidogrel's clot-preventing effect.",
+      "recommendation": "Where stomach protection is needed, the prescriber may prefer a different acid reducer (such as pantoprazole). Do not change either medicine without asking."
+    },
+    {
+      "drugA": "levothyroxine",
+      "drugB": "omeprazole",
+      "severity": "moderate",
+      "description": "By reducing stomach acid, omeprazole can lower how much levothyroxine the body absorbs, which may weaken thyroid treatment.",
+      "recommendation": "Keep levothyroxine timing consistent and have thyroid levels rechecked if omeprazole is started or stopped. Report new tiredness or weight changes."
+    },
+    {
+      "drugA": "levothyroxine",
+      "drugB": "calcium carbonate",
+      "severity": "moderate",
+      "description": "Calcium binds levothyroxine in the gut and reduces its absorption, which can weaken thyroid treatment.",
+      "recommendation": "Separate levothyroxine and calcium by at least four hours. Take levothyroxine on an empty stomach and keep the routine consistent."
+    },
+    {
+      "drugA": "aspirin",
+      "drugB": "ibuprofen",
+      "severity": "moderate",
+      "description": "Ibuprofen taken near a daily aspirin dose can block aspirin's heart-protective antiplatelet effect, and together they raise stomach-bleeding risk.",
+      "recommendation": "If both are needed, take aspirin at least 30 minutes before ibuprofen, or ask the prescriber about timing. Watch for stomach pain or black stools."
+    }
+  ]
+}

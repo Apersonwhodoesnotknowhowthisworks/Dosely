@@ -510,3 +510,16 @@
 "refill.alert.body" = "%@ days of supply remaining. Refill before %@.";
 "refill.dosecard.daysleft" = "%@ days left";
 "refill.dosecard.daysleft.a11yLabel" = "%@ days of %@ remaining. Tap to view details.";
+
+// MARK: - Drug interactions
+"interactions.section.title" = "Interactions with other medications";
+"interactions.section.empty" = "No known interactions with the patient's other medications.";
+"interactions.severity.informational" = "Informational";
+"interactions.severity.moderate" = "Moderate";
+"interactions.severity.severe" = "Severe";
+"interactions.recommendation.prefix" = "Recommendation:";
+"interactions.banner.count.singular" = "1 interaction detected";
+"interactions.banner.count.plural" = "%@ interactions detected";
+"interactions.banner.tap" = "Tap to review.";
+"interactions.list.title" = "Drug interactions";
+"interactions.readaloud.template" = "%@ interaction between %@ and %@. %@ %@";

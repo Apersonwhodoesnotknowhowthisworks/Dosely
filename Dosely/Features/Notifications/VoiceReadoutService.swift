@@ -156,6 +156,27 @@ struct VoiceUtterance {
         if language == "pa", let fb = fallbackText { fallback = [Segment(fb)] }
         return VoiceUtterance(segments: [Segment(text)], language: language, fallbackSegments: fallback)
     }
+
+    /// Spoken form of a drug interaction: "{severity} interaction between
+    /// {drugA} and {drugB}. {description} {recommendation}". Pass
+    /// `fallbackInteraction` (the English version) so a Punjabi utterance falls
+    /// back to English speech when no pa-IN voice is installed.
+    static func interaction(_ interaction: DrugInteraction,
+                            language: String,
+                            fallbackInteraction: DrugInteraction? = nil) -> VoiceUtterance {
+        func spoken(_ i: DrugInteraction, _ lang: String) -> String {
+            L("interactions.readaloud.template", in: lang,
+              L(i.severity.localizedNameKey, in: lang) as NSString,
+              i.drugA as NSString, i.drugB as NSString,
+              i.description as NSString, i.recommendation as NSString)
+        }
+        var fallback: [Segment]?
+        if language == "pa", let fb = fallbackInteraction {
+            fallback = [Segment(spoken(fb, "en"))]
+        }
+        return VoiceUtterance(segments: [Segment(spoken(interaction, language))],
+                              language: language, fallbackSegments: fallback)
+    }
 }
 
 /// The full voice-readout service. Owns one `AVSpeechSynthesizer` for its

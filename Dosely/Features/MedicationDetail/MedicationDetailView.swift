@@ -7,8 +7,13 @@ struct MedicationDetailView: View {
     let medicationName: String
     let dose: String
     let pillPhotoData: Data?
+    /// The patient whose other medications this view checks for interactions.
+    /// nil (previews, the add-flow review) → the interactions section shows its
+    /// "no known interactions" line.
+    let patientPersonID: UUID?
 
     @State private var phase: Phase
+    @State private var patientMedications: [Medication] = []
 
     enum Phase {
         case loading
@@ -16,18 +21,21 @@ struct MedicationDetailView: View {
         case error(message: String)
     }
 
-    init(name: String, dose: String, pillPhotoData: Data? = nil) {
+    init(name: String, dose: String, pillPhotoData: Data? = nil, patientPersonID: UUID? = nil) {
         self.medicationName = name
         self.dose = dose
         self.pillPhotoData = pillPhotoData
+        self.patientPersonID = patientPersonID
         self._phase = State(initialValue: .loading)
     }
 
     #if DEBUG
-    init(name: String, dose: String, pillPhotoData: Data? = nil, phase: Phase) {
+    init(name: String, dose: String, pillPhotoData: Data? = nil,
+         patientPersonID: UUID? = nil, phase: Phase) {
         self.medicationName = name
         self.dose = dose
         self.pillPhotoData = pillPhotoData
+        self.patientPersonID = patientPersonID
         self._phase = State(initialValue: phase)
     }
     #endif
@@ -39,6 +47,7 @@ struct MedicationDetailView: View {
                     disclaimerBanner
                     header
                     content
+                    interactionsSection
                 }
                 .padding(DSSpacing.lg)
             }
@@ -53,6 +62,39 @@ struct MedicationDetailView: View {
             }
         }
         .task { await loadIfNeeded() }
+        .task(id: patientPersonID) { await loadPatientMedications() }
+    }
+
+    // MARK: - Interactions
+
+    /// Drug interactions between this medication and the patient's others.
+    /// Always rendered (even when empty) — "no known interactions" is itself
+    /// useful information for the reader.
+    private var interactionsSection: some View {
+        let interactions = DrugInteractionService.shared.interactionsFor(
+            medicationNamed: medicationName, in: patientMedications
+        )
+        return VStack(alignment: .leading, spacing: DSSpacing.md) {
+            Text("interactions.section.title")
+                .dsTitleMedium()
+                .foregroundColor(.dsTextPrimary)
+            if interactions.isEmpty {
+                Text("interactions.section.empty")
+                    .dsBodyRegular()
+                    .foregroundColor(.dsTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                ForEach(interactions) { interaction in
+                    InteractionCard(interaction: interaction, focusDrug: medicationName)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func loadPatientMedications() async {
+        guard let personID = patientPersonID else { return }
+        patientMedications = await MedicationRepository().fetchAllMedications(for: personID)
     }
 
     @ViewBuilder

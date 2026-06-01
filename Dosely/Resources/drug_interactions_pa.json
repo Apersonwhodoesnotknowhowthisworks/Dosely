@@ -1,0 +1,215 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-05-31",
+  "_review_note": "REVIEW NEEDED — every Punjabi description and recommendation is an AI-generated draft and must be reviewed by a fluent Punjabi speaker (ideally a healthcare worker) before client testing. Drug names (drugA/drugB) and severity values stay in English on purpose: the lookup is language-independent and BC pharmacy bottles carry English labels.",
+  "interactions": [
+    {
+      "drugA": "warfarin",
+      "drugB": "aspirin",
+      "severity": "severe",
+      "reviewNeeded": true,
+      "description": "ਵਾਰਫਰਿਨ (warfarin) ਨੂੰ ਐਸਪਰੀਨ (aspirin) ਨਾਲ ਲੈਣ ਨਾਲ ਖ਼ੂਨ ਪਤਲਾ ਕਰਨ ਵਾਲੀਆਂ ਦੋ ਦਵਾਈਆਂ ਮਿਲ ਜਾਂਦੀਆਂ ਹਨ, ਜਿਸ ਨਾਲ ਗੰਭੀਰ ਖ਼ੂਨ ਵਗਣ ਦਾ ਖ਼ਤਰਾ ਬਹੁਤ ਵਧ ਜਾਂਦਾ ਹੈ।",
+      "recommendation": "ਸਿਰਫ਼ ਡਾਕਟਰ ਦੀ ਸਾਫ਼ ਹਿਦਾਇਤ ਉੱਤੇ ਹੀ ਇਕੱਠੀਆਂ ਲਓ। ਅਸਾਧਾਰਨ ਨੀਲ਼, ਕਾਲ਼ੀ ਟੱਟੀ, ਜਾਂ ਨਾ ਰੁਕਣ ਵਾਲੇ ਖ਼ੂਨ ਨੂੰ ਤੁਰੰਤ ਦੱਸੋ।"
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "ibuprofen",
+      "severity": "severe",
+      "reviewNeeded": true,
+      "description": "ਆਈਬੂਪ੍ਰੋਫ਼ੈਨ (ibuprofen) ਵਰਗੀਆਂ NSAID ਦਵਾਈਆਂ ਵਾਰਫਰਿਨ ਨਾਲ ਖ਼ੂਨ ਵਗਣ ਅਤੇ ਪੇਟ ਵਿੱਚ ਜ਼ਖ਼ਮ ਦਾ ਖ਼ਤਰਾ ਬਹੁਤ ਵਧਾ ਦਿੰਦੀਆਂ ਹਨ।",
+      "recommendation": "ਇਹ ਜੋੜ ਤੋਂ ਬਚੋ। ਦਰਦ ਜਾਂ ਬੁਖ਼ਾਰ ਲਈ ਆਮ ਤੌਰ 'ਤੇ ਐਸੀਟਾਮਿਨੋਫ਼ੈਨ ਸੁਰੱਖਿਅਤ ਹੈ। ਕੋਈ ਤਬਦੀਲੀ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਡਾਕਟਰ ਨੂੰ ਪੁੱਛੋ।"
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "naproxen",
+      "severity": "severe",
+      "reviewNeeded": true,
+      "description": "ਨੈਪ੍ਰੋਕਸਨ (naproxen), ਹੋਰ NSAID ਵਾਂਗ, ਵਾਰਫਰਿਨ ਨਾਲ ਖ਼ੂਨ ਵਗਣ ਅਤੇ ਪੇਟ ਦੀ ਜਲਣ ਦਾ ਖ਼ਤਰਾ ਵਧਾਉਂਦੀ ਹੈ।",
+      "recommendation": "ਬਚੋ। ਵਾਰਫਰਿਨ ਨਾਲ ਦਰਦ ਲਈ ਐਸੀਟਾਮਿਨੋਫ਼ੈਨ ਚੁਣੋ, ਅਤੇ ਕੋਈ ਸੋਜ਼ਸ਼-ਰੋਕੂ ਦਵਾਈ ਲੈਣ ਤੋਂ ਪਹਿਲਾਂ ਡਾਕਟਰ ਨੂੰ ਪੁੱਛੋ।"
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "amiodarone",
+      "severity": "severe",
+      "reviewNeeded": true,
+      "description": "ਐਮੀਓਡੈਰੋਨ (amiodarone) ਵਾਰਫਰਿਨ ਦੇ ਟੁੱਟਣ ਨੂੰ ਹੌਲੀ ਕਰ ਦਿੰਦੀ ਹੈ, ਜਿਸ ਨਾਲ INR ਅਤੇ ਖ਼ੂਨ ਵਗਣ ਦਾ ਖ਼ਤਰਾ ਕਾਫ਼ੀ ਵਧ ਸਕਦਾ ਹੈ।",
+      "recommendation": "ਆਮ ਤੌਰ 'ਤੇ ਵਾਰਫਰਿਨ ਦੀ ਖ਼ੁਰਾਕ ਘਟਾਉਣੀ ਪੈਂਦੀ ਹੈ ਅਤੇ INR ਜ਼ਿਆਦਾ ਵਾਰੀ ਜਾਂਚਣਾ ਪੈਂਦਾ ਹੈ। ਇਹ ਜੋੜ ਡਾਕਟਰ ਦੀ ਨਿਗਰਾਨੀ ਮੰਗਦਾ ਹੈ।"
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "omeprazole",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਓਮੇਪ੍ਰਾਜ਼ੋਲ (omeprazole) ਵਾਰਫਰਿਨ ਦੇ ਟੁੱਟਣ ਨੂੰ ਹੌਲੀ ਕਰ ਸਕਦੀ ਹੈ ਅਤੇ INR ਥੋੜ੍ਹਾ ਵਧਾ ਸਕਦੀ ਹੈ।",
+      "recommendation": "ਓਮੇਪ੍ਰਾਜ਼ੋਲ ਸ਼ੁਰੂ ਜਾਂ ਬੰਦ ਕਰਨ ਮਗਰੋਂ INR ਜਾਂਚੋ ਅਤੇ ਨੀਲ਼ ਜਾਂ ਖ਼ੂਨ ਵਗਣ ਵੱਲ ਧਿਆਨ ਦਿਓ।"
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "levothyroxine",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਥਾਇਰਾਇਡ ਹਾਰਮੋਨ ਸਰੀਰ ਵਿੱਚ ਖ਼ੂਨ ਜੰਮਣ ਵਾਲੇ ਤੱਤਾਂ ਦੀ ਵਰਤੋਂ ਤੇਜ਼ ਕਰ ਦਿੰਦਾ ਹੈ, ਜਿਸ ਨਾਲ ਵਾਰਫਰਿਨ ਦਾ ਅਸਰ ਅਤੇ INR ਵਧ ਸਕਦੇ ਹਨ।",
+      "recommendation": "ਜਦੋਂ ਵੀ ਲੀਵੋਥਾਇਰੋਕਸਿਨ (levothyroxine) ਦੀ ਖ਼ੁਰਾਕ ਬਦਲੇ, INR ਨੇੜਿਓਂ ਜਾਂਚੋ। ਕੋਈ ਨਵਾਂ ਨੀਲ਼ ਜਾਂ ਖ਼ੂਨ ਵਗਣਾ ਦੱਸੋ।"
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "sertraline",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਸਰਟ੍ਰਾਲਿਨ (sertraline) ਵਰਗੀਆਂ SSRI ਦਵਾਈਆਂ ਪਲੇਟਲੈਟ ਦੀ ਕਿਰਿਆ ਘਟਾਉਂਦੀਆਂ ਹਨ ਅਤੇ INR ਵਧਾ ਸਕਦੀਆਂ ਹਨ, ਜਿਸ ਨਾਲ ਖ਼ੂਨ ਵਗਣ ਦਾ ਖ਼ਤਰਾ ਵਧਦਾ ਹੈ।",
+      "recommendation": "ਨੀਲ਼ ਅਤੇ ਖ਼ੂਨ ਵਗਣ ਵੱਲ ਧਿਆਨ ਦਿਓ ਅਤੇ ਸਰਟ੍ਰਾਲਿਨ ਸ਼ੁਰੂ ਕਰਨ ਮਗਰੋਂ INR ਜਾਂਚੋ।"
+    },
+    {
+      "drugA": "warfarin",
+      "drugB": "tramadol",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਟ੍ਰਾਮਾਡੋਲ (tramadol) ਵਾਰਫਰਿਨ ਲੈਣ ਵਾਲਿਆਂ ਵਿੱਚ INR ਵਧਾ ਸਕਦੀ ਹੈ, ਜਿਸ ਨਾਲ ਖ਼ੂਨ ਵਗਣ ਦਾ ਖ਼ਤਰਾ ਵਧਦਾ ਹੈ।",
+      "recommendation": "ਟ੍ਰਾਮਾਡੋਲ ਸ਼ੁਰੂ ਕਰਨ ਮਗਰੋਂ INR ਜਾਂਚੋ ਅਤੇ ਖ਼ੂਨ ਵਗਣ ਵੱਲ ਧਿਆਨ ਦਿਓ। ਦਰਦ ਲਈ ਹੋਰ ਵਿਕਲਪ ਬਾਰੇ ਡਾਕਟਰ ਨੂੰ ਪੁੱਛੋ।"
+    },
+    {
+      "drugA": "lisinopril",
+      "drugB": "spironolactone",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਲਿਸਿਨੋਪ੍ਰਿਲ (lisinopril) ਅਤੇ ਸਪਾਇਰੋਨੋਲੈਕਟੋਨ (spironolactone) ਦੋਵੇਂ ਖ਼ੂਨ ਵਿੱਚ ਪੋਟਾਸ਼ੀਅਮ ਵਧਾਉਂਦੀਆਂ ਹਨ, ਜਿਸ ਨਾਲ ਖ਼ਾਸ ਕਰਕੇ ਗੁਰਦੇ ਕਮਜ਼ੋਰ ਹੋਣ 'ਤੇ ਹਾਈਪਰਕੇਲੀਮੀਆ ਦਾ ਖ਼ਤਰਾ ਵਧਦਾ ਹੈ।",
+      "recommendation": "ਪੋਟਾਸ਼ੀਅਮ ਅਤੇ ਗੁਰਦੇ ਦੀ ਜਾਂਚ ਸਮੇਂ-ਸਮੇਂ ਕਰਾਓ। ਮਾਸਪੇਸ਼ੀ ਦੀ ਕਮਜ਼ੋਰੀ ਜਾਂ ਅਨਿਯਮਿਤ ਧੜਕਣ ਨੂੰ ਤੁਰੰਤ ਦੱਸੋ।"
+    },
+    {
+      "drugA": "lisinopril",
+      "drugB": "potassium chloride",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਲਿਸਿਨੋਪ੍ਰਿਲ ਵਰਗੀ ACE ਰੋਕੂ ਨਾਲ ਪੋਟਾਸ਼ੀਅਮ ਪੂਰਕ ਲੈਣ ਨਾਲ ਪੋਟਾਸ਼ੀਅਮ ਖ਼ਤਰਨਾਕ ਹੱਦ ਤੱਕ ਵਧ ਸਕਦਾ ਹੈ।",
+      "recommendation": "ਪੋਟਾਸ਼ੀਅਮ ਪੂਰਕ ਜਾਂ ਪੋਟਾਸ਼ੀਅਮ ਵਾਲਾ ਲੂਣ-ਬਦਲ ਸਿਰਫ਼ ਡਾਕਟਰ ਦੀ ਹਿਦਾਇਤ 'ਤੇ, ਨਿਯਮਿਤ ਜਾਂਚ ਨਾਲ ਲਓ।"
+    },
+    {
+      "drugA": "lisinopril",
+      "drugB": "ibuprofen",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਆਈਬੂਪ੍ਰੋਫ਼ੈਨ ਵਰਗੀਆਂ NSAID ਲਿਸਿਨੋਪ੍ਰਿਲ ਦੇ ਬਲੱਡ ਪ੍ਰੈਸ਼ਰ ਘਟਾਉਣ ਵਾਲੇ ਅਸਰ ਨੂੰ ਘਟਾ ਸਕਦੀਆਂ ਹਨ ਅਤੇ, ਖ਼ਾਸ ਕਰਕੇ ਡਾਇਯੂਰੈਟਿਕ ਨਾਲ, ਗੁਰਦਿਆਂ 'ਤੇ ਜ਼ੋਰ ਪਾ ਸਕਦੀਆਂ ਹਨ।",
+      "recommendation": "NSAID ਦੀ ਵਰਤੋਂ ਘਟਾਓ; ਆਮ ਦਰਦ ਲਈ ਐਸੀਟਾਮਿਨੋਫ਼ੈਨ ਚੁਣੋ। ਲੋੜ ਹੋਵੇ ਤਾਂ ਡਾਕਟਰ ਤੋਂ ਬਲੱਡ ਪ੍ਰੈਸ਼ਰ ਤੇ ਗੁਰਦੇ ਦੀ ਨਿਗਰਾਨੀ ਕਰਾਓ।"
+    },
+    {
+      "drugA": "lisinopril",
+      "drugB": "lithium",
+      "severity": "severe",
+      "reviewNeeded": true,
+      "description": "ਲਿਸਿਨੋਪ੍ਰਿਲ ਵਰਗੀਆਂ ACE ਰੋਕੂ ਗੁਰਦਿਆਂ ਤੋਂ ਲਿਥੀਅਮ (lithium) ਦੇ ਨਿਕਾਸ ਨੂੰ ਘਟਾਉਂਦੀਆਂ ਹਨ, ਜਿਸ ਨਾਲ ਲਿਥੀਅਮ ਜ਼ਹਿਰੀਲੇ ਪੱਧਰ ਤੱਕ ਵਧ ਸਕਦਾ ਹੈ।",
+      "recommendation": "ਇਹ ਜੋੜ ਡਾਕਟਰ ਦੀ ਨਿਗਰਾਨੀ ਹੇਠ ਲਿਥੀਅਮ-ਪੱਧਰ ਦੀ ਨੇੜਿਓਂ ਜਾਂਚ ਮੰਗਦਾ ਹੈ। ਕੰਬਣੀ, ਉਲਝਣ ਜਾਂ ਉਲਟੀਆਂ ਜ਼ਹਿਰੀਲੇਪਣ ਦੇ ਚਿੰਨ੍ਹ ਹੋ ਸਕਦੇ ਹਨ — ਤੁਰੰਤ ਧਿਆਨ ਦਿਓ।"
+    },
+    {
+      "drugA": "lisinopril",
+      "drugB": "amlodipine",
+      "severity": "informational",
+      "reviewNeeded": true,
+      "description": "ਲਿਸਿਨੋਪ੍ਰਿਲ ਅਤੇ ਐਮਲੋਡੀਪੀਨ (amlodipine) ਦੋਵੇਂ ਬਲੱਡ ਪ੍ਰੈਸ਼ਰ ਘਟਾਉਂਦੀਆਂ ਹਨ ਅਤੇ ਅਕਸਰ ਜਾਣ-ਬੁੱਝ ਕੇ ਇਕੱਠੀਆਂ ਦਿੱਤੀਆਂ ਜਾਂਦੀਆਂ ਹਨ; ਮਿਲ ਕੇ ਕਦੇ-ਕਦੇ ਚੱਕਰ ਜਾਂ ਘੱਟ ਬਲੱਡ ਪ੍ਰੈਸ਼ਰ ਹੋ ਸਕਦਾ ਹੈ।",
+      "recommendation": "ਆਮ ਤੌਰ 'ਤੇ ਇਹ ਜਾਣ-ਬੁੱਝ ਕੇ ਕੀਤਾ ਜੋੜ ਹੈ। ਬੈਠ ਜਾਂ ਲੇਟ ਕੇ ਹੌਲੀ ਉੱਠੋ, ਅਤੇ ਲਗਾਤਾਰ ਚੱਕਰ ਡਾਕਟਰ ਨੂੰ ਦੱਸੋ।"
+    },
+    {
+      "drugA": "atorvastatin",
+      "drugB": "clarithromycin",
+      "severity": "severe",
+      "reviewNeeded": true,
+      "description": "ਕਲੈਰੀਥ੍ਰੋਮਾਇਸਿਨ (clarithromycin) ਐਟੋਰਵਾਸਟੈਟਿਨ (atorvastatin) ਨੂੰ ਸਾਫ਼ ਕਰਨ ਵਾਲੇ ਐਨਜ਼ਾਈਮ ਨੂੰ ਰੋਕ ਦਿੰਦੀ ਹੈ, ਜਿਸ ਨਾਲ ਸਟੈਟਿਨ ਦਾ ਪੱਧਰ ਅਤੇ ਗੰਭੀਰ ਮਾਸਪੇਸ਼ੀ ਨੁਕਸਾਨ (ਰੈਬਡੋਮਾਇਓਲਾਇਸਿਸ) ਦਾ ਖ਼ਤਰਾ ਵਧਦਾ ਹੈ।",
+      "recommendation": "ਇਹ ਜੋੜ ਤੋਂ ਬਚੋ; ਡਾਕਟਰ ਕਲੈਰੀਥ੍ਰੋਮਾਇਸਿਨ ਦੇ ਦੌਰਾਨ ਸਟੈਟਿਨ ਰੋਕ ਸਕਦਾ ਹੈ ਜਾਂ ਹੋਰ ਐਂਟੀਬਾਇਓਟਿਕ ਚੁਣ ਸਕਦਾ ਹੈ। ਅਣਜਾਣ ਮਾਸਪੇਸ਼ੀ ਦਰਦ, ਕਮਜ਼ੋਰੀ ਜਾਂ ਗੂੜ੍ਹਾ ਪਿਸ਼ਾਬ ਤੁਰੰਤ ਦੱਸੋ।"
+    },
+    {
+      "drugA": "atorvastatin",
+      "drugB": "diltiazem",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਡਿਲਟੀਆਜ਼ੈਮ (diltiazem) ਐਟੋਰਵਾਸਟੈਟਿਨ ਦੇ ਟੁੱਟਣ ਨੂੰ ਹੌਲੀ ਕਰ ਦਿੰਦੀ ਹੈ, ਜਿਸ ਨਾਲ ਸਟੈਟਿਨ ਦਾ ਪੱਧਰ ਅਤੇ ਮਾਸਪੇਸ਼ੀ ਨਾਲ ਜੁੜੇ ਮਾੜੇ ਅਸਰ ਵਧ ਸਕਦੇ ਹਨ।",
+      "recommendation": "ਮਾਸਪੇਸ਼ੀ ਦਰਦ ਜਾਂ ਕਮਜ਼ੋਰੀ ਵੱਲ ਧਿਆਨ ਦਿਓ। ਡਾਕਟਰ ਡਿਲਟੀਆਜ਼ੈਮ ਨਾਲ ਐਟੋਰਵਾਸਟੈਟਿਨ ਦੀ ਖ਼ੁਰਾਕ ਘੱਟ ਰੱਖ ਸਕਦਾ ਹੈ।"
+    },
+    {
+      "drugA": "atorvastatin",
+      "drugB": "amlodipine",
+      "severity": "informational",
+      "reviewNeeded": true,
+      "description": "ਐਮਲੋਡੀਪੀਨ ਐਟੋਰਵਾਸਟੈਟਿਨ ਦਾ ਪੱਧਰ ਥੋੜ੍ਹਾ ਵਧਾ ਸਕਦੀ ਹੈ, ਪਰ ਇਹ ਜੋੜ ਆਮ ਹੈ ਅਤੇ ਆਮ ਤੌਰ 'ਤੇ ਚੰਗੀ ਤਰ੍ਹਾਂ ਸਹਿਣਯੋਗ ਹੈ।",
+      "recommendation": "ਕੋਈ ਖ਼ਾਸ ਤਬਦੀਲੀ ਦੀ ਲੋੜ ਨਹੀਂ। ਕੋਈ ਨਵਾਂ ਜਾਂ ਅਣਜਾਣ ਮਾਸਪੇਸ਼ੀ ਦਰਦ ਜਾਂ ਕਮਜ਼ੋਰੀ ਡਾਕਟਰ ਨੂੰ ਦੱਸੋ।"
+    },
+    {
+      "drugA": "simvastatin",
+      "drugB": "amlodipine",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਐਮਲੋਡੀਪੀਨ ਸਿਮਵਾਸਟੈਟਿਨ (simvastatin) ਦਾ ਪੱਧਰ ਇੰਨਾ ਵਧਾ ਦਿੰਦੀ ਹੈ ਕਿ ਸਿਮਵਾਸਟੈਟਿਨ ਦੀ ਉੱਚੀ ਖ਼ੁਰਾਕ ਨਾਲ ਮਾਸਪੇਸ਼ੀ ਨੁਕਸਾਨ ਦਾ ਖ਼ਤਰਾ ਵਧਦਾ ਹੈ।",
+      "recommendation": "ਐਮਲੋਡੀਪੀਨ ਨਾਲ ਸਿਮਵਾਸਟੈਟਿਨ ਆਮ ਤੌਰ 'ਤੇ ਰੋਜ਼ਾਨਾ 20 ਮਿਲੀਗ੍ਰਾਮ ਤੱਕ ਸੀਮਤ ਹੁੰਦੀ ਹੈ। ਅਣਜਾਣ ਮਾਸਪੇਸ਼ੀ ਦਰਦ ਜਾਂ ਕਮਜ਼ੋਰੀ ਦੱਸੋ।"
+    },
+    {
+      "drugA": "metoprolol",
+      "drugB": "diltiazem",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਬੀਟਾ ਬਲੌਕਰ (metoprolol) ਅਤੇ ਡਿਲਟੀਆਜ਼ੈਮ ਮਿਲ ਕੇ ਦਿਲ ਦੀ ਧੜਕਣ ਨੂੰ ਬਹੁਤ ਹੌਲੀ ਕਰ ਸਕਦੇ ਹਨ, ਜਿਸ ਨਾਲ ਘੱਟ ਧੜਕਣ ਜਾਂ AV ਬਲੌਕ ਹੋ ਸਕਦਾ ਹੈ।",
+      "recommendation": "ਦਿਲ ਦੀ ਧੜਕਣ 'ਤੇ ਨਜ਼ਰ ਰੱਖੋ ਅਤੇ ਚੱਕਰ, ਬੇਹੋਸ਼ੀ ਜਾਂ ਅਸਾਧਾਰਨ ਥਕਾਵਟ ਵੱਲ ਧਿਆਨ ਦਿਓ। ਇਹ ਜੋੜ ਡਾਕਟਰ ਦੀ ਨਿਗਰਾਨੀ ਮੰਗਦਾ ਹੈ।"
+    },
+    {
+      "drugA": "digoxin",
+      "drugB": "amiodarone",
+      "severity": "severe",
+      "reviewNeeded": true,
+      "description": "ਐਮੀਓਡੈਰੋਨ ਡਿਗੌਕਸਿਨ (digoxin) ਦਾ ਪੱਧਰ ਬਹੁਤ ਵਧਾ ਦਿੰਦੀ ਹੈ, ਜਿਸ ਨਾਲ ਡਿਗੌਕਸਿਨ ਜ਼ਹਿਰੀਲਾਪਣ (ਮਤਲੀ, ਨਜ਼ਰ ਵਿੱਚ ਬਦਲਾਅ, ਖ਼ਤਰਨਾਕ ਧੜਕਣ) ਹੋ ਸਕਦਾ ਹੈ।",
+      "recommendation": "ਐਮੀਓਡੈਰੋਨ ਜੋੜਨ 'ਤੇ ਆਮ ਤੌਰ 'ਤੇ ਡਿਗੌਕਸਿਨ ਦੀ ਖ਼ੁਰਾਕ ਕਾਫ਼ੀ ਘਟਾਈ ਜਾਂਦੀ ਹੈ ਅਤੇ ਪੱਧਰ ਜਾਂਚਿਆ ਜਾਂਦਾ ਹੈ। ਮਤਲੀ, ਨਜ਼ਰ ਵਿੱਚ ਬਦਲਾਅ ਜਾਂ ਧੜਕਣ ਤੁਰੰਤ ਦੱਸੋ।"
+    },
+    {
+      "drugA": "digoxin",
+      "drugB": "furosemide",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਫਿਊਰੋਸੇਮਾਈਡ (furosemide) ਪੋਟਾਸ਼ੀਅਮ ਘਟਾ ਸਕਦੀ ਹੈ, ਅਤੇ ਘੱਟ ਪੋਟਾਸ਼ੀਅਮ ਦਿਲ ਨੂੰ ਡਿਗੌਕਸਿਨ ਪ੍ਰਤੀ ਵਧੇਰੇ ਸੰਵੇਦਨਸ਼ੀਲ ਬਣਾ ਦਿੰਦਾ ਹੈ, ਜਿਸ ਨਾਲ ਡਿਗੌਕਸਿਨ ਜ਼ਹਿਰੀਲਾਪਣ ਦਾ ਖ਼ਤਰਾ ਵਧਦਾ ਹੈ।",
+      "recommendation": "ਪੋਟਾਸ਼ੀਅਮ ਸਮੇਂ-ਸਮੇਂ ਜਾਂਚਾਓ। ਮਾਸਪੇਸ਼ੀ ਦੀ ਕਮਜ਼ੋਰੀ, ਮਤਲੀ ਜਾਂ ਅਨਿਯਮਿਤ ਧੜਕਣ ਦੱਸੋ।"
+    },
+    {
+      "drugA": "lithium",
+      "drugB": "hydrochlorothiazide",
+      "severity": "severe",
+      "reviewNeeded": true,
+      "description": "ਹਾਈਡ੍ਰੋਕਲੋਰੋਥਾਇਆਜ਼ਾਈਡ (hydrochlorothiazide) ਵਰਗੀਆਂ ਥਾਇਜ਼ਾਈਡ ਡਾਇਯੂਰੈਟਿਕ ਲਿਥੀਅਮ ਦੇ ਨਿਕਾਸ ਨੂੰ ਘਟਾਉਂਦੀਆਂ ਹਨ, ਜਿਸ ਨਾਲ ਲਿਥੀਅਮ ਜ਼ਹਿਰੀਲੇ ਪੱਧਰ ਤੱਕ ਵਧ ਸਕਦਾ ਹੈ।",
+      "recommendation": "ਡਾਕਟਰ ਦੀ ਨਿਗਰਾਨੀ ਹੇਠ ਲਿਥੀਅਮ-ਪੱਧਰ ਦੀ ਨੇੜਿਓਂ ਜਾਂਚ ਜ਼ਰੂਰੀ ਹੈ। ਕੰਬਣੀ, ਉਲਝਣ, ਥਥਲਾਉਣਾ ਜਾਂ ਉਲਟੀਆਂ ਜ਼ਹਿਰੀਲੇਪਣ ਦੇ ਚਿੰਨ੍ਹ ਹਨ — ਤੁਰੰਤ ਮਦਦ ਲਓ।"
+    },
+    {
+      "drugA": "sertraline",
+      "drugB": "tramadol",
+      "severity": "severe",
+      "reviewNeeded": true,
+      "description": "SSRI (sertraline) ਨੂੰ ਟ੍ਰਾਮਾਡੋਲ ਨਾਲ ਮਿਲਾਉਣ ਨਾਲ ਸੇਰੋਟੋਨਿਨ ਵਧ ਜਾਂਦਾ ਹੈ ਅਤੇ ਸੇਰੋਟੋਨਿਨ ਸਿੰਡਰੋਮ ਹੋ ਸਕਦਾ ਹੈ; ਦੋਵੇਂ ਦੌਰੇ ਦਾ ਖ਼ਤਰਾ ਵੀ ਵਧਾ ਸਕਦੀਆਂ ਹਨ।",
+      "recommendation": "ਜਿੱਥੇ ਸੰਭਵ ਹੋਵੇ ਇਕੱਠੀਆਂ ਲੈਣ ਤੋਂ ਬਚੋ। ਬੇਚੈਨੀ, ਪਸੀਨਾ, ਕੰਬਣੀ, ਤੇਜ਼ ਧੜਕਣ ਜਾਂ ਉਲਝਣ ਸੇਰੋਟੋਨਿਨ ਸਿੰਡਰੋਮ ਦੇ ਚਿੰਨ੍ਹ ਹੋ ਸਕਦੇ ਹਨ — ਤੁਰੰਤ ਧਿਆਨ ਦਿਓ।"
+    },
+    {
+      "drugA": "clopidogrel",
+      "drugB": "omeprazole",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਓਮੇਪ੍ਰਾਜ਼ੋਲ ਉਸ ਐਨਜ਼ਾਈਮ ਨੂੰ ਰੋਕਦੀ ਹੈ ਜੋ ਕਲੋਪੀਡੋਗ੍ਰਲ (clopidogrel) ਨੂੰ ਸਰਗਰਮ ਕਰਦਾ ਹੈ, ਜਿਸ ਨਾਲ ਕਲੋਪੀਡੋਗ੍ਰਲ ਦਾ ਥੱਕਾ-ਰੋਕੂ ਅਸਰ ਘਟ ਸਕਦਾ ਹੈ।",
+      "recommendation": "ਜੇ ਪੇਟ ਦੀ ਸੁਰੱਖਿਆ ਲੋੜੀਂਦੀ ਹੋਵੇ, ਡਾਕਟਰ ਕੋਈ ਹੋਰ ਐਸਿਡ ਘਟਾਉਣ ਵਾਲੀ ਦਵਾਈ (ਜਿਵੇਂ pantoprazole) ਚੁਣ ਸਕਦਾ ਹੈ। ਪੁੱਛੇ ਬਿਨਾਂ ਕੋਈ ਦਵਾਈ ਨਾ ਬਦਲੋ।"
+    },
+    {
+      "drugA": "levothyroxine",
+      "drugB": "omeprazole",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਪੇਟ ਦਾ ਐਸਿਡ ਘਟਾ ਕੇ, ਓਮੇਪ੍ਰਾਜ਼ੋਲ ਸਰੀਰ ਵੱਲੋਂ ਲੀਵੋਥਾਇਰੋਕਸਿਨ ਦੇ ਸੋਖਣ ਨੂੰ ਘਟਾ ਸਕਦੀ ਹੈ, ਜਿਸ ਨਾਲ ਥਾਇਰਾਇਡ ਇਲਾਜ ਕਮਜ਼ੋਰ ਹੋ ਸਕਦਾ ਹੈ।",
+      "recommendation": "ਲੀਵੋਥਾਇਰੋਕਸਿਨ ਦਾ ਸਮਾਂ ਇੱਕੋ ਜਿਹਾ ਰੱਖੋ ਅਤੇ ਓਮੇਪ੍ਰਾਜ਼ੋਲ ਸ਼ੁਰੂ ਜਾਂ ਬੰਦ ਹੋਣ 'ਤੇ ਥਾਇਰਾਇਡ ਪੱਧਰ ਮੁੜ ਜਾਂਚਾਓ। ਨਵੀਂ ਥਕਾਵਟ ਜਾਂ ਭਾਰ ਬਦਲਾਅ ਦੱਸੋ।"
+    },
+    {
+      "drugA": "levothyroxine",
+      "drugB": "calcium carbonate",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਕੈਲਸ਼ੀਅਮ ਪੇਟ ਵਿੱਚ ਲੀਵੋਥਾਇਰੋਕਸਿਨ ਨਾਲ ਜੁੜ ਕੇ ਉਸ ਦੇ ਸੋਖਣ ਨੂੰ ਘਟਾਉਂਦਾ ਹੈ, ਜਿਸ ਨਾਲ ਥਾਇਰਾਇਡ ਇਲਾਜ ਕਮਜ਼ੋਰ ਹੋ ਸਕਦਾ ਹੈ।",
+      "recommendation": "ਲੀਵੋਥਾਇਰੋਕਸਿਨ ਅਤੇ ਕੈਲਸ਼ੀਅਮ ਵਿਚਕਾਰ ਘੱਟੋ-ਘੱਟ ਚਾਰ ਘੰਟੇ ਦਾ ਫ਼ਰਕ ਰੱਖੋ। ਲੀਵੋਥਾਇਰੋਕਸਿਨ ਖ਼ਾਲੀ ਪੇਟ ਲਓ ਅਤੇ ਰੁਟੀਨ ਇੱਕੋ ਜਿਹਾ ਰੱਖੋ।"
+    },
+    {
+      "drugA": "aspirin",
+      "drugB": "ibuprofen",
+      "severity": "moderate",
+      "reviewNeeded": true,
+      "description": "ਰੋਜ਼ਾਨਾ ਐਸਪਰੀਨ ਦੀ ਖ਼ੁਰਾਕ ਨੇੜੇ ਆਈਬੂਪ੍ਰੋਫ਼ੈਨ ਲੈਣ ਨਾਲ ਐਸਪਰੀਨ ਦਾ ਦਿਲ-ਰੱਖਿਅਕ ਅਸਰ ਰੁਕ ਸਕਦਾ ਹੈ, ਅਤੇ ਦੋਵੇਂ ਮਿਲ ਕੇ ਪੇਟ ਵਿੱਚ ਖ਼ੂਨ ਵਗਣ ਦਾ ਖ਼ਤਰਾ ਵਧਾਉਂਦੀਆਂ ਹਨ।",
+      "recommendation": "ਜੇ ਦੋਵੇਂ ਲੋੜੀਂਦੀਆਂ ਹੋਣ, ਆਈਬੂਪ੍ਰੋਫ਼ੈਨ ਤੋਂ ਘੱਟੋ-ਘੱਟ 30 ਮਿੰਟ ਪਹਿਲਾਂ ਐਸਪਰੀਨ ਲਓ, ਜਾਂ ਡਾਕਟਰ ਤੋਂ ਸਮੇਂ ਬਾਰੇ ਪੁੱਛੋ। ਪੇਟ ਦਰਦ ਜਾਂ ਕਾਲ਼ੀ ਟੱਟੀ ਵੱਲ ਧਿਆਨ ਦਿਓ।"
+    }
+  ]
+}

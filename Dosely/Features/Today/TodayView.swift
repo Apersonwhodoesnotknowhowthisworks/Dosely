@@ -160,7 +160,8 @@ struct TodayView: View {
             MedicationDetailView(
                 name: dose.medication.name ?? "",
                 dose: dose.medication.dose ?? "",
-                pillPhotoData: dose.medication.pillPhotoData
+                pillPhotoData: dose.medication.pillPhotoData,
+                patientPersonID: dose.medication.personID
             )
         }
         // Reload when the app returns from background so that doses logged from a
