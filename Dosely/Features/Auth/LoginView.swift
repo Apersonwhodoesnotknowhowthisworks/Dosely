@@ -19,6 +19,8 @@ struct LoginView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: DSSpacing.lg) {
+                        DoselyBanner()
+
                         if let msg = authService.errorMessage {
                             ErrorBanner(message: msg) { authService.dismissError() }
                         }

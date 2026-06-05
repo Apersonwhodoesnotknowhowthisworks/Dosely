@@ -649,6 +649,26 @@ The reflection worth leaving: with this, Dosely's accessibility isn't a feature,
 
 Files touched: `Dosely/DesignSystem/DSColors.swift`, `Dosely/DesignSystem/AccessibilityScaling.swift` (new), `Dosely/DoselyApp.swift`, `Dosely/Features/Auth/SettingsSheet.swift`, `Dosely/Resources/en.lproj/Localizable.strings`, `Dosely/Resources/pa.lproj/Localizable.strings`, `DoselyTests/DSColorsContrastTests.swift`, `DoselyTests/AccessibilityToggleTests.swift` (new), and `Dosely.xcodeproj/project.pbxproj` (two new files wired in). No `firestore.rules` change, no `firebase deploy`.
 
+## June 4 — A branded header: the Dosely logo on the sign-in and home screens
+
+CLAUDE.md doesn't list a banner as a feature — this is pure branding, the first time the app shows its own name and mark instead of a system title. The art arrived as one wide lockup (the pill-and-heart icon plus the "Dosely" wordmark), and the job was to put it at the top of the two screens a user meets first: sign-in and the client home.
+
+**The dark-mode trap baked into the art.** The PNG is opaque, white background — `sips` reports `hasAlpha: no`. Dropped straight onto a screen it looks fine in light mode and reads as a glaring white rectangle in dark mode, because the white is in the pixels, not transparent, and a raster can't recolor itself the way the four-cell DSColors tokens do. So `DoselyBanner` seats the logo on a fixed-white rounded badge — the art's own substrate made deliberate — with a hairline border from `dsTextSecondary`. Light mode: a white-on-near-white card the border defines. Dark mode: a clean white chip on the dark page, brand colors intact. I deliberately didn't reach for `dsSurface`, which goes charcoal in dark and would put a white rectangle inside a charcoal card — the very thing I was dodging. That makes `Color.white` a fixed literal outside the system, so it's logged as the fifth sanctioned non-token usage in the DSColors header audit and tagged inline where it's used.
+
+**Scaling and VoiceOver.** A raster `Image` ignores Dynamic Type, but a header above body copy has to grow with it, so the badge height rides an `@ScaledMetric` — 40 pt by default, clamped at 64 so the largest accessibility sizes don't shove content off the bottom. The whole banner is one accessibility element labeled "Dosely," a brand name that's identical in English and Punjabi and so a literal rather than a localized key; VoiceOver announces it once instead of reading an image or skipping a decoration.
+
+**Placement.** Neither screen had a bare "Dosely" title to replace — sign-in opens with "Welcome to Dosely" (a sentence, kept) and the home tab's nav title is the functional "Today" (kept). The banner is purely additive: the first row of the sign-in stack above the welcome copy, and the first row of the home content above the date. No navigation, logic, or data moved.
+
+**The smoke test, and a compile wrinkle.** `DoselyBannerTests` hosts the banner in a `UIHostingController` and asserts `sizeThatFits` is non-zero — the render-without-walking-the-tree idiom the other view tests use — in both states the brief asked for: with the bundled logo, and with a deliberately-absent asset name forcing the text-wordmark fallback. A third test asserts `UIImage(named: "DoselyLogo")` resolves, which is what proves the new image set is actually wired into the catalog rather than just sitting on disk. The first compile tripped on `.greatestFiniteMagnitude` being ambiguous across CGSize's Int/Double/CGFloat inits; `CGFloat.greatestFiniteMagnitude` settled it.
+
+Worth recording, because the test run looked alarming before it didn't: with the Firestore emulator up, fourteen Firestore-backed tests fail with "Firestore instance has already been started." That isn't this change — I stashed the banner work and reproduced the identical nine-of-nine failure in `FirestoreServiceTests` alone at baseline. The cause is the test host: launched into a signed-in state it starts the Firestore singleton before any `setUp` can point it at the emulator, so `db.settings = …` throws. Emulator-down, those same tests skip — or, on a fresh simulator, hang retrying the unreachable write — which is why the green baseline runs emulator-down. The banner touches no Firestore code, and the clean proof is the suite minus those four emulator-only classes: **311 tests, zero failures**, the three banner tests among them.
+
+The reflection worth leaving: the logo is the one asset that can't join the adaptive color system, and that's easy to forget when everything else does. Months went into making every color resolve four ways by appearance and contrast, and then a flat PNG shows up that resolves one way in all of them. The honest move isn't to fake an adaptivity the raster doesn't have — it's to give the art the controlled background it was drawn for and stop pretending. The white badge isn't a compromise; it's the recognition that branding and theming are different jobs. The design system bends the app to the user's eyes; the logo is the one place the app gets to look like itself.
+
+Files touched: `Dosely/Features/Common/DoselyBanner.swift` (new), `Dosely/Assets.xcassets/DoselyLogo.imageset/` (new image set), `Dosely/Features/Auth/LoginView.swift`, `Dosely/Features/Today/TodayView.swift`, `Dosely/DesignSystem/DSColors.swift` (sanctioned-usage note), `DoselyTests/DoselyBannerTests.swift` (new), and `Dosely.xcodeproj/project.pbxproj` (two new files wired in). No `firestore.rules` change, no `firebase deploy`.
+
+Trailer: added a pending line for the Swift Firestore-service tests that can't run against the emulator in the current test-host configuration.
+
 ## Still pending
 
 <!-- Trailer last pruned 2026-05-29 -->
@@ -662,6 +682,7 @@ Files touched: `Dosely/DesignSystem/DSColors.swift`, `Dosely/DesignSystem/Access
 - Real-iPhone scan test with an actual prescription bottle (simulator can't capture frames)
 - Round 2 client testing — structured, with stopwatch and silent observation
 - Portfolio cleanup: empty A.2 prioritization body, A.3, B.1, B.4 wireframes, leftover duplicate A.1 page
+- Swift Firestore-service tests vs. the emulator — the test host starts the Firestore singleton at launch (signed-in state), so `useEmulator()` can't set settings; the four emulator-backed classes (`FirestoreServiceTests`, `OrphanCircleCleanupMigrationTests`, `PullToRefreshTests`, `RemotePersonResolverTests`) fail emulator-up and hang emulator-down. Needs a test host that defers Firestore start, or a fresh instance per class. Surfaced 2026-06-04 during the banner work; not caused by it.
 
 
 

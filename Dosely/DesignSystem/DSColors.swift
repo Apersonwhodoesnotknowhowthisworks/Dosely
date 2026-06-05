@@ -6,7 +6,7 @@ import UIKit
 // A periodic grep for `Color.red/blue/black/white/gray`, `Color(red:…)`,
 // `Color(hex:…)`, or `UIColor.…` outside this file is how we keep raw color
 // literals from rotting back into the app. As of the 2026-05-28 audit, every
-// hit outside DSColors falls into one of four categories that are deliberately
+// hit outside DSColors falls into one of five categories that are deliberately
 // NOT design-system tokens — documented here, with the less-obvious sites also
 // tagged inline ("see DSColors audit note"), so a future grep doesn't re-flag
 // them:
@@ -28,8 +28,14 @@ import UIKit
 //  4. Card elevation shadows — `Color.black.opacity(0.06)`. Shadows fade to
 //     invisible against a dark surface by convention; in dark mode the
 //     dsSurface/dsBackground contrast carries separation instead.
+//  5. Brand logo substrate — `DoselyBanner` seats the opaque,
+//     white-background `DoselyLogo` raster on a fixed `Color.white` rounded
+//     badge so the mark reads on a dark page; a bare white-background image is
+//     a glaring rectangle in dark mode. The white is the art's own substrate
+//     made deliberate, not a themable surface — `dsSurface` would go charcoal
+//     in dark and put a white rectangle inside it. Added 2026-06-04.
 //
-// Anything that does NOT fit these four belongs as a DS token. Content text
+// Anything that does NOT fit these five belongs as a DS token. Content text
 // and surfaces already route through the adaptive tokens below.
 //
 // As of the 2026-06-01 accessibility pass, each token resolves FOUR cells —

@@ -40,6 +40,8 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+                    DoselyBanner()
+
                     Text(LocalizedFormatters.fullDateFormatter.string(from: Date()))
                         .dsBodyLarge()
                         .foregroundColor(.dsTextSecondary)

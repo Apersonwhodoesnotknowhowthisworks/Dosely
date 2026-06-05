@@ -89,6 +89,7 @@
 		BFD00000000000000000000C1 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = GRP0000000000000000000018 /* Localizable.stringsdict */; };
 		BFD00000000000000000000D0 /* DSColorsContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000D0 /* DSColorsContrastTests.swift */; };
 		BFD0000000000000000000221 /* AccessibilityToggleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000221 /* AccessibilityToggleTests.swift */; };
+		BFD0000000000000000000223 /* DoselyBannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000223 /* DoselyBannerTests.swift */; };
 		BFD00000000000000000000E0 /* PinHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000E0 /* PinHasher.swift */; };
 		BFD00000000000000000000E1 /* PersonRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000E1 /* PersonRepository.swift */; };
 		BFD00000000000000000000E2 /* CareCircleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000E2 /* CareCircleRepository.swift */; };
@@ -127,6 +128,7 @@
 		BFD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */; };
 		BFD000000000000000000011C /* AddMedicationFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011C /* AddMedicationFlowTests.swift */; };
 		BFD000000000000000000011D /* PullToRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011D /* PullToRefresh.swift */; };
+		BFD0000000000000000000222 /* DoselyBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000222 /* DoselyBanner.swift */; };
 		BFD000000000000000000011E /* PullToRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011E /* PullToRefreshTests.swift */; };
 		BFD000000000000000000011F /* AddPersonFlowLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000011F /* AddPersonFlowLocalizationTests.swift */; };
 		BFD0000000000000000000120 /* SupervisorDashboardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000120 /* SupervisorDashboardViewModelTests.swift */; };
@@ -253,6 +255,7 @@
 		FRD00000000000000000000C3 /* pa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = pa; path = pa.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		FRD00000000000000000000D0 /* DSColorsContrastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSColorsContrastTests.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000221 /* AccessibilityToggleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityToggleTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000223 /* DoselyBannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoselyBannerTests.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000E0 /* PinHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinHasher.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000E1 /* PersonRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonRepository.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000E2 /* CareCircleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareCircleRepository.swift; sourceTree = "<group>"; };
@@ -291,6 +294,7 @@
 		FRD000000000000000000011B /* OrphanCircleCleanupMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanCircleCleanupMigrationTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000011C /* AddMedicationFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMedicationFlowTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000011D /* PullToRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PullToRefresh.swift; path = Common/PullToRefresh.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000222 /* DoselyBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DoselyBanner.swift; path = Common/DoselyBanner.swift; sourceTree = "<group>"; };
 		FRD000000000000000000011E /* PullToRefreshTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PullToRefreshTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000011F /* AddPersonFlowLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPersonFlowLocalizationTests.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000120 /* SupervisorDashboardViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupervisorDashboardViewModelTests.swift; sourceTree = "<group>"; };
@@ -445,6 +449,7 @@
 				FRD00000000000000000000A5 /* PrescriptionParserTests.swift */,
 				FRD00000000000000000000D0 /* DSColorsContrastTests.swift */,
 				FRD0000000000000000000221 /* AccessibilityToggleTests.swift */,
+				FRD0000000000000000000223 /* DoselyBannerTests.swift */,
 				FRD00000000000000000000E4 /* PersonRepositoryTests.swift */,
 				FRD00000000000000000000E5 /* CareCircleRepositoryTests.swift */,
 				FRD00000000000000000000E6 /* CareCircleMigrationTests.swift */,
@@ -489,6 +494,7 @@
 				GRP0000000000000000000012 /* MedicationDetail */,
 				GRP0000000000000000000020 /* Supervisor */,
 				FRD000000000000000000011D /* PullToRefresh.swift */,
+				FRD0000000000000000000222 /* DoselyBanner.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -887,6 +893,7 @@
 				BFD0000000000000000000118 /* RemotePersonResolver.swift in Sources */,
 				BFD000000000000000000011A /* OrphanCircleCleanupMigration.swift in Sources */,
 				BFD000000000000000000011D /* PullToRefresh.swift in Sources */,
+				BFD0000000000000000000222 /* DoselyBanner.swift in Sources */,
 				BFD0000000000000000000121 /* AlertsRepository.swift in Sources */,
 				BFD0000000000000000000122 /* MissedDoseDetector.swift in Sources */,
 				BFD0000000000000000000205 /* RefillAlertDetector.swift in Sources */,
@@ -910,6 +917,7 @@
 				BFD00000000000000000000A5 /* PrescriptionParserTests.swift in Sources */,
 				BFD00000000000000000000D0 /* DSColorsContrastTests.swift in Sources */,
 				BFD0000000000000000000221 /* AccessibilityToggleTests.swift in Sources */,
+				BFD0000000000000000000223 /* DoselyBannerTests.swift in Sources */,
 				BFD00000000000000000000E4 /* PersonRepositoryTests.swift in Sources */,
 				BFD00000000000000000000E5 /* CareCircleRepositoryTests.swift in Sources */,
 				BFD00000000000000000000E6 /* CareCircleMigrationTests.swift in Sources */,
