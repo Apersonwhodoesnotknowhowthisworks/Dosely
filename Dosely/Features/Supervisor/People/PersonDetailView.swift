@@ -23,6 +23,8 @@ struct PersonDetailView: View {
     @State private var showingAddMedication = false
     @State private var showingMedicalIDEditor = false
     @State private var showingMedicalIDViewer = false
+    @State private var showingDemoteSheet = false
+    @State private var isDemoting = false
 
     let person: Person
     let personRepo: PersonRepository
@@ -41,6 +43,16 @@ struct PersonDetailView: View {
 
     private var targetIsAnotherSupervisor: Bool {
         Roles.isAnySupervisor(person.role) && person.id != authService.currentPerson?.id
+    }
+
+    private var showDemoteSection: Bool {
+        Self.shouldShowDemoteSection(
+            targetRole: person.role,
+            targetPersonID: person.id,
+            actorPersonID: authService.currentPerson?.id,
+            primarySupervisorPersonID: authService.currentPerson?.careCircle?.primarySupervisorPersonID,
+            actorIsPrimary: actorIsPrimary
+        )
     }
 
     private var primaryName: String? {
@@ -90,6 +102,10 @@ struct PersonDetailView: View {
                             promoteToPrimaryRow
                         }
 
+                        if showDemoteSection {
+                            demoteRoleSection
+                        }
+
                         if !Roles.isAnySupervisor(person.role) || canRemoveSupervisor {
                             removeSection
                         }
@@ -120,6 +136,14 @@ struct PersonDetailView: View {
             }
             .sheet(isPresented: $showingMedicalIDViewer) {
                 EmergencyMedicalIDView(person: person)
+            }
+            .sheet(isPresented: $showingDemoteSheet) {
+                DemoteToManagedClientSheet(
+                    personName: name.isEmpty ? (person.name ?? "") : name,
+                    isWorking: isDemoting,
+                    onConfirm: { Task { await demoteToManagedClient() } },
+                    onCancel: { showingDemoteSheet = false }
+                )
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -356,6 +380,37 @@ struct PersonDetailView: View {
         .accessibilityLabel(Text("supervisor.promote.row"))
     }
 
+    private var demoteRoleSection: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.sm) {
+            Text("people.demote.section.title")
+                .dsCaption()
+                .foregroundColor(.dsTextSecondary)
+            Button(action: { showingDemoteSheet = true }) {
+                HStack(spacing: DSSpacing.sm) {
+                    Text("people.demote.button.title")
+                        .dsBodyLarge()
+                        .foregroundColor(.white)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.white.opacity(0.9))
+                        .accessibilityHidden(true)
+                }
+                .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget, alignment: .leading)
+                .padding(DSSpacing.md)
+                .background(Color.dsWarning)
+                .cornerRadius(DSSpacing.rMd)
+            }
+            .accessibilityLabel(Text("people.demote.button.title"))
+            Text("people.demote.section.subtitle")
+                .dsCaption()
+                .foregroundColor(.dsTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(DSSpacing.md)
+        .background(Color.dsSurface)
+        .cornerRadius(DSSpacing.rLg)
+    }
+
     private var readOnlyNotice: some View {
         HStack(alignment: .top, spacing: DSSpacing.sm) {
             Image(systemName: "lock.fill")
@@ -523,6 +578,29 @@ struct PersonDetailView: View {
         }
     }
 
+    private func demoteToManagedClient() async {
+        guard let targetID = person.id,
+              let actorID = authService.currentPerson?.id else { return }
+        isDemoting = true
+        do {
+            try await personRepo.demoteSupervisorToManagedClient(
+                targetPersonID: targetID,
+                actingSupervisorID: actorID
+            )
+            isDemoting = false
+            showingDemoteSheet = false
+            // Deliberately no `dismiss()`: the Person row is now a
+            // managed_client, so the demote section disappears and the
+            // managed<->device flip + medications sections appear on the
+            // next body pass — the supervisor stays put and sees the result.
+            onChanged()
+        } catch {
+            isDemoting = false
+            showingDemoteSheet = false
+            errorMessage = demoteErrorMessage(error)
+        }
+    }
+
     private func removeFromCircle() async {
         guard let targetID = person.id,
               let actorID = authService.currentPerson?.id else { return }
@@ -578,6 +656,7 @@ struct PersonDetailView: View {
             case .invalidRoleTransition:    return L("supervisor.person.error.invalidrole")
             case .notCurrentPrimary:        return L("supervisor.promote.error.notprimary")
             case .invalidPromotionTarget:   return L("supervisor.promote.error.target")
+            case .invalidDemotionTarget:    return L("people.demote.error.invalidtarget")
             case .notFound, .alreadyExists: return L("supervisor.person.error.generic")
             }
         }
@@ -590,5 +669,54 @@ struct PersonDetailView: View {
             }
         }
         return L("supervisor.person.error.generic")
+    }
+
+    /// Demote-specific error copy. The shared `mapError` returns the
+    /// generic `supervisor.*` strings used by the other actions; this
+    /// privilege-REMOVING flow gets its own `people.demote.*` set so each
+    /// failure reads distinctly. Distinct error codes per the error-collapse
+    /// convention — see build_log April 30 phantom join code entry: a rules
+    /// rejection (`permissionDenied`) must never surface as "check your
+    /// connection" (`offline`).
+    private func demoteErrorMessage(_ error: Error) -> String {
+        if let err = error as? PersonRepositoryError {
+            switch err {
+            case .notCurrentPrimary:     return L("people.demote.error.notcurrentprimary")
+            case .invalidDemotionTarget: return L("people.demote.error.invalidtarget")
+            case .permissionDenied:      return L("people.demote.error.permission")
+            case .notFound:              return L("people.demote.error.notfound")
+            default:                     return L("people.demote.error.unknown")
+            }
+        }
+        if let err = error as? FirestoreServiceError {
+            switch err {
+            case .permissionDenied: return L("people.demote.error.permission")
+            case .offline:          return L("people.demote.error.offline")
+            case .notFound:         return L("people.demote.error.notfound")
+            case .unknown:          return L("people.demote.error.unknown")
+            }
+        }
+        return L("people.demote.error.unknown")
+    }
+
+    /// Whether the "Convert to managed family member" affordance should be
+    /// shown. Pure and static so `PersonDetailViewTests` can pin every
+    /// branch without hosting the view. Visible only when the viewer is the
+    /// primary, the target is a `secondary_supervisor` (NOT the legacy
+    /// `"supervisor"` alias, which reads as primary), the target isn't the
+    /// viewer (no self-demotion), and the target isn't the current primary.
+    static func shouldShowDemoteSection(
+        targetRole: String?,
+        targetPersonID: UUID?,
+        actorPersonID: UUID?,
+        primarySupervisorPersonID: UUID?,
+        actorIsPrimary: Bool
+    ) -> Bool {
+        guard actorIsPrimary,
+              targetRole == Roles.secondarySupervisor,
+              let targetID = targetPersonID else { return false }
+        if targetID == actorPersonID { return false }
+        if targetID == primarySupervisorPersonID { return false }
+        return true
     }
 }

@@ -437,6 +437,146 @@ final class PersonRepositoryTests: XCTestCase {
                           "promote-to-primary failures must surface distinct codes per the error-collapse convention")
     }
 
+    // MARK: - demoteSupervisorToManagedClient
+
+    func test_demoteSupervisorToManagedClient_happyPath() async throws {
+        let secondary = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        try await personRepo.demoteSupervisorToManagedClient(
+            targetPersonID: secondary.id!, actingSupervisorID: supervisor.id!
+        )
+
+        let updated = await personRepo.fetchPerson(id: secondary.id!)
+        XCTAssertEqual(updated?.role, Roles.managedClient)
+        XCTAssertNil(updated?.firebaseUID)
+        XCTAssertNil(updated?.pinHash)
+        XCTAssertNil(updated?.pinSalt)
+        XCTAssertEqual(updated?.failedPinAttempts, 0)
+    }
+
+    func test_demoteSupervisorToManagedClient_throwsNotCurrentPrimaryWhenActorIsSecondary() async {
+        let secondary = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        // The secondary tries to demote the primary — the actor isn't the
+        // current primary, so this fails before any target check.
+        do {
+            try await personRepo.demoteSupervisorToManagedClient(
+                targetPersonID: supervisor.id!, actingSupervisorID: secondary.id!
+            )
+            XCTFail("Expected notCurrentPrimary")
+        } catch let err as PersonRepositoryError {
+            XCTAssertEqual(err, .notCurrentPrimary)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
+    }
+
+    func test_demoteSupervisorToManagedClient_throwsInvalidDemotionTargetForSelfDemote() async {
+        // The primary cannot demote themselves — they must promote another
+        // secondary to primary first.
+        do {
+            try await personRepo.demoteSupervisorToManagedClient(
+                targetPersonID: supervisor.id!, actingSupervisorID: supervisor.id!
+            )
+            XCTFail("Expected invalidDemotionTarget")
+        } catch let err as PersonRepositoryError {
+            XCTAssertEqual(err, .invalidDemotionTarget)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
+    }
+
+    func test_demoteSupervisorToManagedClient_throwsInvalidDemotionTargetForNonSecondary() async {
+        let managed = try? await personRepo.createManagedClient(
+            name: "Grandma", photoData: nil, language: "en",
+            in: circle, actorPersonID: supervisor.id!
+        )
+        let device = try? await personRepo.createDeviceClient(
+            name: "Grandpa", photoData: nil, pinPlaintext: "1234",
+            language: "en", in: circle, actorPersonID: supervisor.id!
+        )
+
+        for target in [managed, device] {
+            do {
+                try await personRepo.demoteSupervisorToManagedClient(
+                    targetPersonID: target!.id!, actingSupervisorID: supervisor.id!
+                )
+                XCTFail("Expected invalidDemotionTarget for a non-secondary target")
+            } catch let err as PersonRepositoryError {
+                XCTAssertEqual(err, .invalidDemotionTarget)
+            } catch {
+                XCTFail("Wrong error: \(error)")
+            }
+        }
+    }
+
+    func test_demoteSupervisorToManagedClient_throwsNotFoundWhenTargetMissing() async {
+        do {
+            try await personRepo.demoteSupervisorToManagedClient(
+                targetPersonID: UUID(), actingSupervisorID: supervisor.id!
+            )
+            XCTFail("Expected notFound")
+        } catch let err as PersonRepositoryError {
+            XCTAssertEqual(err, .notFound)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
+    }
+
+    func test_demoteSupervisorToManagedClient_throwsPermissionDeniedAcrossCircles() async throws {
+        // A secondary in a DIFFERENT circle cannot be demoted by this
+        // circle's primary — same enforcement the rules layer carries.
+        let otherCircle = await careCircleRepo.createCareCircle(
+            name: "Other", foundingSupervisorFirebaseUID: "other-uid", founderName: "Other"
+        )
+        let otherPrimary = await personRepo.fetchSupervisor(firebaseUID: "other-uid")!
+        XCTAssertNotEqual(circle.id, otherCircle.id)
+
+        do {
+            try await personRepo.demoteSupervisorToManagedClient(
+                targetPersonID: otherPrimary.id!, actingSupervisorID: supervisor.id!
+            )
+            XCTFail("Expected permissionDenied for a cross-circle target")
+        } catch let err as PersonRepositoryError {
+            XCTAssertEqual(err, .permissionDenied)
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
+    }
+
+    /// Type-level guard for the error-collapse convention on the demote
+    /// path: the two preflight failures must surface as DISTINCT
+    /// `PersonRepositoryError` cases. Mirrors
+    /// `testPromoteToPrimary_errorCasesAreDistinct`.
+    func test_demoteSupervisorToManagedClient_errorCasesAreDistinct() async {
+        let secondary = await addSecondarySupervisor(uid: "second-uid", name: "Second")
+        let client = try? await personRepo.createManagedClient(
+            name: "Grandma", photoData: nil, language: "en",
+            in: circle, actorPersonID: supervisor.id!
+        )
+
+        var notCurrentPrimaryThrown: PersonRepositoryError?
+        do {
+            try await personRepo.demoteSupervisorToManagedClient(
+                targetPersonID: secondary.id!, actingSupervisorID: secondary.id!
+            )
+        } catch let err as PersonRepositoryError {
+            notCurrentPrimaryThrown = err
+        } catch {}
+
+        var invalidTargetThrown: PersonRepositoryError?
+        do {
+            try await personRepo.demoteSupervisorToManagedClient(
+                targetPersonID: client!.id!, actingSupervisorID: supervisor.id!
+            )
+        } catch let err as PersonRepositoryError {
+            invalidTargetThrown = err
+        } catch {}
+
+        XCTAssertEqual(notCurrentPrimaryThrown, .notCurrentPrimary)
+        XCTAssertEqual(invalidTargetThrown, .invalidDemotionTarget)
+        XCTAssertNotEqual(notCurrentPrimaryThrown, invalidTargetThrown,
+                          "demote failures must surface distinct codes per the error-collapse convention")
+    }
+
     // MARK: - Duplicate-row regression
     //
     // The shipping bug: a managed client added through AddPersonFlow

@@ -1582,6 +1582,155 @@ describe("Firestore security rules", () => {
     });
   });
 
+  // -- 12b. demote a secondary supervisor to a managed_client -------------
+  //
+  // The current primary converts a secondary supervisor into a managed
+  // family member in one batch: the Person doc's role -> managed_client and
+  // firebaseUID -> "", the circle's supervisorCount drops by 1, and the
+  // secondary's /userMemberships index doc is deleted (a managed_client is
+  // not a Firebase member). `isDemotionToManagedClientBatch` plus the
+  // carve-out on the primary's blanket Person-update branch are what force
+  // every malformed variant below to be rejected.
+  describe("demote secondary -> managed_client batch", () => {
+    const circleID = "circle-demote";
+    const primary = { uid: "primary-d-uid", personID: "person-primary-d" };
+    const secondary = { uid: "secondary-d-uid", personID: "person-secondary-d" };
+
+    beforeEach(async () => {
+      await seedCircle({
+        circleID,
+        joinCode: "960001",
+        supervisor: primary,
+        extraSupervisors: [secondary],
+        supervisorCount: 2,
+      });
+    });
+
+    // Mirrors the on-the-wire shape of
+    // FirestoreService.applyDemotionToManagedClient: the Person doc's
+    // role/firebaseUID/PIN cleared, supervisorCount written to its
+    // post-batch value, and the membership doc deleted.
+    function buildDemotionBatch(
+      db: ReturnType<typeof authedDb>,
+      circle: string,
+      target: SeedSupervisor,
+      postSupervisorCount: number
+    ) {
+      const batch = writeBatch(db);
+      batch.update(doc(db, `careCircles/${circle}/people/${target.personID}`), {
+        role: "managed_client",
+        firebaseUID: "",
+        failedPinAttempts: 0,
+        lastModified: serverTimestamp(),
+      });
+      batch.update(doc(db, `careCircles/${circle}`), {
+        supervisorCount: postSupervisorCount,
+        lastModified: serverTimestamp(),
+      });
+      batch.delete(doc(db, `userMemberships/${target.uid}`));
+      return batch;
+    }
+
+    it("the current primary can demote a secondary; role, count, and membership update atomically", async () => {
+      const db = authedDb(primary.uid);
+      const batch = buildDemotionBatch(db, circleID, secondary, 1);
+      await assertSucceeds(batch.commit());
+
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        const adb = ctx.firestore();
+        const personDoc = await getDoc(
+          doc(adb, `careCircles/${circleID}/people/${secondary.personID}`)
+        );
+        const circle = await getDoc(doc(adb, `careCircles/${circleID}`));
+        const membership = await getDoc(doc(adb, `userMemberships/${secondary.uid}`));
+        if (
+          personDoc.data()?.role !== "managed_client" ||
+          personDoc.data()?.firebaseUID !== "" ||
+          circle.data()?.supervisorCount !== 1 ||
+          membership.exists()
+        ) {
+          throw new Error("demotion did not produce expected post-state");
+        }
+      });
+    });
+
+    it("the primary cannot demote THEMSELVES through this batch", async () => {
+      // The primary's pre-role is primary_supervisor, so
+      // isDemotionToManagedClientBatch rejects (it requires a secondary
+      // pre-role) and the carve-out blocks the blanket primary branch.
+      const db = authedDb(primary.uid);
+      const batch = buildDemotionBatch(db, circleID, primary, 1);
+      await assertFails(batch.commit());
+    });
+
+    it("a secondary supervisor cannot demote another secondary", async () => {
+      const secondaryB = { uid: "secondaryB-d-uid", personID: "person-secondaryB-d" };
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        const adb = ctx.firestore();
+        await setDoc(doc(adb, `careCircles/${circleID}/people/${secondaryB.personID}`), {
+          id: secondaryB.personID,
+          careCircleID: circleID,
+          name: "Co-Supervisor B",
+          role: "secondary_supervisor",
+          languagePreference: "en",
+          firebaseUID: secondaryB.uid,
+          failedPinAttempts: 0,
+        });
+        await setDoc(doc(adb, `userMemberships/${secondaryB.uid}`), {
+          careCircleID: circleID,
+          personID: secondaryB.personID,
+          role: "secondary_supervisor",
+          joinedAt: new Date(),
+        });
+      });
+      // Actor is a secondary, not the primary — isPrimary(circleID) is false
+      // for both the carve-out branch and isDemotionToManagedClientBatch.
+      const db = authedDb(secondary.uid);
+      const batch = buildDemotionBatch(db, circleID, secondaryB, 1);
+      await assertFails(batch.commit());
+    });
+
+    it("rejects the batch when the target is already a managed_client (wrong source role)", async () => {
+      // A managed_client has no /userMemberships index entry, so the
+      // demotion batch's membership delete is denied — the demotion path
+      // cannot be run against a non-secondary target.
+      const managed = { uid: "managed-d-uid", personID: "person-managed-d" };
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        const adb = ctx.firestore();
+        await setDoc(doc(adb, `careCircles/${circleID}/people/${managed.personID}`), {
+          id: managed.personID,
+          careCircleID: circleID,
+          name: "Grandpa",
+          role: "managed_client",
+          languagePreference: "en",
+          firebaseUID: managed.uid,
+          failedPinAttempts: 0,
+        });
+        // Deliberately NO /userMemberships doc — managed clients have none.
+      });
+      const db = authedDb(primary.uid);
+      const batch = buildDemotionBatch(db, circleID, managed, 1);
+      await assertFails(batch.commit());
+    });
+
+    it("rejects the batch when supervisorCount is not decremented by exactly 1", async () => {
+      // supervisorCount is left unchanged (still 2):
+      // isDemotionToManagedClientBatch requires getAfter == get - 1, so the
+      // Person write is denied and the whole batch fails.
+      const db = authedDb(primary.uid);
+      const batch = writeBatch(db);
+      batch.update(doc(db, `careCircles/${circleID}/people/${secondary.personID}`), {
+        role: "managed_client",
+        firebaseUID: "",
+        failedPinAttempts: 0,
+        lastModified: serverTimestamp(),
+      });
+      batch.delete(doc(db, `userMemberships/${secondary.uid}`));
+      // No careCircle.supervisorCount write — the count stays at 2.
+      await assertFails(batch.commit());
+    });
+  });
+
   // -- 13. Legacy "supervisor" role is treated as primary -----------------
 
   describe("legacy supervisor role compatibility", () => {

@@ -109,6 +109,7 @@
 		BFD00000000000000000000F6 /* QuickActionsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F6 /* QuickActionsCard.swift */; };
 		BFD00000000000000000000F7 /* PeopleManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F7 /* PeopleManagementView.swift */; };
 		BFD00000000000000000000F8 /* PersonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F8 /* PersonDetailView.swift */; };
+		BFD0000000000000000000301 /* DemoteToManagedClientSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000301 /* DemoteToManagedClientSheet.swift */; };
 		BFD00000000000000000000F9 /* AddPersonFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD00000000000000000000F9 /* AddPersonFlow.swift */; };
 		BFD0000000000000000000100 /* CircleSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000100 /* CircleSetupView.swift */; };
 		BFD0000000000000000000101 /* CreateCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000101 /* CreateCircleView.swift */; };
@@ -151,6 +152,7 @@
 		BFD0000000000000000000129 /* MedicalIDRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000129 /* MedicalIDRepositoryTests.swift */; };
 		BFD000000000000000000012A /* EditMedicalIDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012A /* EditMedicalIDView.swift */; };
 		BFD000000000000000000012B /* EditMedicalIDViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012B /* EditMedicalIDViewTests.swift */; };
+		BFD0000000000000000000302 /* PersonDetailViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000302 /* PersonDetailViewTests.swift */; };
 		BFD000000000000000000012C /* ErrorCollapseConventionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012C /* ErrorCollapseConventionTests.swift */; };
 		BFD000000000000000000012D /* EmergencyMedicalIDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012D /* EmergencyMedicalIDView.swift */; };
 		BFD000000000000000000012E /* EmergencyMedicalIDViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012E /* EmergencyMedicalIDViewModel.swift */; };
@@ -275,6 +277,7 @@
 		FRD00000000000000000000F6 /* QuickActionsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionsCard.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000F7 /* PeopleManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeopleManagementView.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000F8 /* PersonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonDetailView.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000301 /* DemoteToManagedClientSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoteToManagedClientSheet.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000F9 /* AddPersonFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPersonFlow.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000100 /* CircleSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleSetupView.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000101 /* CreateCircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateCircleView.swift; sourceTree = "<group>"; };
@@ -317,6 +320,7 @@
 		FRD0000000000000000000129 /* MedicalIDRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalIDRepositoryTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000012A /* EditMedicalIDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditMedicalIDView.swift; path = MedicalID/EditMedicalIDView.swift; sourceTree = "<group>"; };
 		FRD000000000000000000012B /* EditMedicalIDViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditMedicalIDViewTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000302 /* PersonDetailViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonDetailViewTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000012C /* ErrorCollapseConventionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorCollapseConventionTests.swift; sourceTree = "<group>"; };
 		FRD000000000000000000012D /* EmergencyMedicalIDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EmergencyMedicalIDView.swift; path = MedicalID/EmergencyMedicalIDView.swift; sourceTree = "<group>"; };
 		FRD000000000000000000012E /* EmergencyMedicalIDViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EmergencyMedicalIDViewModel.swift; path = MedicalID/EmergencyMedicalIDViewModel.swift; sourceTree = "<group>"; };
@@ -473,6 +477,7 @@
 				FRD0000000000000000000127 /* AlertsCardSmokeTests.swift */,
 				FRD0000000000000000000129 /* MedicalIDRepositoryTests.swift */,
 				FRD000000000000000000012B /* EditMedicalIDViewTests.swift */,
+				FRD0000000000000000000302 /* PersonDetailViewTests.swift */,
 				FRD000000000000000000012C /* ErrorCollapseConventionTests.swift */,
 				FRD000000000000000000012F /* EmergencyMedicalIDViewModelTests.swift */,
 				FRD0000000000000000000130 /* EmergencyMedicalIDViewTests.swift */,
@@ -684,6 +689,7 @@
 			children = (
 				FRD00000000000000000000F7 /* PeopleManagementView.swift */,
 				FRD00000000000000000000F8 /* PersonDetailView.swift */,
+				FRD0000000000000000000301 /* DemoteToManagedClientSheet.swift */,
 				FRD00000000000000000000F9 /* AddPersonFlow.swift */,
 			);
 			path = People;
@@ -879,6 +885,7 @@
 				BFD00000000000000000000F6 /* QuickActionsCard.swift in Sources */,
 				BFD00000000000000000000F7 /* PeopleManagementView.swift in Sources */,
 				BFD00000000000000000000F8 /* PersonDetailView.swift in Sources */,
+				BFD0000000000000000000301 /* DemoteToManagedClientSheet.swift in Sources */,
 				BFD00000000000000000000F9 /* AddPersonFlow.swift in Sources */,
 				BFD0000000000000000000100 /* CircleSetupView.swift in Sources */,
 				BFD0000000000000000000101 /* CreateCircleView.swift in Sources */,
@@ -941,6 +948,7 @@
 				BFD0000000000000000000127 /* AlertsCardSmokeTests.swift in Sources */,
 				BFD0000000000000000000129 /* MedicalIDRepositoryTests.swift in Sources */,
 				BFD000000000000000000012B /* EditMedicalIDViewTests.swift in Sources */,
+				BFD0000000000000000000302 /* PersonDetailViewTests.swift in Sources */,
 				BFD000000000000000000012C /* ErrorCollapseConventionTests.swift in Sources */,
 				BFD000000000000000000012F /* EmergencyMedicalIDViewModelTests.swift in Sources */,
 				BFD0000000000000000000130 /* EmergencyMedicalIDViewTests.swift in Sources */,

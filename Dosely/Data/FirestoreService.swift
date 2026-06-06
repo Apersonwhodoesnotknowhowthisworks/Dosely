@@ -342,6 +342,75 @@ final class FirestoreService {
         }
     }
 
+    /// Atomically demotes a `secondary_supervisor` to a `managed_client`,
+    /// preserving the Person doc but stripping their Firebase access:
+    ///   - careCircles/{id}/people/{targetID}.role = "managed_client"
+    ///   - careCircles/{id}/people/{targetID}.firebaseUID = ""
+    ///   - careCircles/{id}/people/{targetID}.pinHash / .pinSalt removed
+    ///   - careCircles/{id}/people/{targetID}.failedPinAttempts = 0
+    ///   - careCircles/{id}.supervisorCount -= 1
+    ///   - userMemberships/{targetFirebaseUID} deleted
+    /// All in one batch so the rules-layer last-supervisor protection
+    /// (post-batch supervisorCount >= 1) and `isDemotionToManagedClientBatch`
+    /// see a consistent state. The demotion either lands whole or not at all.
+    func applyDemotionToManagedClient(
+        circleID: String,
+        targetPersonID: String,
+        targetFirebaseUID: String
+    ) async throws {
+        guard let db else { return }
+        Self.roleLogger.debug(
+            "applyDemotionToManagedClient: batch starting circle=\(circleID, privacy: .public) target=\(targetPersonID, privacy: .public) writes=[person.role->managed_client, person.firebaseUID->\"\", person.pin cleared, careCircle.supervisorCount-1, userMemberships/\(targetFirebaseUID, privacy: .public) delete]"
+        )
+        do {
+            let batch = db.batch()
+            let personRef = db
+                .collection(Path.people(circleID))
+                .document(targetPersonID)
+            // firebaseUID is set to "" (empty string), NOT FieldValue.delete():
+            // the rules' `isDemotionToManagedClientBatch` helper recognizes a
+            // demoted account by `firebaseUID == ""`, so the field must be
+            // present and explicitly empty. pinHash/pinSalt are removed with
+            // FieldValue.delete() — a managed_client has no PIN, and an empty
+            // string there could be misread by a future reader as "PIN '' is
+            // valid."
+            batch.updateData([
+                "role": "managed_client",
+                "firebaseUID": "",
+                "pinHash": FieldValue.delete(),
+                "pinSalt": FieldValue.delete(),
+                "failedPinAttempts": 0,
+                "lastModified": FieldValue.serverTimestamp()
+            ], forDocument: personRef)
+            Self.roleLogger.debug("applyDemotionToManagedClient: write person.role->managed_client target=\(targetPersonID, privacy: .public)")
+
+            let circleRef = db.document(Path.careCircle(circleID))
+            batch.updateData([
+                "supervisorCount": FieldValue.increment(Int64(-1)),
+                "lastModified": FieldValue.serverTimestamp()
+            ], forDocument: circleRef)
+            Self.roleLogger.debug("applyDemotionToManagedClient: write careCircle.supervisorCount-1 circle=\(circleID, privacy: .public)")
+
+            // A managed_client is not a Firebase member, so the membership
+            // index doc is deleted outright (mirrors removeSupervisorAtomically),
+            // not rewritten — the /userMemberships role enum doesn't admit
+            // managed_client.
+            batch.deleteDocument(db.document(Path.userMembership(targetFirebaseUID)))
+            Self.roleLogger.debug("applyDemotionToManagedClient: delete membership uid=\(targetFirebaseUID, privacy: .public)")
+
+            try await batch.commit()
+            Self.roleLogger.info("applyDemotionToManagedClient: success circle=\(circleID, privacy: .public) target=\(targetPersonID, privacy: .public)")
+        } catch {
+            let ns = error as NSError
+            Self.roleLogger.error(
+                "applyDemotionToManagedClient: batch failed circle=\(circleID, privacy: .public) domain=\(ns.domain, privacy: .public) code=\(ns.code, privacy: .public) desc=\(ns.localizedDescription, privacy: .public)"
+            )
+            // Distinct error codes per error-collapse convention —
+            // see build_log April 30 phantom join code entry.
+            throw FirestoreServiceError.map(error)
+        }
+    }
+
     /// Atomically removes a supervisor: deletes their Person doc,
     /// decrements `supervisorCount` on the parent circle, and (if a
     /// Firebase UID is provided) deletes their `/userMemberships` doc.

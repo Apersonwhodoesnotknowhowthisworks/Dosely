@@ -193,6 +193,34 @@ service cloud.firestore {
              );
     }
 
+    // True when this Person doc update is the demotion of a SECONDARY
+    // supervisor to a managed_client, initiated by the current primary:
+    //   - The target (this Person doc) is currently a secondary_supervisor
+    //     with a real Firebase UID.
+    //   - The new role is managed_client, firebaseUID is cleared to "",
+    //     and the PIN fields are absent/empty (a managed_client has no PIN).
+    //   - The circle's supervisorCount decrements by exactly 1 in the same
+    //     batch (the demoted member no longer counts as a supervisor).
+    // The actor must currently be the primary. Requiring the pre-role to be
+    // secondary_supervisor already implies the target is NOT the current
+    // primary (whose role is primary_supervisor) and NOT a self-demotion;
+    // the explicit primarySupervisorPersonID != personID check below is
+    // belt-and-suspenders so the circle can never lose its primary through
+    // this path (mirrors the Person-delete rule's primary protection).
+    function isDemotionToManagedClientBatch(circleID, personID) {
+      let preCircle = get(/databases/$(database)/documents/careCircles/$(circleID)).data;
+      let postCircle = getAfter(/databases/$(database)/documents/careCircles/$(circleID)).data;
+      return isPrimary(circleID) &&
+             preCircle.get('primarySupervisorPersonID', '') != personID &&
+             resource.data.role == 'secondary_supervisor' &&
+             resource.data.get('firebaseUID', '') != '' &&
+             request.resource.data.role == 'managed_client' &&
+             request.resource.data.firebaseUID == '' &&
+             (!('pinHash' in request.resource.data) || request.resource.data.pinHash == '') &&
+             (!('pinSalt' in request.resource.data) || request.resource.data.pinSalt == '') &&
+             postCircle.supervisorCount == preCircle.supervisorCount - 1;
+    }
+
     // True when the requester founded `circleID` AND does not currently
     // belong to it via `/userMemberships`. Both conjuncts are required.
     //
@@ -429,7 +457,17 @@ service cloud.firestore {
         );
 
         // Update:
-        //   (a) Primary of circle (id immutable).
+        //   (a) Primary of circle (id immutable) — EXCEPT demoting a
+        //       supervisor to managed_client, which is carved out so it
+        //       must go through branch (d). Without this carve-out the
+        //       blanket primary branch would authorize ANY role write,
+        //       making branch (d)'s supervisorCount / no-self-demote
+        //       invariants unenforceable. The carve-out is surgical: it
+        //       touches only supervisor->managed_client (a brand-new
+        //       transition); the device<->managed flip, PIN resets,
+        //       promotions, and the role migration are all unaffected
+        //       because none of them set a supervisor's role to
+        //       managed_client.
         //   (b) Self-edit of own languagePreference / pinHash / pinSalt only.
         //   (c) The role transition half of a promotion batch — the
         //       current primary writes both the old primary's Person doc
@@ -437,15 +475,26 @@ service cloud.firestore {
         //       (promote to primary). `isPromotionBatch` enforces that
         //       both writes match a CareCircle.primarySupervisorPersonID
         //       change in the same batch.
+        //   (d) The Person-doc half of a demote-secondary-to-managed_client
+        //       batch. `isDemotionToManagedClientBatch` enforces the actor
+        //       is primary, the target was a secondary with a real UID, the
+        //       PIN is cleared, and supervisorCount drops by exactly 1.
         allow update: if (
           isPrimary(circleID) &&
-          request.resource.data.id == resource.data.id
+          request.resource.data.id == resource.data.id &&
+          !(
+            request.resource.data.role == 'managed_client' &&
+            resource.data.role in ['primary_supervisor', 'secondary_supervisor', 'supervisor']
+          )
         ) || (
           memberOf(circleID) &&
           myPersonID(circleID) == personID &&
           request.resource.data.diff(resource.data).changedKeys().hasOnly(['languagePreference', 'pinHash', 'pinSalt', 'lastModified'])
         ) || (
           isPromotionBatch(circleID, personID) &&
+          request.resource.data.id == resource.data.id
+        ) || (
+          isDemotionToManagedClientBatch(circleID, personID) &&
           request.resource.data.id == resource.data.id
         );
 

@@ -399,6 +399,25 @@
 "supervisor.promote.error.target" = "ਇਸ ਮੈਂਬਰ ਨੂੰ ਮੁੱਖ ਨਹੀਂ ਬਣਾਇਆ ਜਾ ਸਕਦਾ।";
 "supervisor.promote.error.generic" = "ਮੁੱਖ ਬਦਲਣ ਵਿੱਚ ਮੁਸ਼ਕਲ ਹੋਈ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
 
+// Demote a secondary supervisor to a managed family member — REVIEW NEEDED
+"people.demote.section.title" = "ਭੂਮਿਕਾ ਬਦਲੋ"; // REVIEW NEEDED
+"people.demote.button.title" = "ਪ੍ਰਬੰਧਿਤ ਪਰਿਵਾਰਕ ਮੈਂਬਰ ਵਿੱਚ ਬਦਲੋ"; // REVIEW NEEDED
+"people.demote.section.subtitle" = "ਇਹ ਉਨ੍ਹਾਂ ਦੀ Firebase ਪਹੁੰਚ ਹਟਾ ਦਿੰਦਾ ਹੈ ਅਤੇ ਉਨ੍ਹਾਂ ਦੀ ਪ੍ਰੋਫ਼ਾਈਲ ਨੂੰ ਪ੍ਰਬੰਧਿਤ ਪਰਿਵਾਰਕ ਮੈਂਬਰ ਵਿੱਚ ਬਦਲ ਦਿੰਦਾ ਹੈ।"; // REVIEW NEEDED
+"people.demote.confirm.title" = "ਕੀ %@ ਨੂੰ ਪ੍ਰਬੰਧਿਤ ਪਰਿਵਾਰਕ ਮੈਂਬਰ ਵਿੱਚ ਬਦਲਣਾ ਹੈ?"; // REVIEW NEEDED
+"people.demote.confirm.body.line1" = "ਇਸ ਨਾਲ %@ ਕਿਸੇ ਵੀ ਡੀਵਾਈਸ ਤੋਂ Dosely ਵਿੱਚ ਸਾਈਨ ਇਨ ਨਹੀਂ ਕਰ ਸਕਣਗੇ।"; // REVIEW NEEDED
+"people.demote.confirm.body.line2" = "ਉਨ੍ਹਾਂ ਦੀ ਪ੍ਰੋਫ਼ਾਈਲ ਪਰਿਵਾਰ ਵਿੱਚ ਰਹਿੰਦੀ ਹੈ — ਉਨ੍ਹਾਂ ਦੀਆਂ ਪਿਛਲੀਆਂ ਖ਼ੁਰਾਕਾਂ ਦੇ ਰਿਕਾਰਡ ਅਤੇ ਇਤਿਹਾਸ ਸੁਰੱਖਿਅਤ ਰਹਿੰਦੇ ਹਨ।"; // REVIEW NEEDED
+"people.demote.confirm.body.line3" = "ਤੁਸੀਂ ਉਨ੍ਹਾਂ ਦੀਆਂ ਦਵਾਈਆਂ ਦਾ ਪ੍ਰਬੰਧ ਕਰ ਸਕੋਗੇ ਅਤੇ ਉਨ੍ਹਾਂ ਵੱਲੋਂ ਖ਼ੁਰਾਕਾਂ ਦਰਜ ਕਰ ਸਕੋਗੇ।"; // REVIEW NEEDED
+"people.demote.confirm.body.line4" = "ਉਨ੍ਹਾਂ ਨੂੰ ਬਾਅਦ ਵਿੱਚ ਨਿਗਰਾਨ ਵਜੋਂ ਮੁੜ ਬਹਾਲ ਕਰਨ ਲਈ, ਤੁਹਾਨੂੰ ਨਵੇਂ ਜੁੜਨ ਕੋਡ ਨਾਲ ਉਨ੍ਹਾਂ ਨੂੰ ਮੁੜ ਸੱਦਾ ਦੇਣਾ ਪਵੇਗਾ।"; // REVIEW NEEDED
+"people.demote.confirm.body.line5" = "ਕੀ ਤੁਸੀਂ ਯਕੀਨੀ ਹੋ?"; // REVIEW NEEDED
+"people.demote.confirm.button.confirm" = "ਬਦਲੋ"; // REVIEW NEEDED
+"people.demote.confirm.button.cancel" = "ਰੱਦ ਕਰੋ"; // REVIEW NEEDED
+"people.demote.error.notcurrentprimary" = "ਇਹ ਸਿਰਫ਼ ਮੁੱਖ ਨਿਗਰਾਨ ਕਰ ਸਕਦੇ ਹਨ।"; // REVIEW NEEDED
+"people.demote.error.invalidtarget" = "ਇਸ ਵਿਅਕਤੀ ਨੂੰ ਬਦਲਿਆ ਨਹੀਂ ਜਾ ਸਕਦਾ।"; // REVIEW NEEDED
+"people.demote.error.permission" = "ਤੁਹਾਨੂੰ ਇਹ ਕਰਨ ਦੀ ਇਜਾਜ਼ਤ ਨਹੀਂ ਹੈ।"; // REVIEW NEEDED
+"people.demote.error.offline" = "ਸਰਵਰ ਨਾਲ ਸੰਪਰਕ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
+"people.demote.error.notfound" = "ਉਹ ਪ੍ਰੋਫ਼ਾਈਲ ਨਹੀਂ ਮਿਲੀ।"; // REVIEW NEEDED
+"people.demote.error.unknown" = "ਕੁਝ ਗ਼ਲਤ ਹੋ ਗਿਆ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
+
 // Errors — REVIEW NEEDED
 "supervisor.person.error.notprimary" = "ਇਹ ਸਿਰਫ਼ ਮੁੱਖ ਨਿਗਰਾਨ ਕਰ ਸਕਦੇ ਹਨ। ਜੇ ਬਦਲਣਾ ਹੈ ਤਾਂ ਉਨ੍ਹਾਂ ਨੂੰ ਕਹੋ।";
 

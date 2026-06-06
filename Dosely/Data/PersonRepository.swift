@@ -15,6 +15,11 @@ enum PersonRepositoryError: Error, Equatable {
     /// `promoteToPrimary` was called by someone who isn't the current
     /// primary supervisor of the circle.
     case notCurrentPrimary
+    /// `demoteSupervisorToManagedClient` was called with a target who
+    /// isn't a `secondary_supervisor` in the same circle, or with the
+    /// actor as the target (self-demotion). The primary must promote
+    /// another secondary to primary first before they can be demoted.
+    case invalidDemotionTarget
 }
 
 /// Person reads stay synchronous from Core Data. Writes hit Firestore
@@ -204,6 +209,136 @@ final class PersonRepository {
         }
         Self.roleLogger.info(
             "promoteToPrimary: Core Data mirror complete circle=\(plan.circleID.uuidString, privacy: .public)"
+        )
+    }
+
+    /// Converts a `secondary_supervisor` into a `managed_client`,
+    /// preserving their Person record and history (dose logs stay
+    /// attributed to them) but removing their Firebase access. Only the
+    /// current primary supervisor can call this. The change lands in a
+    /// single Firestore batch via `applyDemotionToManagedClient`, whose
+    /// exact write shape the rules' `isDemotionToManagedClientBatch`
+    /// helper recognizes.
+    ///
+    /// Throws:
+    /// - `notCurrentPrimary` if the caller isn't the current primary
+    /// - `invalidDemotionTarget` if the target is the actor (self-demote),
+    ///   or isn't a `secondary_supervisor` in the same circle. The legacy
+    ///   `"supervisor"` alias reads as primary and is rejected here — the
+    ///   actor must promote a different secondary to primary first.
+    /// - `notFound` if the actor or target Person is missing
+    /// - `permissionDenied` if the target belongs to a different circle
+    /// - any underlying `FirestoreServiceError` on rule rejection or
+    ///   network failure (the local mirror is skipped)
+    func demoteSupervisorToManagedClient(
+        targetPersonID: UUID,
+        actingSupervisorID: UUID
+    ) async throws {
+        Self.roleLogger.info(
+            "demoteSupervisorToManagedClient: entry actor=\(actingSupervisorID.uuidString, privacy: .public) target=\(targetPersonID.uuidString, privacy: .public)"
+        )
+        struct Plan {
+            let circleID: UUID
+            let targetPersonID: UUID
+            let targetFirebaseUID: String
+        }
+
+        let plan: Plan
+        do {
+            plan = try await context.perform { [context] in
+                guard let actor = Self.find(id: actingSupervisorID, in: context),
+                      let circle = actor.careCircle,
+                      let circleID = circle.id else {
+                    throw PersonRepositoryError.notFound
+                }
+                // Primary-only. We check primary inline (rather than via
+                // `ensureCanWrite`, which throws `.permissionDenied`) so a
+                // non-primary actor surfaces the distinct `.notCurrentPrimary`
+                // copy — mirrors `promoteToPrimary`.
+                guard let primaryID = circle.primarySupervisorPersonID,
+                      primaryID == actingSupervisorID,
+                      Roles.isPrimarySupervisor(actor.role) else {
+                    throw PersonRepositoryError.notCurrentPrimary
+                }
+                // Self-demotion is impossible: the primary must first hand
+                // off primary to another secondary, then be demoted by the
+                // new primary.
+                guard targetPersonID != actingSupervisorID else {
+                    throw PersonRepositoryError.invalidDemotionTarget
+                }
+                guard let target = Self.find(id: targetPersonID, in: context) else {
+                    throw PersonRepositoryError.notFound
+                }
+                guard target.careCircle?.id == circleID else {
+                    throw PersonRepositoryError.permissionDenied
+                }
+                // Only a secondary supervisor can be demoted this way. A
+                // legacy `"supervisor"` target reads as primary, so it's
+                // rejected (promote a different secondary first). A target
+                // without a real Firebase UID was never a Firebase member,
+                // so there's nothing to demote.
+                guard target.role == Roles.secondarySupervisor,
+                      let targetUID = target.firebaseUID, !targetUID.isEmpty else {
+                    throw PersonRepositoryError.invalidDemotionTarget
+                }
+                return Plan(
+                    circleID: circleID,
+                    targetPersonID: targetPersonID,
+                    targetFirebaseUID: targetUID
+                )
+            }
+        } catch let err as PersonRepositoryError {
+            switch err {
+            case .notCurrentPrimary:
+                Self.roleLogger.error("demoteSupervisorToManagedClient: notCurrentPrimary actor=\(actingSupervisorID.uuidString, privacy: .public)")
+            case .invalidDemotionTarget:
+                Self.roleLogger.error("demoteSupervisorToManagedClient: invalidDemotionTarget target=\(targetPersonID.uuidString, privacy: .public)")
+            case .permissionDenied:
+                Self.roleLogger.error("demoteSupervisorToManagedClient: cross-circle target=\(targetPersonID.uuidString, privacy: .public)")
+            case .notFound:
+                Self.roleLogger.error("demoteSupervisorToManagedClient: notFound actor=\(actingSupervisorID.uuidString, privacy: .public)")
+            default:
+                Self.roleLogger.error("demoteSupervisorToManagedClient: preflight failed err=\(String(describing: err), privacy: .public)")
+            }
+            throw err
+        }
+
+        do {
+            try await firestore.applyDemotionToManagedClient(
+                circleID: plan.circleID.uuidString,
+                targetPersonID: plan.targetPersonID.uuidString,
+                targetFirebaseUID: plan.targetFirebaseUID
+            )
+            Self.roleLogger.info(
+                "demoteSupervisorToManagedClient: Firestore success circle=\(plan.circleID.uuidString, privacy: .public) target=\(plan.targetPersonID.uuidString, privacy: .public)"
+            )
+        } catch let err as FirestoreServiceError {
+            // Distinct error codes per error-collapse convention —
+            // see build_log April 30 phantom join code entry.
+            switch err {
+            case .permissionDenied:
+                Self.roleLogger.error("demoteSupervisorToManagedClient: Firestore permissionDenied — rules rejected the batch")
+            case .offline:
+                Self.roleLogger.error("demoteSupervisorToManagedClient: Firestore offline")
+            case .notFound:
+                Self.roleLogger.error("demoteSupervisorToManagedClient: Firestore notFound")
+            case .unknown(let detail):
+                Self.roleLogger.error("demoteSupervisorToManagedClient: Firestore unknown \(detail, privacy: .public)")
+            }
+            throw err
+        }
+
+        await context.perform { [context] in
+            guard let target = Self.find(id: plan.targetPersonID, in: context) else { return }
+            target.role = Roles.managedClient
+            target.firebaseUID = nil
+            target.pinHash = nil
+            target.pinSalt = nil
+            target.failedPinAttempts = 0
+            try? context.save()
+        }
+        Self.roleLogger.info(
+            "demoteSupervisorToManagedClient: Core Data mirror complete target=\(plan.targetPersonID.uuidString, privacy: .public)"
         )
     }
 

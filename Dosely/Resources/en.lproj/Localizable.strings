@@ -396,6 +396,25 @@
 "supervisor.promote.error.target" = "That person can't be made primary.";
 "supervisor.promote.error.generic" = "Couldn't change who's primary. Please try again.";
 
+// Demote a secondary supervisor to a managed family member
+"people.demote.section.title" = "Change role";
+"people.demote.button.title" = "Convert to managed family member";
+"people.demote.section.subtitle" = "This removes their Firebase access and converts their profile to a managed family member.";
+"people.demote.confirm.title" = "Convert %@ to managed family member?";
+"people.demote.confirm.body.line1" = "This will remove %@'s ability to sign in to Dosely from any device.";
+"people.demote.confirm.body.line2" = "Their profile stays in the family — their previous dose logs and history are preserved.";
+"people.demote.confirm.body.line3" = "You will be able to manage their medications and log doses on their behalf.";
+"people.demote.confirm.body.line4" = "To restore them as a supervisor later, you would need to re-invite them via a new join code.";
+"people.demote.confirm.body.line5" = "Are you sure?";
+"people.demote.confirm.button.confirm" = "Convert";
+"people.demote.confirm.button.cancel" = "Cancel";
+"people.demote.error.notcurrentprimary" = "Only the primary supervisor can do this.";
+"people.demote.error.invalidtarget" = "This person can't be converted.";
+"people.demote.error.permission" = "You don't have permission to do that.";
+"people.demote.error.offline" = "Couldn't reach the server. Check your connection and try again.";
+"people.demote.error.notfound" = "Couldn't find that profile.";
+"people.demote.error.unknown" = "Something went wrong. Try again.";
+
 // Errors
 "supervisor.person.error.notprimary" = "Only the primary supervisor can do that. Ask the primary if you need it changed.";
 
