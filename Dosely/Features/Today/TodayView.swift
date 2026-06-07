@@ -88,16 +88,17 @@ struct TodayView: View {
                     }
                     .accessibilityLabel(Text("today.account"))
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
-                        print("[UI-DEBUG] + tapped")
-                        showingAdd = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.title2.weight(.semibold))
-                            .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
+                // Add-medication is a supervisor write affordance — hidden from
+                // device_client / managed_client signed in on their own device.
+                if Self.shouldShowAddMedication(role: authService.currentPerson?.role) {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(action: { showingAdd = true }) {
+                            Image(systemName: "plus")
+                                .font(.title2.weight(.semibold))
+                                .frame(width: DSSpacing.minTapTarget, height: DSSpacing.minTapTarget)
+                        }
+                        .accessibilityLabel(Text("today.add"))
                     }
-                    .accessibilityLabel(Text("today.add"))
                 }
             }
             .debugToolbar()
@@ -225,6 +226,15 @@ struct TodayView: View {
     /// their own emergency info elsewhere.
     private var isClientActor: Bool {
         EmergencyMedicalIDViewModel.isEligibleForMedicalID(role: authService.currentPerson?.role)
+    }
+
+    /// Whether the add-medication "+" toolbar affordance should be shown.
+    /// Supervisor-only (both flavours — a secondary tapping it still hits the
+    /// repository's primary-only guard at save time); hidden from
+    /// device_client / managed_client. Pure + static so `TodayViewTests` can
+    /// pin every role branch without rendering.
+    static func shouldShowAddMedication(role: String?) -> Bool {
+        Roles.isAnySupervisor(role)
     }
 
     private var medicalIDButton: some View {

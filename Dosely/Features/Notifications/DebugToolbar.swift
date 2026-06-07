@@ -7,47 +7,59 @@ struct DebugToolbarModifier: ViewModifier {
     @State private var showPermissionAlert = false
     #endif
 
+    /// Even in a DEBUG build, the developer test toolbar is supervisor-only —
+    /// it must never appear for a device_client / managed_client signed in on
+    /// their own device. (RELEASE hides it entirely via the #else passthrough.)
+    /// Static + outside #if DEBUG so the test target can pin it in any config.
+    static func shouldShowDebugToolbar(role: String?) -> Bool {
+        Roles.isAnySupervisor(role)
+    }
+
     func body(content: Content) -> some View {
         #if DEBUG
-        content
-            .safeAreaInset(edge: .top) {
-                VStack(spacing: DSSpacing.xs) {
-                    HStack(spacing: DSSpacing.xs) {
-                        Spacer()
-                        pill(title: "Test notification (30s)",
-                             a11y: "DEBUG: schedule test notification in 30 seconds") {
-                            Task { await handleTestTap() }
+        if Self.shouldShowDebugToolbar(role: authService.currentPerson?.role) {
+            content
+                .safeAreaInset(edge: .top) {
+                    VStack(spacing: DSSpacing.xs) {
+                        HStack(spacing: DSSpacing.xs) {
+                            Spacer()
+                            pill(title: "Test notification (30s)",
+                                 a11y: "DEBUG: schedule test notification in 30 seconds") {
+                                Task { await handleTestTap() }
+                            }
+                            pill(title: "Schedule real dose (2 min)",
+                                 a11y: "Schedule real dose verification in 2 minutes") {
+                                Task { await handleScheduleVerifyRx() }
+                            }
                         }
-                        pill(title: "Schedule real dose (2 min)",
-                             a11y: "Schedule real dose verification in 2 minutes") {
-                            Task { await handleScheduleVerifyRx() }
-                        }
-                    }
-                    HStack(spacing: DSSpacing.xs) {
-                        Spacer()
-                        pill(title: "Clear drug cache",
-                             a11y: "DEBUG: clear drug info cache") {
-                            Task {
-                                await DrugInfoCache.shared.clear()
-                                print("[DRUG-DEBUG] cleared")
+                        HStack(spacing: DSSpacing.xs) {
+                            Spacer()
+                            pill(title: "Clear drug cache",
+                                 a11y: "DEBUG: clear drug info cache") {
+                                Task {
+                                    await DrugInfoCache.shared.clear()
+                                    print("[DRUG-DEBUG] cleared")
+                                }
                             }
                         }
                     }
+                    .padding(.trailing, DSSpacing.md)
+                    .padding(.top, DSSpacing.xs)
                 }
-                .padding(.trailing, DSSpacing.md)
-                .padding(.top, DSSpacing.xs)
-            }
-            .task {
-                if ProcessInfo.processInfo.arguments.contains("-DoselyAutoTest") {
-                    await handleTestTap()
+                .task {
+                    if ProcessInfo.processInfo.arguments.contains("-DoselyAutoTest") {
+                        await handleTestTap()
+                    }
                 }
-            }
-            .alert("Notifications are off", isPresented: $showPermissionAlert) {
-                Button("Open Settings") { ReminderScheduler.openSystemSettings() }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Tap Open Settings to enable them.")
-            }
+                .alert("Notifications are off", isPresented: $showPermissionAlert) {
+                    Button("Open Settings") { ReminderScheduler.openSystemSettings() }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Tap Open Settings to enable them.")
+                }
+        } else {
+            content
+        }
         #else
         content
         #endif
