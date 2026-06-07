@@ -331,7 +331,10 @@ final class PersonRepository {
         await context.perform { [context] in
             guard let target = Self.find(id: plan.targetPersonID, in: context) else { return }
             target.role = Roles.managedClient
-            target.firebaseUID = nil
+            // firebaseUID is intentionally PRESERVED — a demoted secondary
+            // keeps their Firebase identity so they can still sign in to view
+            // their own dose schedule and log their own doses. Only the PIN is
+            // cleared (a managed_client has no PIN).
             target.pinHash = nil
             target.pinSalt = nil
             target.failedPinAttempts = 0

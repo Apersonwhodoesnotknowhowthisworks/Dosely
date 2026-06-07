@@ -13,8 +13,11 @@ import Foundation
 ///   button) and acknowledging alerts that involve them.
 /// - `device_client`: a non-Firebase user who unlocks the device profile
 ///   with a 4-digit PIN. Logs their own doses.
-/// - `managed_client`: a non-Firebase user with no PIN, fully managed by
-///   a supervisor.
+/// - `managed_client`: a family member with no PIN, fully managed by a
+///   supervisor. May have a Firebase identity (e.g. a demoted secondary
+///   supervisor) — in which case they can sign in to view and log their
+///   own doses, like a device_client minus the PIN — or none at all
+///   (fully passive; the supervisor logs on their behalf).
 ///
 /// Reads tolerate the legacy `"supervisor"` value as a transitional
 /// alias for `primary_supervisor` so that old data populated before the

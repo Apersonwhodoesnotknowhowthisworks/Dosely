@@ -402,12 +402,12 @@
 // Demote a secondary supervisor to a managed family member — REVIEW NEEDED
 "people.demote.section.title" = "ਭੂਮਿਕਾ ਬਦਲੋ"; // REVIEW NEEDED
 "people.demote.button.title" = "ਪ੍ਰਬੰਧਿਤ ਪਰਿਵਾਰਕ ਮੈਂਬਰ ਵਿੱਚ ਬਦਲੋ"; // REVIEW NEEDED
-"people.demote.section.subtitle" = "ਇਹ ਉਨ੍ਹਾਂ ਦੀ Firebase ਪਹੁੰਚ ਹਟਾ ਦਿੰਦਾ ਹੈ ਅਤੇ ਉਨ੍ਹਾਂ ਦੀ ਪ੍ਰੋਫ਼ਾਈਲ ਨੂੰ ਪ੍ਰਬੰਧਿਤ ਪਰਿਵਾਰਕ ਮੈਂਬਰ ਵਿੱਚ ਬਦਲ ਦਿੰਦਾ ਹੈ।"; // REVIEW NEEDED
+"people.demote.section.subtitle" = "ਇਹ ਉਨ੍ਹਾਂ ਦੇ ਨਿਗਰਾਨ ਅਧਿਕਾਰ ਹਟਾ ਦਿੰਦਾ ਹੈ। ਉਹ ਸਾਈਨ ਇਨ ਕਰ ਸਕਦੇ ਰਹਿਣਗੇ ਅਤੇ ਆਪਣੀ ਜਾਣਕਾਰੀ ਵੇਖ ਸਕਣਗੇ।"; // REVIEW NEEDED
 "people.demote.confirm.title" = "ਕੀ %@ ਨੂੰ ਪ੍ਰਬੰਧਿਤ ਪਰਿਵਾਰਕ ਮੈਂਬਰ ਵਿੱਚ ਬਦਲਣਾ ਹੈ?"; // REVIEW NEEDED
-"people.demote.confirm.body.line1" = "ਇਸ ਨਾਲ %@ ਕਿਸੇ ਵੀ ਡੀਵਾਈਸ ਤੋਂ Dosely ਵਿੱਚ ਸਾਈਨ ਇਨ ਨਹੀਂ ਕਰ ਸਕਣਗੇ।"; // REVIEW NEEDED
-"people.demote.confirm.body.line2" = "ਉਨ੍ਹਾਂ ਦੀ ਪ੍ਰੋਫ਼ਾਈਲ ਪਰਿਵਾਰ ਵਿੱਚ ਰਹਿੰਦੀ ਹੈ — ਉਨ੍ਹਾਂ ਦੀਆਂ ਪਿਛਲੀਆਂ ਖ਼ੁਰਾਕਾਂ ਦੇ ਰਿਕਾਰਡ ਅਤੇ ਇਤਿਹਾਸ ਸੁਰੱਖਿਅਤ ਰਹਿੰਦੇ ਹਨ।"; // REVIEW NEEDED
-"people.demote.confirm.body.line3" = "ਤੁਸੀਂ ਉਨ੍ਹਾਂ ਦੀਆਂ ਦਵਾਈਆਂ ਦਾ ਪ੍ਰਬੰਧ ਕਰ ਸਕੋਗੇ ਅਤੇ ਉਨ੍ਹਾਂ ਵੱਲੋਂ ਖ਼ੁਰਾਕਾਂ ਦਰਜ ਕਰ ਸਕੋਗੇ।"; // REVIEW NEEDED
-"people.demote.confirm.body.line4" = "ਉਨ੍ਹਾਂ ਨੂੰ ਬਾਅਦ ਵਿੱਚ ਨਿਗਰਾਨ ਵਜੋਂ ਮੁੜ ਬਹਾਲ ਕਰਨ ਲਈ, ਤੁਹਾਨੂੰ ਨਵੇਂ ਜੁੜਨ ਕੋਡ ਨਾਲ ਉਨ੍ਹਾਂ ਨੂੰ ਮੁੜ ਸੱਦਾ ਦੇਣਾ ਪਵੇਗਾ।"; // REVIEW NEEDED
+"people.demote.confirm.body.line1" = "ਇਹ %@ ਦੀ ਪਰਿਵਾਰ ਦਾ ਪ੍ਰਬੰਧ ਕਰਨ ਦੀ ਯੋਗਤਾ ਹਟਾ ਦਿੰਦਾ ਹੈ — ਹੁਣ ਦਵਾਈਆਂ ਸੋਧਣਾ, ਲੋਕਾਂ ਨੂੰ ਸੱਦਾ ਦੇਣਾ, ਜਾਂ ਪਰਿਵਾਰ ਸੈਟਿੰਗਾਂ ਬਦਲਣਾ ਨਹੀਂ।"; // REVIEW NEEDED
+"people.demote.confirm.body.line2" = "ਉਹ ਫਿਰ ਵੀ ਆਪਣੇ ਡੀਵਾਈਸ 'ਤੇ ਸਾਈਨ ਇਨ ਕਰ ਕੇ ਆਪਣੀ ਖ਼ੁਰਾਕ ਸਮਾਂ-ਸਾਰਣੀ ਵੇਖ ਸਕਣਗੇ। ਉਹ ਆਪਣੇ ਖ਼ੁਰਾਕ ਕਾਰਡਾਂ 'ਤੇ ਲਈ, ਛੱਡੀ, ਜਾਂ ਸਨੂਜ਼ ਟੈਪ ਕਰ ਸਕਦੇ ਹਨ। ਉਨ੍ਹਾਂ ਦੀ ਪਿਛਲੀ ਗਤੀਵਿਧੀ ਪਰਿਵਾਰ ਵਿੱਚ ਰਹਿੰਦੀ ਹੈ।"; // REVIEW NEEDED
+"people.demote.confirm.body.line3" = "ਤੁਸੀਂ ਉਨ੍ਹਾਂ ਵੱਲੋਂ ਖ਼ੁਰਾਕਾਂ ਦਰਜ ਕਰ ਸਕੋਗੇ ਅਤੇ ਆਪਣੇ ਡੀਵਾਈਸ ਤੋਂ ਉਨ੍ਹਾਂ ਦੀਆਂ ਦਵਾਈਆਂ ਅਤੇ ਐਮਰਜੈਂਸੀ ਜਾਣਕਾਰੀ ਦਾ ਪ੍ਰਬੰਧ ਕਰ ਸਕੋਗੇ।"; // REVIEW NEEDED
+"people.demote.confirm.body.line4" = "ਉਨ੍ਹਾਂ ਨੂੰ ਬਾਅਦ ਵਿੱਚ ਨਿਗਰਾਨ ਵਜੋਂ ਮੁੜ ਬਹਾਲ ਕਰਨ ਲਈ, ਹੁਣ ਲਈ ਸਭ ਤੋਂ ਸੌਖਾ ਤਰੀਕਾ ਉਨ੍ਹਾਂ ਨੂੰ ਹਟਾ ਕੇ ਨਵੇਂ ਜੁੜਨ ਕੋਡ ਨਾਲ ਮੁੜ ਸੱਦਾ ਦੇਣਾ ਹੈ।"; // REVIEW NEEDED
 "people.demote.confirm.body.line5" = "ਕੀ ਤੁਸੀਂ ਯਕੀਨੀ ਹੋ?"; // REVIEW NEEDED
 "people.demote.confirm.button.confirm" = "ਬਦਲੋ"; // REVIEW NEEDED
 "people.demote.confirm.button.cancel" = "ਰੱਦ ਕਰੋ"; // REVIEW NEEDED

@@ -1585,12 +1585,14 @@ describe("Firestore security rules", () => {
   // -- 12b. demote a secondary supervisor to a managed_client -------------
   //
   // The current primary converts a secondary supervisor into a managed
-  // family member in one batch: the Person doc's role -> managed_client and
-  // firebaseUID -> "", the circle's supervisorCount drops by 1, and the
-  // secondary's /userMemberships index doc is deleted (a managed_client is
-  // not a Firebase member). `isDemotionToManagedClientBatch` plus the
-  // carve-out on the primary's blanket Person-update branch are what force
-  // every malformed variant below to be rejected.
+  // family member in one batch: the Person doc's role -> managed_client (its
+  // Firebase UID PRESERVED), the circle's supervisorCount drops by 1, and the
+  // secondary's /userMemberships index doc is UPDATED to role managed_client
+  // (not deleted) — so the demoted user keeps their identity, still resolves
+  // on sign-in (landing on TodayView, not the no-circle screen), and can
+  // author their own dose logs. `isDemotionToManagedClientBatch` plus the
+  // carve-out on the primary's blanket Person-update branch force every
+  // malformed variant below to be rejected.
   describe("demote secondary -> managed_client batch", () => {
     const circleID = "circle-demote";
     const primary = { uid: "primary-d-uid", personID: "person-primary-d" };
@@ -1607,9 +1609,11 @@ describe("Firestore security rules", () => {
     });
 
     // Mirrors the on-the-wire shape of
-    // FirestoreService.applyDemotionToManagedClient: the Person doc's
-    // role/firebaseUID/PIN cleared, supervisorCount written to its
-    // post-batch value, and the membership doc deleted.
+    // FirestoreService.applyDemotionToManagedClient: the Person doc's role
+    // flips to managed_client and its PIN fields clear (firebaseUID is
+    // PRESERVED so the demoted user keeps their identity), supervisorCount is
+    // written to its post-batch value, and the /userMemberships doc is UPDATED
+    // to role managed_client (not deleted).
     function buildDemotionBatch(
       db: ReturnType<typeof authedDb>,
       circle: string,
@@ -1619,7 +1623,6 @@ describe("Firestore security rules", () => {
       const batch = writeBatch(db);
       batch.update(doc(db, `careCircles/${circle}/people/${target.personID}`), {
         role: "managed_client",
-        firebaseUID: "",
         failedPinAttempts: 0,
         lastModified: serverTimestamp(),
       });
@@ -1627,11 +1630,14 @@ describe("Firestore security rules", () => {
         supervisorCount: postSupervisorCount,
         lastModified: serverTimestamp(),
       });
-      batch.delete(doc(db, `userMemberships/${target.uid}`));
+      batch.update(doc(db, `userMemberships/${target.uid}`), {
+        role: "managed_client",
+        lastModified: serverTimestamp(),
+      });
       return batch;
     }
 
-    it("the current primary can demote a secondary; role, count, and membership update atomically", async () => {
+    it("the current primary can demote a secondary; role flips, UID preserved, membership updated atomically", async () => {
       const db = authedDb(primary.uid);
       const batch = buildDemotionBatch(db, circleID, secondary, 1);
       await assertSucceeds(batch.commit());
@@ -1645,9 +1651,10 @@ describe("Firestore security rules", () => {
         const membership = await getDoc(doc(adb, `userMemberships/${secondary.uid}`));
         if (
           personDoc.data()?.role !== "managed_client" ||
-          personDoc.data()?.firebaseUID !== "" ||
+          personDoc.data()?.firebaseUID !== secondary.uid ||
           circle.data()?.supervisorCount !== 1 ||
-          membership.exists()
+          !membership.exists() ||
+          membership.data()?.role !== "managed_client"
         ) {
           throw new Error("demotion did not produce expected post-state");
         }
@@ -1691,9 +1698,11 @@ describe("Firestore security rules", () => {
     });
 
     it("rejects the batch when the target is already a managed_client (wrong source role)", async () => {
-      // A managed_client has no /userMemberships index entry, so the
-      // demotion batch's membership delete is denied — the demotion path
-      // cannot be run against a non-secondary target.
+      // A fresh managed_client has no /userMemberships index entry, so the
+      // demotion batch's membership UPDATE targets a nonexistent doc and is
+      // denied — the demotion path cannot be run against a non-secondary
+      // target. (The carve-out lets a primary write managed->managed on the
+      // Person doc, so the membership write is the rejection point.)
       const managed = { uid: "managed-d-uid", personID: "person-managed-d" };
       await testEnv.withSecurityRulesDisabled(async (ctx) => {
         const adb = ctx.firestore();
@@ -1721,13 +1730,134 @@ describe("Firestore security rules", () => {
       const batch = writeBatch(db);
       batch.update(doc(db, `careCircles/${circleID}/people/${secondary.personID}`), {
         role: "managed_client",
-        firebaseUID: "",
         failedPinAttempts: 0,
         lastModified: serverTimestamp(),
       });
-      batch.delete(doc(db, `userMemberships/${secondary.uid}`));
+      batch.update(doc(db, `userMemberships/${secondary.uid}`), {
+        role: "managed_client",
+        lastModified: serverTimestamp(),
+      });
       // No careCircle.supervisorCount write — the count stays at 2.
       await assertFails(batch.commit());
+    });
+  });
+
+  // -- 12c. managed_client (Firebase-backed) dose-log authorship ----------
+  //
+  // A demoted secondary keeps its Firebase identity + /userMemberships doc,
+  // so it can author its OWN dose logs exactly like a device_client. The
+  // doseLog create rule's client branch now admits managed_client; the
+  // own-medication + own-loggedByPersonID scoping is unchanged.
+  describe("managed_client dose log authorship", () => {
+    const circleID = "circle-mc-doselog";
+    const primary = { uid: "mc-primary-uid", personID: "person-mc-primary" };
+    const managed = { uid: "mc-managed-uid", personID: "person-mc-managed" };
+    const other = { uid: "mc-other-uid", personID: "person-mc-other" };
+    const managedMedID = "med-mc-managed";
+    const otherMedID = "med-mc-other";
+
+    beforeEach(async () => {
+      await seedCircle({ circleID, joinCode: "960002", supervisor: primary });
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        const adb = ctx.firestore();
+        // A Firebase-backed managed_client (a demoted secondary): real
+        // firebaseUID + role managed_client + a /userMemberships index doc so
+        // myPersonID() resolves.
+        await setDoc(doc(adb, `careCircles/${circleID}/people/${managed.personID}`), {
+          id: managed.personID,
+          careCircleID: circleID,
+          name: "Demoted Aunt",
+          role: "managed_client",
+          languagePreference: "en",
+          firebaseUID: managed.uid,
+          failedPinAttempts: 0,
+        });
+        await setDoc(doc(adb, `userMemberships/${managed.uid}`), {
+          careCircleID: circleID,
+          personID: managed.personID,
+          role: "managed_client",
+          joinedAt: new Date(),
+        });
+        // A different patient (no membership needed).
+        await setDoc(doc(adb, `careCircles/${circleID}/people/${other.personID}`), {
+          id: other.personID,
+          careCircleID: circleID,
+          name: "Grandpa",
+          role: "managed_client",
+          languagePreference: "en",
+          failedPinAttempts: 0,
+        });
+      });
+      await seedMedication(circleID, managedMedID, managed.personID, "Lisinopril");
+      await seedMedication(circleID, otherMedID, other.personID, "Metformin");
+    });
+
+    it("a Firebase-backed managed_client can create a doseLog for THEIR OWN medication", async () => {
+      const db = authedDb(managed.uid);
+      const logID = "log-mc-own";
+      await assertSucceeds(
+        setDoc(doc(db, `careCircles/${circleID}/doseLogs/${logID}`), {
+          id: logID,
+          medicationID: managedMedID,
+          loggedByPersonID: managed.personID,
+          scheduledTime: new Date(),
+          actualTime: new Date(),
+          status: "taken",
+        })
+      );
+    });
+
+    it("a managed_client CANNOT create a doseLog for another person's medication", async () => {
+      const db = authedDb(managed.uid);
+      const logID = "log-mc-cross";
+      await assertFails(
+        setDoc(doc(db, `careCircles/${circleID}/doseLogs/${logID}`), {
+          id: logID,
+          medicationID: otherMedID, // belongs to `other`, not the managed_client
+          loggedByPersonID: managed.personID,
+          scheduledTime: new Date(),
+          actualTime: new Date(),
+          status: "taken",
+        })
+      );
+    });
+
+    it("a managed_client WITHOUT a Firebase identity cannot author dose logs", async () => {
+      // Person doc firebaseUID is "" -> authedAsClaimedPerson fails ->
+      // roleIn returns "" -> the client self-author branch denies. (This is
+      // the fully-passive managed_client; the supervisor logs on their behalf.)
+      const passive = { uid: "mc-passive-uid", personID: "person-mc-passive" };
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        const adb = ctx.firestore();
+        await setDoc(doc(adb, `careCircles/${circleID}/people/${passive.personID}`), {
+          id: passive.personID,
+          careCircleID: circleID,
+          name: "Passive Patient",
+          role: "managed_client",
+          languagePreference: "en",
+          firebaseUID: "",
+          failedPinAttempts: 0,
+        });
+        await setDoc(doc(adb, `userMemberships/${passive.uid}`), {
+          careCircleID: circleID,
+          personID: passive.personID,
+          role: "managed_client",
+          joinedAt: new Date(),
+        });
+      });
+      await seedMedication(circleID, "med-mc-passive", passive.personID, "Aspirin");
+      const db = authedDb(passive.uid);
+      const logID = "log-mc-passive";
+      await assertFails(
+        setDoc(doc(db, `careCircles/${circleID}/doseLogs/${logID}`), {
+          id: logID,
+          medicationID: "med-mc-passive",
+          loggedByPersonID: passive.personID,
+          scheduledTime: new Date(),
+          actualTime: new Date(),
+          status: "taken",
+        })
+      );
     });
   });
 

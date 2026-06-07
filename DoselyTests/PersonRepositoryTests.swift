@@ -447,10 +447,25 @@ final class PersonRepositoryTests: XCTestCase {
 
         let updated = await personRepo.fetchPerson(id: secondary.id!)
         XCTAssertEqual(updated?.role, Roles.managedClient)
-        XCTAssertNil(updated?.firebaseUID)
+        // Firebase identity is PRESERVED so the demoted user can still sign in
+        // and view their own data (the bug fix — was cleared before).
+        XCTAssertEqual(updated?.firebaseUID, "second-uid")
         XCTAssertNil(updated?.pinHash)
         XCTAssertNil(updated?.pinSalt)
         XCTAssertEqual(updated?.failedPinAttempts, 0)
+    }
+
+    func test_demoteSupervisorToManagedClient_preservesFirebaseUID() async throws {
+        let secondary = await addSecondarySupervisor(uid: "keep-uid", name: "Second")
+        try await personRepo.demoteSupervisorToManagedClient(
+            targetPersonID: secondary.id!, actingSupervisorID: supervisor.id!
+        )
+        let updated = await personRepo.fetchPerson(id: secondary.id!)
+        // The crux of the fix: a demoted secondary keeps their Firebase UID so
+        // RemotePersonResolver still resolves them on next sign-in (landing on
+        // TodayView, not the no-circle setup screen).
+        XCTAssertEqual(updated?.firebaseUID, "keep-uid")
+        XCTAssertEqual(updated?.role, Roles.managedClient)
     }
 
     func test_demoteSupervisorToManagedClient_throwsNotCurrentPrimaryWhenActorIsSecondary() async {

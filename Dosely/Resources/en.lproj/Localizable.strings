@@ -399,12 +399,12 @@
 // Demote a secondary supervisor to a managed family member
 "people.demote.section.title" = "Change role";
 "people.demote.button.title" = "Convert to managed family member";
-"people.demote.section.subtitle" = "This removes their Firebase access and converts their profile to a managed family member.";
+"people.demote.section.subtitle" = "This removes their supervisor privileges. They keep their sign-in and can still see their own information.";
 "people.demote.confirm.title" = "Convert %@ to managed family member?";
-"people.demote.confirm.body.line1" = "This will remove %@'s ability to sign in to Dosely from any device.";
-"people.demote.confirm.body.line2" = "Their profile stays in the family — their previous dose logs and history are preserved.";
-"people.demote.confirm.body.line3" = "You will be able to manage their medications and log doses on their behalf.";
-"people.demote.confirm.body.line4" = "To restore them as a supervisor later, you would need to re-invite them via a new join code.";
+"people.demote.confirm.body.line1" = "This removes %@'s ability to manage the family — no more editing medications, inviting people, or changing family settings.";
+"people.demote.confirm.body.line2" = "They'll still be able to sign in on their device and see their own dose schedule. They can tap Take, Skip, or Snooze on their own dose cards. Their previous activity stays in the family.";
+"people.demote.confirm.body.line3" = "You'll be able to log doses on their behalf and manage their medications and emergency information from your device.";
+"people.demote.confirm.body.line4" = "To restore them as a supervisor later, the simplest path for now is to remove them and re-invite them via a new join code.";
 "people.demote.confirm.body.line5" = "Are you sure?";
 "people.demote.confirm.button.confirm" = "Convert";
 "people.demote.confirm.button.cancel" = "Cancel";

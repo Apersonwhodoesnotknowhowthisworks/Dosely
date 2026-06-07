@@ -343,13 +343,15 @@ final class FirestoreService {
     }
 
     /// Atomically demotes a `secondary_supervisor` to a `managed_client`,
-    /// preserving the Person doc but stripping their Firebase access:
+    /// removing their supervisor privileges while PRESERVING their Firebase
+    /// identity so they can still sign in and view/log their own data:
     ///   - careCircles/{id}/people/{targetID}.role = "managed_client"
-    ///   - careCircles/{id}/people/{targetID}.firebaseUID = ""
+    ///   - careCircles/{id}/people/{targetID}.firebaseUID — left intact
     ///   - careCircles/{id}/people/{targetID}.pinHash / .pinSalt removed
     ///   - careCircles/{id}/people/{targetID}.failedPinAttempts = 0
     ///   - careCircles/{id}.supervisorCount -= 1
-    ///   - userMemberships/{targetFirebaseUID} deleted
+    ///   - userMemberships/{targetFirebaseUID}.role = "managed_client" (updated,
+    ///     NOT deleted, so the resolver still finds them on next sign-in)
     /// All in one batch so the rules-layer last-supervisor protection
     /// (post-batch supervisorCount >= 1) and `isDemotionToManagedClientBatch`
     /// see a consistent state. The demotion either lands whole or not at all.
@@ -360,29 +362,27 @@ final class FirestoreService {
     ) async throws {
         guard let db else { return }
         Self.roleLogger.debug(
-            "applyDemotionToManagedClient: batch starting circle=\(circleID, privacy: .public) target=\(targetPersonID, privacy: .public) writes=[person.role->managed_client, person.firebaseUID->\"\", person.pin cleared, careCircle.supervisorCount-1, userMemberships/\(targetFirebaseUID, privacy: .public) delete]"
+            "applyDemotionToManagedClient: batch starting circle=\(circleID, privacy: .public) target=\(targetPersonID, privacy: .public) writes=[person.role->managed_client (firebaseUID preserved), person.pin cleared, careCircle.supervisorCount-1, userMemberships/\(targetFirebaseUID, privacy: .public) role->managed_client]"
         )
         do {
             let batch = db.batch()
             let personRef = db
                 .collection(Path.people(circleID))
                 .document(targetPersonID)
-            // firebaseUID is set to "" (empty string), NOT FieldValue.delete():
-            // the rules' `isDemotionToManagedClientBatch` helper recognizes a
-            // demoted account by `firebaseUID == ""`, so the field must be
-            // present and explicitly empty. pinHash/pinSalt are removed with
-            // FieldValue.delete() — a managed_client has no PIN, and an empty
-            // string there could be misread by a future reader as "PIN '' is
-            // valid."
+            // firebaseUID is intentionally PRESERVED (not written here) — the
+            // demoted secondary keeps their Firebase identity so they can sign
+            // in to view their own data and author their own dose logs. Only
+            // the PIN is removed, with FieldValue.delete() — a managed_client
+            // has no PIN, and an empty string there could be misread by a
+            // future reader as "PIN '' is valid."
             batch.updateData([
                 "role": "managed_client",
-                "firebaseUID": "",
                 "pinHash": FieldValue.delete(),
                 "pinSalt": FieldValue.delete(),
                 "failedPinAttempts": 0,
                 "lastModified": FieldValue.serverTimestamp()
             ], forDocument: personRef)
-            Self.roleLogger.debug("applyDemotionToManagedClient: write person.role->managed_client target=\(targetPersonID, privacy: .public)")
+            Self.roleLogger.debug("applyDemotionToManagedClient: write person.role->managed_client (uid preserved) target=\(targetPersonID, privacy: .public)")
 
             let circleRef = db.document(Path.careCircle(circleID))
             batch.updateData([
@@ -391,12 +391,16 @@ final class FirestoreService {
             ], forDocument: circleRef)
             Self.roleLogger.debug("applyDemotionToManagedClient: write careCircle.supervisorCount-1 circle=\(circleID, privacy: .public)")
 
-            // A managed_client is not a Firebase member, so the membership
-            // index doc is deleted outright (mirrors removeSupervisorAtomically),
-            // not rewritten — the /userMemberships role enum doesn't admit
-            // managed_client.
-            batch.deleteDocument(db.document(Path.userMembership(targetFirebaseUID)))
-            Self.roleLogger.debug("applyDemotionToManagedClient: delete membership uid=\(targetFirebaseUID, privacy: .public)")
+            // The /userMemberships index doc is UPDATED to role managed_client,
+            // NOT deleted — the demoted user keeps their membership so the
+            // resolver still finds them on next sign-in (landing on their own
+            // view, not the no-circle screen) and so myPersonID() resolves in
+            // the dose-log create rule, letting them author their own doses.
+            batch.updateData([
+                "role": "managed_client",
+                "lastModified": FieldValue.serverTimestamp()
+            ], forDocument: db.document(Path.userMembership(targetFirebaseUID)))
+            Self.roleLogger.debug("applyDemotionToManagedClient: update membership role->managed_client uid=\(targetFirebaseUID, privacy: .public)")
 
             try await batch.commit()
             Self.roleLogger.info("applyDemotionToManagedClient: success circle=\(circleID, privacy: .public) target=\(targetPersonID, privacy: .public)")

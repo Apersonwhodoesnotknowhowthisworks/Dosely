@@ -244,11 +244,21 @@ final class MedicationRepository {
                   let circleID = person.careCircle?.id else { return nil }
 
             // Secondary supervisors cannot log doses (read-only mode).
-            // Device clients logging their own dose, or the primary
-            // supervisor logging on someone's behalf, are both fine.
-            if let actor = Self.findPerson(id: loggedByPersonID, in: context),
-               actor.role == Roles.secondarySupervisor {
-                return nil
+            // Device and managed clients may log only their OWN doses (the
+            // medication must belong to them); the primary supervisor may log
+            // on anyone's behalf. Mirrors the Firestore dose-log create rule,
+            // which enforces the same own-dose scoping for client roles — a
+            // Firebase-backed managed_client (e.g. a demoted secondary) logs
+            // their own doses exactly like a device_client.
+            if let actor = Self.findPerson(id: loggedByPersonID, in: context) {
+                if actor.role == Roles.secondarySupervisor {
+                    return nil
+                }
+                let isClient = actor.role == Roles.deviceClient
+                    || actor.role == Roles.managedClient
+                if isClient, actor.id != personID {
+                    return nil
+                }
             }
 
             // Supply delta from the state TRANSITION for this scheduled time,

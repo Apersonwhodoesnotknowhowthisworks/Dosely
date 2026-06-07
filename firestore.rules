@@ -196,9 +196,15 @@ service cloud.firestore {
     // True when this Person doc update is the demotion of a SECONDARY
     // supervisor to a managed_client, initiated by the current primary:
     //   - The target (this Person doc) is currently a secondary_supervisor
-    //     with a real Firebase UID.
-    //   - The new role is managed_client, firebaseUID is cleared to "",
-    //     and the PIN fields are absent/empty (a managed_client has no PIN).
+    //     with a real Firebase UID. The UID is PRESERVED (not cleared) so the
+    //     demoted user keeps their identity — they can still sign in to view
+    //     their own dose schedule and author their own dose logs, the same as
+    //     a device_client minus the PIN. The /userMemberships index doc is
+    //     UPDATED to role managed_client in the same batch, not deleted, so
+    //     the resolver still finds them on next sign-in (landing on TodayView
+    //     instead of the no-circle setup screen).
+    //   - The new role is managed_client and the PIN fields are absent/empty
+    //     (a managed_client has no PIN).
     //   - The circle's supervisorCount decrements by exactly 1 in the same
     //     batch (the demoted member no longer counts as a supervisor).
     // The actor must currently be the primary. Requiring the pre-role to be
@@ -215,7 +221,6 @@ service cloud.firestore {
              resource.data.role == 'secondary_supervisor' &&
              resource.data.get('firebaseUID', '') != '' &&
              request.resource.data.role == 'managed_client' &&
-             request.resource.data.firebaseUID == '' &&
              (!('pinHash' in request.resource.data) || request.resource.data.pinHash == '') &&
              (!('pinSalt' in request.resource.data) || request.resource.data.pinSalt == '') &&
              postCircle.supervisorCount == preCircle.supervisorCount - 1;
@@ -288,14 +293,17 @@ service cloud.firestore {
       //       /userMemberships, and they need /userMemberships to exist
       //       before the rules consider them primary.
       // Roles allowed in /userMemberships: primary_supervisor,
-      // secondary_supervisor, legacy supervisor, device_client.
-      // (managed_clients and family_contacts have no Firebase UID and so
-      // do not appear here.)
+      // secondary_supervisor, legacy supervisor, device_client, and
+      // managed_client. A managed_client that retains a Firebase identity
+      // (e.g. a demoted secondary supervisor) keeps its membership index doc
+      // — updated to role managed_client — so the resolver still finds them
+      // and routes them to their own view. family_contacts have no Firebase
+      // UID and so do not appear here.
       allow create: if isSignedIn() &&
                     request.resource.data.careCircleID is string &&
                     request.resource.data.personID is string &&
                     request.resource.data.role in
-                      ['primary_supervisor', 'secondary_supervisor', 'supervisor', 'device_client'] &&
+                      ['primary_supervisor', 'secondary_supervisor', 'supervisor', 'device_client', 'managed_client'] &&
                     request.resource.data.joinedAt is timestamp &&
                     exists(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)) &&
                     (
@@ -325,7 +333,7 @@ service cloud.firestore {
       allow update: if request.resource.data.careCircleID == resource.data.careCircleID &&
                     request.resource.data.personID == resource.data.personID &&
                     request.resource.data.role in
-                      ['primary_supervisor', 'secondary_supervisor', 'supervisor', 'device_client'] &&
+                      ['primary_supervisor', 'secondary_supervisor', 'supervisor', 'device_client', 'managed_client'] &&
                     (
                       request.auth.uid == uid ||
                       isPrimary(resource.data.careCircleID)
@@ -626,17 +634,21 @@ service cloud.firestore {
 
         // Create:
         //   (a) Primary logs any dose.
-        //   (b) Device client logs their OWN dose for THEIR OWN medication.
-        //       (medication.personID == client's personID; loggedByPersonID == client's personID.)
+        //   (b) A client (device_client OR a Firebase-backed managed_client,
+        //       e.g. a demoted secondary supervisor) logs their OWN dose for
+        //       THEIR OWN medication. (medication.personID == client's
+        //       personID; loggedByPersonID == client's personID.) The
+        //       managed_client must have a /userMemberships index doc for
+        //       myPersonID() to resolve — which the demote flow preserves.
         // Secondary supervisors are intentionally excluded — they cannot
-        // log doses on behalf of a client. Device clients log themselves.
+        // log doses on behalf of a client. Clients log only themselves.
         allow create: if (
           isPrimary(circleID) &&
           request.resource.data.id == logID &&
           request.resource.data.medicationID is string &&
           exists(/databases/$(database)/documents/careCircles/$(circleID)/medications/$(request.resource.data.medicationID))
         ) || (
-          isDeviceClient(circleID) &&
+          roleIn(circleID) in ['device_client', 'managed_client'] &&
           request.resource.data.id == logID &&
           request.resource.data.medicationID is string &&
           request.resource.data.loggedByPersonID == myPersonID(circleID) &&

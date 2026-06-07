@@ -292,6 +292,47 @@ final class MedicationRepositoryTests: XCTestCase {
         XCTAssertNil(log)
     }
 
+    // MARK: - logDose own-dose scoping for client roles
+
+    func test_logDose_managedClientCanLogOwn() async throws {
+        let client = try await personRepo.createManagedClient(
+            name: "Grandpa", photoData: nil, language: "en",
+            in: supervisor.careCircle!, actorPersonID: personID
+        )
+        let med = try await repo.saveMedication(
+            personID: client.id!, actorPersonID: personID,
+            name: "Lisinopril", dose: "10mg", pillsPerDose: 1, foodRule: "either",
+            notes: nil, currentSupply: 30, pillPhotoData: nil
+        )
+        let log = await repo.logDose(
+            medicationID: med.id!, scheduledTime: Date(), actualTime: Date(),
+            status: DoseStatus.taken.rawValue, loggedByPersonID: client.id!
+        )
+        XCTAssertNotNil(log, "a managed_client may log their own dose")
+        XCTAssertEqual(log?.loggedByPersonID, client.id!)
+    }
+
+    func test_logDose_managedClientCannotLogForOthers() async throws {
+        let clientA = try await personRepo.createManagedClient(
+            name: "Grandpa", photoData: nil, language: "en",
+            in: supervisor.careCircle!, actorPersonID: personID
+        )
+        let clientB = try await personRepo.createManagedClient(
+            name: "Grandma", photoData: nil, language: "en",
+            in: supervisor.careCircle!, actorPersonID: personID
+        )
+        let medB = try await repo.saveMedication(
+            personID: clientB.id!, actorPersonID: personID,
+            name: "Metformin", dose: "500mg", pillsPerDose: 1, foodRule: "with",
+            notes: nil, currentSupply: 30, pillPhotoData: nil
+        )
+        let log = await repo.logDose(
+            medicationID: medB.id!, scheduledTime: Date(), actualTime: Date(),
+            status: DoseStatus.taken.rawValue, loggedByPersonID: clientA.id!
+        )
+        XCTAssertNil(log, "a managed_client cannot log a dose for another person's medication")
+    }
+
     func testFetchDoseLogsScopedToPerson() async throws {
         let medA = try await repo.saveMedication(personID: personID, actorPersonID: personID,
                                                  name: "A", dose: "1mg", pillsPerDose: 1,
