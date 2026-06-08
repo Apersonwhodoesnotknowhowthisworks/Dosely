@@ -838,6 +838,51 @@ describe("Firestore security rules", () => {
       const codeSnap = await getDoc(doc(db, `joinCodes/${joinCode}`));
       if (!codeSnap.exists()) throw new Error("joinCode doc missing post-bootstrap");
     });
+
+    // Negative gates: prove get->getAfter did not WIDEN the rule. The two
+    // tests above prove the founder path now ALLOWs; these prove the gate
+    // still DENIES the wrong shapes.
+
+    it("a circle cannot be created already seated at supervisorCount=1", async () => {
+      // The careCircle create rule still pins supervisorCount==0, so a circle
+      // can only ever be born empty — which is what keeps the /joinCodes
+      // founder branch's `getAfter(...).supervisorCount == 0` meaningful (an
+      // attacker can't pre-seat a count to dodge a later gate).
+      const db = authedDb("eager-uid");
+      await assertFails(
+        setDoc(doc(db, `careCircles/circle-eager`), {
+          id: "circle-eager",
+          name: "X",
+          joinCode: "121212",
+          createdAt: new Date(),
+          supervisorCount: 1,
+          primarySupervisorPersonID: "p",
+          lastModified: serverTimestamp(),
+        })
+      );
+    });
+
+    it("a non-member cannot mint a joinCode aliasing an existing circle", async () => {
+      // Populated circle (count=1) owned by someone else.
+      await seedCircle({
+        circleID: "circle-owned",
+        joinCode: "424242",
+        supervisor: { uid: "owner-uid", personID: "owner-person" },
+      });
+      // A stranger tries to mint a NEW code pointing at it. They cannot
+      // batch in a careCircle write (the careCircle update rule denies
+      // them), so getAfter(careCircle).joinCode is the real "424242",
+      // which != their "999000" -> first conjunct false -> DENY. The
+      // get->getAfter change does not loosen this: an outsider still cannot
+      // alias a code onto a circle they do not own.
+      const db = authedDb("stranger-uid");
+      await assertFails(
+        setDoc(doc(db, `joinCodes/999000`), {
+          careCircleID: "circle-owned",
+          regeneratedAt: new Date(),
+        })
+      );
+    });
   });
 
   // -- 9. Secondary supervisor: read access ------------------------------
