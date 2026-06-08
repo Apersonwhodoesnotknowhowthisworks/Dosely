@@ -734,6 +734,112 @@ describe("Firestore security rules", () => {
     });
   });
 
+  // -- 8b. Founder bootstrap (full five-write sequence) -------------------
+  //
+  // The /userMemberships block above seeds the circle UNDER ADMIN and
+  // exercises only the membership write. That left the REAL founder path
+  // — careCircle + joinCode written together in a single batch by
+  // FirestoreService.createCareCircle — untested through the rules, and a
+  // day-one latent bug rode that gap to production: the /joinCodes create
+  // rule read careCircle.supervisorCount with get() (pre-batch null) instead
+  // of getAfter(), so the founder batch was denied with a null-value
+  // evaluation error and every fresh-signup bootstrap silently failed
+  // (masked by createCareCircle's `try?` + the local Core Data circle).
+  //
+  // These tests drive the EXACT five-write sequence as a brand-new
+  // authenticated user with no prior /userMemberships and no admin seeding
+  // of the thing under test. The batch test is the one that would have gone
+  // red before the get->getAfter fix.
+  describe("founder bootstrap (full sequence)", () => {
+    const founderUID = "fresh-founder-uid";
+    const circleID = "circle-fresh-bootstrap";
+    const personID = "person-fresh-founder";
+    const joinCode = "654321";
+
+    function circleDoc() {
+      return {
+        id: circleID,
+        name: "New Family",
+        joinCode,
+        createdAt: new Date(),
+        supervisorCount: 0,
+        primarySupervisorPersonID: personID,
+        lastModified: serverTimestamp(),
+      };
+    }
+    function joinCodeDoc() {
+      return { careCircleID: circleID, regeneratedAt: new Date() };
+    }
+    function personDoc() {
+      return {
+        id: personID,
+        careCircleID: circleID,
+        name: "Founder",
+        role: "primary_supervisor",
+        languagePreference: "en",
+        firebaseUID: founderUID,
+        failedPinAttempts: 0,
+      };
+    }
+
+    it("careCircle + joinCode write together in ONE batch is allowed", async () => {
+      // The exact FirestoreService.createCareCircle batch. Pre-fix this
+      // failed because the /joinCodes create rule's supervisorCount check
+      // used get() on the careCircle that does not exist until this batch
+      // commits. This single test is the regression sentinel for the bug.
+      const db = authedDb(founderUID);
+      const batch = writeBatch(db);
+      batch.set(doc(db, `careCircles/${circleID}`), circleDoc());
+      batch.set(doc(db, `joinCodes/${joinCode}`), joinCodeDoc());
+      await assertSucceeds(batch.commit());
+    });
+
+    it("fresh founder can execute the full bootstrap with no prior state", async () => {
+      const db = authedDb(founderUID);
+
+      // Write 1+2: careCircle + joinCode batch.
+      const batch = writeBatch(db);
+      batch.set(doc(db, `careCircles/${circleID}`), circleDoc());
+      batch.set(doc(db, `joinCodes/${joinCode}`), joinCodeDoc());
+      await assertSucceeds(batch.commit());
+
+      // Write 3: founder /userMemberships index doc.
+      await assertSucceeds(
+        setDoc(doc(db, `userMemberships/${founderUID}`), {
+          careCircleID: circleID,
+          personID,
+          role: "primary_supervisor",
+          joinedAt: new Date(),
+        })
+      );
+
+      // Write 4: founder Person doc (self-bootstrap branch).
+      await assertSucceeds(
+        setDoc(doc(db, `careCircles/${circleID}/people/${personID}`), personDoc())
+      );
+
+      // Write 5: bump supervisorCount 0 -> 1 (founder is now primary).
+      await assertSucceeds(
+        updateDoc(doc(db, `careCircles/${circleID}`), {
+          supervisorCount: 1,
+          lastModified: serverTimestamp(),
+        })
+      );
+
+      // Post-state: a fully bootstrapped, readable circle.
+      const circleSnap = await getDoc(doc(db, `careCircles/${circleID}`));
+      if (!circleSnap.exists() || circleSnap.data()?.supervisorCount !== 1) {
+        throw new Error("careCircle missing or supervisorCount != 1 post-bootstrap");
+      }
+      const memSnap = await getDoc(doc(db, `userMemberships/${founderUID}`));
+      if (!memSnap.exists()) throw new Error("membership doc missing post-bootstrap");
+      const personSnap = await getDoc(doc(db, `careCircles/${circleID}/people/${personID}`));
+      if (!personSnap.exists()) throw new Error("Person doc missing post-bootstrap");
+      const codeSnap = await getDoc(doc(db, `joinCodes/${joinCode}`));
+      if (!codeSnap.exists()) throw new Error("joinCode doc missing post-bootstrap");
+    });
+  });
+
   // -- 9. Secondary supervisor: read access ------------------------------
 
   describe("secondary supervisor reads", () => {

@@ -352,15 +352,24 @@ service cloud.firestore {
 
       // Create: the careCircle's joinCode field must already match `code`,
       // AND the writer must be either bootstrapping a fresh circle (count==0)
-      // or already a primary (regenerate flow). The careCircle.joinCode
-      // check uses getAfter() so regenerateJoinCode (a transaction that
-      // updates careCircle.joinCode and creates the new /joinCodes doc in
-      // one shot) is permitted.
+      // or already a primary (regenerate flow). BOTH careCircle reads use
+      // getAfter() — never get() — because the founder bootstrap creates the
+      // careCircle and its /joinCodes doc in the SAME batch
+      // (FirestoreService.createCareCircle). Pre-batch the careCircle does
+      // not yet exist, so a get() returns null and `.data.supervisorCount`
+      // raises a null-value evaluation error that denies the whole batch —
+      // the latent day-one bug that silently blocked every founder bootstrap
+      // (masked by createCareCircle's `try?` + the local Core Data circle).
+      // getAfter() sees the post-batch careCircle (count==0, joinCode==code),
+      // so the founder path passes; regenerateJoinCode (which updates an
+      // existing careCircle.joinCode and creates the new doc in one shot) is
+      // likewise permitted. See firestore_rules.test.ts "fresh founder can
+      // execute the full bootstrap with no prior state".
       allow create: if isSignedIn() &&
                     request.resource.data.careCircleID is string &&
                     getAfter(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)).data.joinCode == code &&
                     (
-                      get(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)).data.supervisorCount == 0 ||
+                      getAfter(/databases/$(database)/documents/careCircles/$(request.resource.data.careCircleID)).data.supervisorCount == 0 ||
                       isPrimary(request.resource.data.careCircleID)
                     );
 
