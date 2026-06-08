@@ -43,6 +43,8 @@ enum OrphanCircleCleanupMigration {
         firebaseUID: String,
         firestore: FirestoreService = .shared
     ) async -> Int {
+        let _sp = Perf.signposter.beginInterval("migration.orphanCleanup")
+        defer { Perf.signposter.endInterval("migration.orphanCleanup", _sp) }
         if isComplete { return 0 }
 
         // Step 1: get the user's real circleID. If they have no

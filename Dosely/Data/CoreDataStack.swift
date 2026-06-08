@@ -1,4 +1,15 @@
 import CoreData
+import os
+
+/// Single shared OSSignposter for performance instrumentation (perf audit,
+/// June 8). Named begin/end interval pairs surface under the "performance"
+/// category in Instruments' os_signpost / Points of Interest tracks. Left
+/// unguarded (no #if DEBUG) deliberately: OSSignposter is near-zero cost when
+/// no Instruments tool is attached, so keeping it in release builds lets a
+/// future field-measurement run happen on a real device without a special build.
+enum Perf {
+    static let signposter = OSSignposter(subsystem: "com.medication.dosely", category: "performance")
+}
 
 final class CoreDataStack {
     static let shared = CoreDataStack()

@@ -47,6 +47,8 @@ final class SyncCoordinator: ObservableObject {
     /// calling with the currently-active id is a no-op; calling with a
     /// new id tears down old listeners first.
     func start(careCircleID: UUID) async {
+        let _sp = Perf.signposter.beginInterval("sync.attachListeners")
+        defer { Perf.signposter.endInterval("sync.attachListeners", _sp) }
         if activeCircleID == careCircleID, !listeners.isEmpty { return }
         stop()
         activeCircleID = careCircleID

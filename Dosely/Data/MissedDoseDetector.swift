@@ -39,6 +39,8 @@ final class MissedDoseDetector {
     /// tried to write — useful for tests, ignored by callers in prod.
     @discardableResult
     func run(in careCircleID: UUID, now: Date = Date()) async -> [String] {
+        let _sp = Perf.signposter.beginInterval("detector.missedDose")
+        defer { Perf.signposter.endInterval("detector.missedDose", _sp) }
         let cutoff = now.addingTimeInterval(-graceWindow)
         let people = await fetchClients(in: careCircleID)
         var attempted: [String] = []

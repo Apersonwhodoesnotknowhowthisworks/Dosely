@@ -33,6 +33,8 @@ enum FirestoreUploadMigration {
         stack: CoreDataStack = .shared,
         firestore: FirestoreService = .shared
     ) async -> Bool {
+        let _sp = Perf.signposter.beginInterval("migration.firestoreUpload")
+        defer { Perf.signposter.endInterval("migration.firestoreUpload", _sp) }
         if isComplete { return false }
 
         let circleSnapshot = await snapshotLocalCircle(firebaseUID: firebaseUID, stack: stack)

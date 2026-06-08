@@ -35,6 +35,8 @@ final class WeeklySummaryGenerator {
     func runIfDue(in careCircleID: UUID,
                   now: Date = Date(),
                   calendar: Calendar = .current) async -> String? {
+        let _sp = Perf.signposter.beginInterval("detector.weeklySummary")
+        defer { Perf.signposter.endInterval("detector.weeklySummary", _sp) }
         guard let weekEnding = Self.weekEndingSunday(for: now, calendar: calendar) else {
             return nil
         }

@@ -35,6 +35,8 @@ final class RefillAlertDetector {
     /// tests, ignored by callers in production.
     @discardableResult
     func run(in careCircleID: UUID, now: Date = Date()) async -> [String] {
+        let _sp = Perf.signposter.beginInterval("detector.refillAlert")
+        defer { Perf.signposter.endInterval("detector.refillAlert", _sp) }
         let candidates = await fetchLowSupplyCandidates(in: careCircleID, now: now)
         var attempted: [String] = []
         for candidate in candidates {

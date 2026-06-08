@@ -35,6 +35,8 @@ final class TodayViewModel: ObservableObject {
     /// the logging — typically the same as `personID` for a device client,
     /// or the supervisor when logging on behalf of a managed client).
     func load(personID: UUID, now: Date = Date()) async {
+        let _sp = Perf.signposter.beginInterval("today.load")
+        defer { Perf.signposter.endInterval("today.load", _sp) }
         let scheduled = await repository.fetchScheduledDoses(for: personID, on: now)
 
         let (dayStart, dayEnd) = Self.dayBounds(for: now)

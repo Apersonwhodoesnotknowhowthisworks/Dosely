@@ -89,7 +89,9 @@ final class MedicationRepository {
         from: Date,
         to: Date
     ) async -> [DoseLog] {
-        await context.perform { [context] in
+        let _sp = Perf.signposter.beginInterval("coredata.fetchDoseLogs")
+        defer { Perf.signposter.endInterval("coredata.fetchDoseLogs", _sp) }
+        return await context.perform { [context] in
             let request = NSFetchRequest<DoseLog>(entityName: "DoseLog")
             var predicates: [NSPredicate] = [
                 NSPredicate(format: "scheduledTime >= %@ AND scheduledTime <= %@",
@@ -316,6 +318,8 @@ final class MedicationRepository {
     private static func hasTakenLog(
         medicationID: UUID, scheduledTime: Date, in context: NSManagedObjectContext
     ) -> Bool {
+        let _sp = Perf.signposter.beginInterval("coredata.hasTakenLog")
+        defer { Perf.signposter.endInterval("coredata.hasTakenLog", _sp) }
         let request = NSFetchRequest<DoseLog>(entityName: "DoseLog")
         request.predicate = NSPredicate(
             format: "medication.id == %@ AND status == %@",

@@ -119,6 +119,8 @@ final class DrugInteractionService {
     /// Every distinct interaction across the patient's full medication list,
     /// deduplicated by id.
     func allInteractionsFor(patient medications: [Medication]) -> [DrugInteraction] {
+        let _sp = Perf.signposter.beginInterval("drug.allInteractionsFor", "meds=\(medications.count)")
+        defer { Perf.signposter.endInterval("drug.allInteractionsFor", _sp) }
         let present = presentNames(medications)
         var seen = Set<String>()
         var result: [DrugInteraction] = []

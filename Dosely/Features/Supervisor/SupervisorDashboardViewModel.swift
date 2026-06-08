@@ -84,6 +84,8 @@ final class SupervisorDashboardViewModel: ObservableObject {
               supervisorID: UUID,
               activePersonID: UUID?,
               now: Date = Date()) async {
+        let _sp = Perf.signposter.beginInterval("dashboard.load")
+        defer { Perf.signposter.endInterval("dashboard.load", _sp) }
         let allPeople = await personRepo.fetchAllPeople(in: circleID)
         // Filter by role, not by id. The selector and the dose-aggregation
         // paths below only make sense for dose-targets — co-supervisors

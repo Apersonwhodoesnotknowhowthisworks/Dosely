@@ -122,6 +122,8 @@ final class HistoryViewModel: ObservableObject {
     }
 
     func load(personID: UUID, now: Date = Date()) async {
+        let _sp = Perf.signposter.beginInterval("history.load")
+        defer { Perf.signposter.endInterval("history.load", _sp) }
         self.personID = personID
         let meds = await repository.fetchAllMedications(for: personID)
         if let oldest = meds.compactMap({ $0.dateAdded }).min() {
@@ -216,12 +218,20 @@ final class HistoryViewModel: ObservableObject {
         self.isLoaded = true
     }
 
+    // Hoisted to a static (perf audit, June 8): weekLabel() allocated a fresh
+    // DateFormatter on every call, and it is read twice per HistoryView render.
+    // Invariant format, system default locale (does not read app_language), so
+    // the shared read-only formatter preserves output exactly.
+    private static let weekRangeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f
+    }()
+
     func weekLabel() -> String {
         if isCurrentWeek { return "This week" }
         let end = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
-        let f = DateFormatter()
-        f.dateFormat = "MMM d"
-        return "\(f.string(from: weekStart)) – \(f.string(from: end))"
+        return "\(Self.weekRangeFormatter.string(from: weekStart)) – \(Self.weekRangeFormatter.string(from: end))"
     }
 
     static func weekStart(for date: Date, calendar: Calendar) -> Date {

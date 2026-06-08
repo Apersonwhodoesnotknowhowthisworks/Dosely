@@ -51,6 +51,8 @@ enum PrimaryRoleMigration {
         stack: CoreDataStack = .shared,
         firestore: FirestoreService = .shared
     ) async -> Bool {
+        let _sp = Perf.signposter.beginInterval("migration.primaryRole")
+        defer { Perf.signposter.endInterval("migration.primaryRole", _sp) }
         if isComplete { return false }
 
         let plans = await collectPlans(stack: stack)

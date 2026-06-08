@@ -219,10 +219,19 @@ struct AlertsCard: View {
         }
     }
 
+    // Hoisted to a file-scope static (perf audit, June 8): formattedTime was
+    // allocating a fresh DateFormatter per alert row per render inside
+    // ForEach(alerts). The format is invariant and uses the system default
+    // locale (it does not read app_language), so a shared read-only formatter
+    // is byte-identical. Mirrors WeekCellDetailView's already-hoisted pattern.
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h:mm a"
+        return f
+    }()
+
     static func formattedTime(_ date: Date?) -> String {
         guard let date else { return "" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: date)
+        return Self.timeFormatter.string(from: date)
     }
 }

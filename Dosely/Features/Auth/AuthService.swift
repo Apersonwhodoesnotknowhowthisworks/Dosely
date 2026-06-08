@@ -175,6 +175,8 @@ final class AuthService: ObservableObject {
     /// SyncCoordinator so cross-device updates land.
     @MainActor
     func resolveCurrentPerson() async {
+        let _sp = Perf.signposter.beginInterval("coldstart.resolveCurrentPerson")
+        defer { Perf.signposter.endInterval("coldstart.resolveCurrentPerson", _sp) }
         guard let user = currentUser else {
             currentPerson = nil
             needsCircleSetup = false

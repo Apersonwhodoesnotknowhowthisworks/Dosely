@@ -34,6 +34,8 @@ enum CareCircleMigration {
         stack: CoreDataStack = .shared,
         firestore: FirestoreService = .shared
     ) async -> Person? {
+        let _sp = Perf.signposter.beginInterval("migration.careCircle")
+        defer { Perf.signposter.endInterval("migration.careCircle", _sp) }
         let careCircleRepo = CareCircleRepository(stack: stack, firestore: firestore)
         let personRepo = PersonRepository(stack: stack, firestore: firestore)
 
