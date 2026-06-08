@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PeopleManagementView: View {
     @EnvironmentObject var authService: AuthService
+    @StateObject private var viewModel = PeopleManagementViewModel()
     @State private var people: [Person] = []
     @State private var isLoaded = false
     @State private var showingAdd = false
@@ -34,12 +35,21 @@ struct PeopleManagementView: View {
                         peopleList
                     }
 
-                    if isLoaded, let circleID = authService.currentPerson?.careCircle?.id {
-                        CircleSettingsSection(
-                            careCircleID: circleID,
-                            careCircleRepo: careCircleRepo
-                        )
-                        .id(circleID)
+                    if isLoaded {
+                        // `viewModel.careCircleID` is reactive to the acting
+                        // Person's careCircle relationship landing in place —
+                        // unlike a raw `authService.currentPerson?.careCircle?.id`
+                        // read, which snapshots once and never re-evaluates when
+                        // the relationship hydrates (the June 8 regression).
+                        if let circleID = viewModel.careCircleID {
+                            CircleSettingsSection(
+                                careCircleID: circleID,
+                                careCircleRepo: careCircleRepo
+                            )
+                            .id(circleID)
+                        } else {
+                            circleSettingUpPlaceholder
+                        }
                     }
                 }
                 .padding(DSSpacing.lg)
@@ -65,7 +75,20 @@ struct PeopleManagementView: View {
             }
         }
         .task(id: authService.currentPerson?.id) {
+            // Feed the acting Person to the view model now that the
+            // @EnvironmentObject is available (it isn't at the view's init,
+            // which is why the @StateObject is built without it — same wiring
+            // as SupervisorDashboardView).
+            viewModel.bind(person: authService.currentPerson)
             await reload()
+        }
+        .onChange(of: viewModel.careCircleID) { newCircleID in
+            // The relationship can resolve a beat after this view first
+            // appears (the create write, or a SyncCoordinator listener merge).
+            // When it does, re-run reload so the people roster recovers from
+            // the empty state it latched while the circle id was still nil.
+            guard newCircleID != nil else { return }
+            Task { await reload() }
         }
         .sheet(isPresented: $showingAdd) {
             AddPersonFlow(personRepo: personRepo,
@@ -119,6 +142,25 @@ struct PeopleManagementView: View {
         .padding(DSSpacing.xl)
         .background(Color.dsSurface)
         .cornerRadius(DSSpacing.rLg)
+    }
+
+    /// Shown while the acting Person's careCircle relationship is still
+    /// resolving (mid-create, before the listener/create-write fills it).
+    /// Visible-but-loading beats a missing card: the Care circle section never
+    /// silently disappears the way it did after the June 8 snapshot regression.
+    private var circleSettingUpPlaceholder: some View {
+        HStack(spacing: DSSpacing.sm) {
+            ProgressView()
+            Text("supervisor.circle.settingup")
+                .dsBodyLarge()
+                .foregroundColor(.dsTextSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DSSpacing.md)
+        .background(Color.dsSurface)
+        .cornerRadius(DSSpacing.rLg)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("supervisor.circle.settingup"))
     }
 
     // MARK: - Data
