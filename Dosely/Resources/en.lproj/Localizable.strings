@@ -469,6 +469,7 @@
 // MARK: - Circle settings
 "supervisor.circle.title" = "Care circle";
 "supervisor.circle.name" = "Circle name";
+"supervisor.circle.name.placeholder" = "Untitled family";
 "supervisor.circle.joincode" = "Join code";
 "supervisor.circle.regenerate" = "Regenerate";
 "supervisor.circle.rename.title" = "Rename circle";

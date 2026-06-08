@@ -474,6 +474,7 @@
 // MARK: - Circle settings
 "supervisor.circle.title" = "ਪਰਿਵਾਰ";
 "supervisor.circle.name" = "ਪਰਿਵਾਰ ਦਾ ਨਾਮ";
+"supervisor.circle.name.placeholder" = "ਬੇਨਾਮ ਪਰਿਵਾਰ"; // REVIEW NEEDED
 "supervisor.circle.joincode" = "ਜੁਆਇਨ ਕੋਡ";
 "supervisor.circle.regenerate" = "ਨਵਾਂ ਬਣਾਉ";
 "supervisor.circle.rename.title" = "ਨਾਮ ਬਦਲੋ";

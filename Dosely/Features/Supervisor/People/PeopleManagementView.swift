@@ -34,11 +34,12 @@ struct PeopleManagementView: View {
                         peopleList
                     }
 
-                    if isLoaded {
+                    if isLoaded, let circleID = authService.currentPerson?.careCircle?.id {
                         CircleSettingsSection(
-                            personRepo: personRepo,
+                            careCircleID: circleID,
                             careCircleRepo: careCircleRepo
                         )
+                        .id(circleID)
                     }
                 }
                 .padding(DSSpacing.lg)
@@ -265,18 +266,21 @@ struct PersonRow: View {
 
 struct CircleSettingsSection: View {
     @EnvironmentObject var authService: AuthService
+    @StateObject private var viewModel: CircleSettingsViewModel
     @State private var renameText: String = ""
     @State private var showingRenameAlert = false
     @State private var showingRegenAlert = false
     @State private var regenerateErrorMessage: String?
     @State private var isRegenerating = false
-    @State private var joinCode: String?
-    @State private var circleName: String = ""
 
-    let personRepo: PersonRepository
     let careCircleRepo: CareCircleRepository
 
     private static let logger = Logger(subsystem: "com.medication.dosely", category: "carecircle")
+
+    init(careCircleID: UUID, careCircleRepo: CareCircleRepository) {
+        self.careCircleRepo = careCircleRepo
+        _viewModel = StateObject(wrappedValue: CircleSettingsViewModel(careCircleID: careCircleID))
+    }
 
     private var isPrimary: Bool {
         guard let person = authService.currentPerson,
@@ -288,16 +292,6 @@ struct CircleSettingsSection: View {
         return Roles.isPrimarySupervisor(person.role)
     }
 
-    /// Re-sync token: changes whenever the underlying circle's identity, name,
-    /// or join code changes — including the nil -> value transition on a
-    /// freshly-created account, where `currentPerson` (and its careCircle
-    /// relationship) resolves AFTER this section first appears. The prior
-    /// `.onAppear`-once load missed that, leaving the card blank with a "—".
-    private var circleSyncToken: String {
-        let circle = authService.currentPerson?.careCircle
-        return "\(circle?.id?.uuidString ?? "")|\(circle?.name ?? "")|\(circle?.joinCode ?? "")"
-    }
-
     /// The join code to display: the real code when present, otherwise a clean
     /// loading state — never a bare placeholder character. Pure + static so
     /// `PeopleManagementViewTests` can pin it.
@@ -306,8 +300,19 @@ struct CircleSettingsSection: View {
         return code
     }
 
+    /// The circle name to display: the real name, or a localized placeholder
+    /// when it's blank (a primary who hit Create without typing a name). Pure +
+    /// static so the tests can pin it; never renders an empty Text.
+    static func circleNameDisplayValue(_ name: String, placeholder: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? placeholder : name
+    }
+
     private var joinCodeDisplay: String {
-        Self.joinCodeDisplayValue(joinCode, loadingText: L("supervisor.circle.joincode.loading"))
+        Self.joinCodeDisplayValue(viewModel.joinCode, loadingText: L("supervisor.circle.joincode.loading"))
+    }
+
+    private var circleNameDisplay: String {
+        Self.circleNameDisplayValue(viewModel.circleName, placeholder: L("supervisor.circle.name.placeholder"))
     }
 
     private var errorBinding: Binding<Bool> {
@@ -323,18 +328,17 @@ struct CircleSettingsSection: View {
 
             if isPrimary {
                 row(title: L("supervisor.circle.name"),
-                    value: circleName,
-                    action: { renameText = circleName; showingRenameAlert = true })
+                    value: circleNameDisplay,
+                    action: { renameText = viewModel.circleName; showingRenameAlert = true })
                 joinCodeRow(showRegenerate: true)
             } else {
-                readOnlyRow(title: L("supervisor.circle.name"), value: circleName)
+                readOnlyRow(title: L("supervisor.circle.name"), value: circleNameDisplay)
                 joinCodeRow(showRegenerate: false)
             }
         }
         .padding(DSSpacing.md)
         .background(Color.dsSurface)
         .cornerRadius(DSSpacing.rLg)
-        .task(id: circleSyncToken) { reloadCircle() }
         .alert(L("supervisor.circle.rename.title"),
                isPresented: $showingRenameAlert) {
             TextField(L("supervisor.circle.name"), text: $renameText)
@@ -350,7 +354,7 @@ struct CircleSettingsSection: View {
             }
             Button(L("common.cancel"), role: .cancel) {}
         } message: {
-            Text(L("supervisor.circle.regenerate.body", (joinCode ?? "") as NSString))
+            Text(L("supervisor.circle.regenerate.body", (viewModel.joinCode ?? "") as NSString))
         }
         .alert(L("settings.family.regenerate.error.title"),
                isPresented: errorBinding) {
@@ -432,12 +436,6 @@ struct CircleSettingsSection: View {
         .padding(.vertical, DSSpacing.xs)
     }
 
-    private func reloadCircle() {
-        guard let circle = authService.currentPerson?.careCircle else { return }
-        circleName = circle.name ?? ""
-        joinCode = circle.joinCode
-    }
-
     private func rename(to newName: String) async {
         guard let circleID = authService.currentPerson?.careCircle?.id,
               let actorID = authService.currentPerson?.id else { return }
@@ -445,7 +443,8 @@ struct CircleSettingsSection: View {
             try await careCircleRepo.renameCircle(careCircleID: circleID,
                                                   newName: newName,
                                                   actorPersonID: actorID)
-            await MainActor.run { reloadCircle() }
+            // The new name reaches the card via the view model's Core Data
+            // observer (renameCircle mirrors it to the viewContext).
         } catch {
             // Permission / blank name — silent on this surface; the
             // primary-only affordances are hidden for secondaries.
@@ -457,13 +456,12 @@ struct CircleSettingsSection: View {
               let actorID = authService.currentPerson?.id else { return }
         isRegenerating = true
         do {
-            let newCode = try await careCircleRepo.regenerateJoinCode(
+            _ = try await careCircleRepo.regenerateJoinCode(
                 careCircleID: circleID, actorPersonID: actorID
             )
-            await MainActor.run {
-                joinCode = newCode
-                isRegenerating = false
-            }
+            // The new code reaches the card via the view model's Core Data
+            // observer (regenerateJoinCode mirrors it to the viewContext).
+            await MainActor.run { isRegenerating = false }
         } catch let error as CareCircleEditError {
             // Distinct error codes per error-collapse convention — see
             // build_log April 30 phantom join code entry. The repo preserves
