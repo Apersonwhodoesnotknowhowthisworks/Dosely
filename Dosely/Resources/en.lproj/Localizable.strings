@@ -473,7 +473,12 @@
 "supervisor.circle.regenerate" = "Regenerate";
 "supervisor.circle.rename.title" = "Rename circle";
 "supervisor.circle.regenerate.title" = "Regenerate join code?";
-"supervisor.circle.regenerate.body" = "The current code will stop working immediately. Anyone you've already shared it with will need the new one.";
+"supervisor.circle.regenerate.body" = "The current code (%@) will stop working immediately. Anyone you've already shared it with will need the new one.";
+"supervisor.circle.joincode.loading" = "Generating code…";
+"supervisor.circle.regenerate.error.permission" = "Only the primary supervisor can regenerate the code.";
+"supervisor.circle.regenerate.error.offline" = "Couldn't reach the server. Check your connection.";
+"supervisor.circle.regenerate.error.notfound" = "Couldn't find the family. Try again.";
+"supervisor.circle.regenerate.error.unknown" = "Something went wrong. Try again.";
 
 // MARK: - Pull-to-refresh
 "sync.refresh.error.offline" = "Couldn't refresh. Check your connection and try again.";

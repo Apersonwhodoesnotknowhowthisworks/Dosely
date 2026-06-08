@@ -1,3 +1,4 @@
+import OSLog
 import SwiftUI
 
 struct PeopleManagementView: View {
@@ -267,12 +268,15 @@ struct CircleSettingsSection: View {
     @State private var renameText: String = ""
     @State private var showingRenameAlert = false
     @State private var showingRegenAlert = false
-    @State private var regenerateErrorVisible = false
+    @State private var regenerateErrorMessage: String?
+    @State private var isRegenerating = false
     @State private var joinCode: String?
     @State private var circleName: String = ""
 
     let personRepo: PersonRepository
     let careCircleRepo: CareCircleRepository
+
+    private static let logger = Logger(subsystem: "com.medication.dosely", category: "carecircle")
 
     private var isPrimary: Bool {
         guard let person = authService.currentPerson,
@@ -282,6 +286,33 @@ struct CircleSettingsSection: View {
             return primaryID == me
         }
         return Roles.isPrimarySupervisor(person.role)
+    }
+
+    /// Re-sync token: changes whenever the underlying circle's identity, name,
+    /// or join code changes — including the nil -> value transition on a
+    /// freshly-created account, where `currentPerson` (and its careCircle
+    /// relationship) resolves AFTER this section first appears. The prior
+    /// `.onAppear`-once load missed that, leaving the card blank with a "—".
+    private var circleSyncToken: String {
+        let circle = authService.currentPerson?.careCircle
+        return "\(circle?.id?.uuidString ?? "")|\(circle?.name ?? "")|\(circle?.joinCode ?? "")"
+    }
+
+    /// The join code to display: the real code when present, otherwise a clean
+    /// loading state — never a bare placeholder character. Pure + static so
+    /// `PeopleManagementViewTests` can pin it.
+    static func joinCodeDisplayValue(_ code: String?, loadingText: String) -> String {
+        guard let code, !code.isEmpty else { return loadingText }
+        return code
+    }
+
+    private var joinCodeDisplay: String {
+        Self.joinCodeDisplayValue(joinCode, loadingText: L("supervisor.circle.joincode.loading"))
+    }
+
+    private var errorBinding: Binding<Bool> {
+        Binding(get: { regenerateErrorMessage != nil },
+                set: { if !$0 { regenerateErrorMessage = nil } })
     }
 
     var body: some View {
@@ -294,20 +325,16 @@ struct CircleSettingsSection: View {
                 row(title: L("supervisor.circle.name"),
                     value: circleName,
                     action: { renameText = circleName; showingRenameAlert = true })
-
-                row(title: L("supervisor.circle.joincode"),
-                    value: joinCode ?? "—",
-                    actionLabel: L("supervisor.circle.regenerate"),
-                    action: { showingRegenAlert = true })
+                joinCodeRow(showRegenerate: true)
             } else {
                 readOnlyRow(title: L("supervisor.circle.name"), value: circleName)
-                readOnlyRow(title: L("supervisor.circle.joincode"), value: joinCode ?? "—")
+                joinCodeRow(showRegenerate: false)
             }
         }
         .padding(DSSpacing.md)
         .background(Color.dsSurface)
         .cornerRadius(DSSpacing.rLg)
-        .onAppear { reloadCircle() }
+        .task(id: circleSyncToken) { reloadCircle() }
         .alert(L("supervisor.circle.rename.title"),
                isPresented: $showingRenameAlert) {
             TextField(L("supervisor.circle.name"), text: $renameText)
@@ -323,13 +350,13 @@ struct CircleSettingsSection: View {
             }
             Button(L("common.cancel"), role: .cancel) {}
         } message: {
-            Text("supervisor.circle.regenerate.body")
+            Text(L("supervisor.circle.regenerate.body", (joinCode ?? "") as NSString))
         }
         .alert(L("settings.family.regenerate.error.title"),
-               isPresented: $regenerateErrorVisible) {
-            Button(L("common.ok"), role: .cancel) {}
+               isPresented: errorBinding) {
+            Button(L("common.ok"), role: .cancel) { regenerateErrorMessage = nil }
         } message: {
-            Text("settings.family.regenerate.error.body")
+            Text(regenerateErrorMessage ?? "")
         }
     }
 
@@ -354,6 +381,41 @@ struct CircleSettingsSection: View {
                     .frame(minHeight: DSSpacing.minTapTarget)
             }
             .accessibilityLabel(Text("\(actionLabel ?? L("common.edit")) — \(title)"))
+        }
+        .padding(.vertical, DSSpacing.xs)
+    }
+
+    /// Join code row: the value is visually prominent (`dsTitleMedium`, since a
+    /// primary reads it aloud to share access), and the regenerate control
+    /// swaps to a spinner and disables itself while the request is in flight.
+    @ViewBuilder
+    private func joinCodeRow(showRegenerate: Bool) -> some View {
+        HStack(alignment: .center, spacing: DSSpacing.sm) {
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                Text("supervisor.circle.joincode").dsCaption().foregroundColor(.dsTextSecondary)
+                Text(joinCodeDisplay)
+                    .dsTitleMedium()
+                    .foregroundColor(.dsTextPrimary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if showRegenerate {
+                Button(action: { showingRegenAlert = true }) {
+                    Group {
+                        if isRegenerating {
+                            ProgressView()
+                        } else {
+                            Text("supervisor.circle.regenerate")
+                                .dsBodyRegular()
+                                .foregroundColor(.dsPrimary)
+                        }
+                    }
+                    .padding(.horizontal, DSSpacing.sm)
+                    .frame(minHeight: DSSpacing.minTapTarget)
+                }
+                .disabled(isRegenerating)
+                .accessibilityLabel(Text("\(L("supervisor.circle.regenerate")) — \(L("supervisor.circle.joincode"))"))
+            }
         }
         .padding(.vertical, DSSpacing.xs)
     }
@@ -386,24 +448,50 @@ struct CircleSettingsSection: View {
             await MainActor.run { reloadCircle() }
         } catch {
             // Permission / blank name — silent on this surface; the
-            // primary-only affordances are hidden for secondaries via
-            // the role badge logic in SupervisorDashboardView.
+            // primary-only affordances are hidden for secondaries.
         }
     }
 
     private func regenerate() async {
         guard let circleID = authService.currentPerson?.careCircle?.id,
               let actorID = authService.currentPerson?.id else { return }
+        isRegenerating = true
         do {
             let newCode = try await careCircleRepo.regenerateJoinCode(
                 careCircleID: circleID, actorPersonID: actorID
             )
-            await MainActor.run { joinCode = newCode }
+            await MainActor.run {
+                joinCode = newCode
+                isRegenerating = false
+            }
+        } catch let error as CareCircleEditError {
+            // Distinct error codes per error-collapse convention — see
+            // build_log April 30 phantom join code entry. The repo preserves
+            // the four cases; the UI must too. A rules rejection
+            // (permissionDenied) must never read as "check your connection".
+            let message: String
+            switch error {
+            case .permissionDenied:
+                message = L("supervisor.circle.regenerate.error.permission")
+            case .offline:
+                message = L("supervisor.circle.regenerate.error.offline")
+            case .notFound:
+                message = L("supervisor.circle.regenerate.error.notfound")
+            case .invalidName:
+                message = L("supervisor.circle.regenerate.error.unknown")
+            case .unknown(let detail):
+                Self.logger.error("regenerateJoinCode failed: \(detail, privacy: .public)")
+                message = L("supervisor.circle.regenerate.error.unknown")
+            }
+            await MainActor.run {
+                regenerateErrorMessage = message
+                isRegenerating = false
+            }
         } catch {
-            // Firestore refused or was unreachable. Don't update the
-            // displayed code — leave it pointing at whatever Firestore
-            // last confirmed — and tell the user.
-            await MainActor.run { regenerateErrorVisible = true }
+            await MainActor.run {
+                regenerateErrorMessage = L("supervisor.circle.regenerate.error.unknown")
+                isRegenerating = false
+            }
         }
     }
 }

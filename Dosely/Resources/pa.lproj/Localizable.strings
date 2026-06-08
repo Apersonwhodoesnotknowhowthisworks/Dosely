@@ -478,7 +478,12 @@
 "supervisor.circle.regenerate" = "ਨਵਾਂ ਬਣਾਉ";
 "supervisor.circle.rename.title" = "ਨਾਮ ਬਦਲੋ";
 "supervisor.circle.regenerate.title" = "ਜੁਆਇਨ ਕੋਡ ਨਵਾਂ ਕਰਨਾ?";
-"supervisor.circle.regenerate.body" = "ਮੌਜੂਦਾ ਕੋਡ ਫ਼ੌਰਨ ਬੰਦ ਹੋ ਜਾਏਗਾ। ਜਿਨ੍ਹਾਂ ਨਾਲ ਪਹਿਲਾਂ ਸਾਂਝਾ ਕੀਤਾ ਸੀ ਉਨ੍ਹਾਂ ਨੂੰ ਨਵਾਂ ਚਾਹੀਦਾ ਹੋਵੇਗਾ।";
+"supervisor.circle.regenerate.body" = "ਮੌਜੂਦਾ ਕੋਡ (%@) ਫ਼ੌਰਨ ਬੰਦ ਹੋ ਜਾਏਗਾ। ਜਿਨ੍ਹਾਂ ਨਾਲ ਪਹਿਲਾਂ ਸਾਂਝਾ ਕੀਤਾ ਸੀ ਉਨ੍ਹਾਂ ਨੂੰ ਨਵਾਂ ਚਾਹੀਦਾ ਹੋਵੇਗਾ।"; // REVIEW NEEDED
+"supervisor.circle.joincode.loading" = "ਕੋਡ ਬਣ ਰਿਹਾ ਹੈ…"; // REVIEW NEEDED
+"supervisor.circle.regenerate.error.permission" = "ਸਿਰਫ਼ ਮੁੱਖ ਨਿਗਰਾਨ ਕੋਡ ਨਵਾਂ ਬਣਾ ਸਕਦੇ ਹਨ।"; // REVIEW NEEDED
+"supervisor.circle.regenerate.error.offline" = "ਸਰਵਰ ਨਾਲ ਸੰਪਰਕ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ।"; // REVIEW NEEDED
+"supervisor.circle.regenerate.error.notfound" = "ਪਰਿਵਾਰ ਨਹੀਂ ਮਿਲਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
+"supervisor.circle.regenerate.error.unknown" = "ਕੁਝ ਗ਼ਲਤ ਹੋ ਗਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
 
 // MARK: - Pull-to-refresh
 "sync.refresh.error.offline" = "ਤਾਜ਼ਾ ਨਹੀਂ ਕਰ ਸਕੇ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"; // REVIEW NEEDED
