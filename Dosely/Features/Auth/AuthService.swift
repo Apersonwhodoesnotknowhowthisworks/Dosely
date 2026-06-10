@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import LocalAuthentication
 import FirebaseAuth
@@ -48,13 +49,28 @@ final class AuthService: ObservableObject {
         }
     }
 
+    /// The act-as overlay (profile switcher). State + eligibility live on the
+    /// coordinator so they stay testable without touching live `Auth.auth()`;
+    /// the service exposes thin forwarders (`actingPersonID` / `actorPerson` /
+    /// `actAs` / `switchBack`) so views keep a single identity surface.
+    let profileSwitch: ProfileSwitchCoordinator
+
     private static let lockedKey = "is_locally_locked"
     private var authHandle: AuthStateDidChangeListenerHandle?
+    private var profileSwitchForwarder: AnyCancellable?
 
     init() {
         UserDefaults.standard.register(defaults: [Self.lockedKey: true])
         self.isLocallyLocked = UserDefaults.standard.bool(forKey: Self.lockedKey)
+        self.profileSwitch = ProfileSwitchCoordinator()
         self.currentUser = Auth.auth().currentUser
+        profileSwitch.currentPersonProvider = { [weak self] in self?.currentPerson }
+        // The coordinator's @Published changes must republish through this
+        // object — AuthGate and the views observe `authService`, not the
+        // nested coordinator.
+        profileSwitchForwarder = profileSwitch.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }
         self.authHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
                 self?.currentUser = user
@@ -120,6 +136,31 @@ final class AuthService: ObservableObject {
         }
     }
 
+    // MARK: - Profile switching (act-as)
+
+    /// Non-nil while the supervisor is viewing the app through a family
+    /// member's lens. Local-only; the Firebase identity never changes.
+    var actingPersonID: UUID? { profileSwitch.actingPersonID }
+
+    /// The single identity read for routing, role gating, and whose-data
+    /// decisions: the acting target while act-as is live, else
+    /// `currentPerson`. Write attribution (`loggedByPersonID`) keeps reading
+    /// `currentPerson` directly — the audit trail records who actually
+    /// tapped, not whose view they were looking through (D5).
+    var actorPerson: Person? { profileSwitch.actorPerson }
+
+    /// Switches the app's vantage point to `personID`'s view. Preconditions
+    /// (primary-only actor, client-only target, same circle, no self-target)
+    /// are enforced by the coordinator and surface as distinct
+    /// `ProfileSwitchError` cases per the error-collapse convention.
+    func actAs(personID: UUID) async throws {
+        try profileSwitch.actAs(personID: personID)
+    }
+
+    func switchBack() {
+        profileSwitch.switchBack()
+    }
+
     // MARK: - Lock / sign-out
 
     func lock() { isLocallyLocked = true }
@@ -147,6 +188,8 @@ final class AuthService: ObservableObject {
         Keychain.delete(.biometricEnabled)
         currentPerson = nil
         needsCircleSetup = false
+        // Act-as must not survive the session it was started in (9d).
+        profileSwitch.clearOnSignOut()
         SyncCoordinator.shared.stop()
         lock()
     }
@@ -180,6 +223,9 @@ final class AuthService: ObservableObject {
         guard let user = currentUser else {
             currentPerson = nil
             needsCircleSetup = false
+            // Session ended out from under us — same contract as
+            // signOutCompletely: act-as does not carry to the next sign-in.
+            profileSwitch.clearOnSignOut()
             SyncCoordinator.shared.stop()
             return
         }
@@ -241,6 +287,11 @@ final class AuthService: ObservableObject {
         } else {
             SyncCoordinator.shared.stop()
         }
+
+        // Now that currentPerson is settled, re-check the persisted act-as
+        // state against it: a fresh sign-in whose stored target crosses
+        // circles, or an actor who is no longer a supervisor, drops the lens.
+        profileSwitch.revalidate()
     }
 
     /// Called by `CircleSetupView` once the user has created or joined a

@@ -9,6 +9,9 @@ struct PeopleManagementView: View {
     @State private var showingAdd = false
     @State private var detailPerson: Person?
     @State private var refreshErrorMessage: String?
+    @State private var switchSheetPerson: Person?
+    @State private var isSwitching = false
+    @State private var switchErrorMessage: String?
 
     let personRepo: PersonRepository
     let careCircleRepo: CareCircleRepository
@@ -105,6 +108,44 @@ struct PeopleManagementView: View {
             }
             .environmentObject(authService)
         }
+        .sheet(item: $switchSheetPerson) { person in
+            ProfileSwitchConfirmSheet(
+                personName: person.name ?? "",
+                isWorking: isSwitching,
+                onConfirm: { Task { await switchTo(person) } },
+                onCancel: { switchSheetPerson = nil }
+            )
+        }
+        .alert(L("supervisor.person.error.title"),
+               isPresented: switchErrorBinding) {
+            Button(L("common.ok"), role: .cancel) { switchErrorMessage = nil }
+        } message: {
+            Text(switchErrorMessage ?? "")
+        }
+    }
+
+    private var switchErrorBinding: Binding<Bool> {
+        Binding(get: { switchErrorMessage != nil },
+                set: { if !$0 { switchErrorMessage = nil } })
+    }
+
+    private func switchTo(_ person: Person) async {
+        guard let targetID = person.id else { return }
+        isSwitching = true
+        do {
+            try await authService.actAs(personID: targetID)
+            isSwitching = false
+            switchSheetPerson = nil
+            // Nothing else to dismiss: AuthGate re-routes to the acting
+            // person's view as soon as actingPersonID publishes.
+        } catch {
+            isSwitching = false
+            switchSheetPerson = nil
+            // Distinct error codes per error-collapse convention — see
+            // CLAUDE.md "Error-collapse convention"; the shared mapper keeps
+            // one copy per ProfileSwitchError case, nothing collapsed.
+            switchErrorMessage = ProfileSwitchConfirmSheet.errorMessage(error)
+        }
     }
 
     // MARK: - Sections
@@ -118,6 +159,25 @@ struct PeopleManagementView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("\(person.name ?? "") — \(roleLabel(person.role))"))
+                .contextMenu {
+                    // Same gate as PersonDetailView's affordance — and on
+                    // `currentPerson`, not `actorPerson`: only the signed-in
+                    // primary may START a switch (D2), regardless of lens.
+                    if PersonDetailView.shouldShowSwitchToView(
+                        targetRole: person.role,
+                        targetPersonID: person.id,
+                        actorPersonID: authService.currentPerson?.id,
+                        actorIsPrimary: isPrimary
+                    ) {
+                        Button {
+                            switchSheetPerson = person
+                        } label: {
+                            Label(L("profileswitch.affordance.button.title",
+                                    (person.name ?? "") as NSString),
+                                  systemImage: "person.crop.circle.badge.questionmark")
+                        }
+                    }
+                }
             }
         }
     }

@@ -25,6 +25,8 @@ struct PersonDetailView: View {
     @State private var showingMedicalIDViewer = false
     @State private var showingDemoteSheet = false
     @State private var isDemoting = false
+    @State private var showingSwitchSheet = false
+    @State private var isSwitching = false
 
     let person: Person
     let personRepo: PersonRepository
@@ -51,6 +53,17 @@ struct PersonDetailView: View {
             targetPersonID: person.id,
             actorPersonID: authService.currentPerson?.id,
             primarySupervisorPersonID: authService.currentPerson?.careCircle?.primarySupervisorPersonID,
+            actorIsPrimary: actorIsPrimary
+        )
+    }
+
+    // Gated on `currentPerson` (not `actorPerson`) deliberately: eligibility
+    // to START a switch belongs to the signed-in supervisor, never to a lens.
+    private var showSwitchToViewSection: Bool {
+        Self.shouldShowSwitchToView(
+            targetRole: person.role,
+            targetPersonID: person.id,
+            actorPersonID: authService.currentPerson?.id,
             actorIsPrimary: actorIsPrimary
         )
     }
@@ -87,6 +100,10 @@ struct PersonDetailView: View {
                     }
 
                     if actorIsPrimary {
+                        if showSwitchToViewSection {
+                            switchToViewSection
+                        }
+
                         if person.role == Roles.deviceClient {
                             pinResetSection
                             roleFlipSection(targetRole: Roles.managedClient,
@@ -143,6 +160,14 @@ struct PersonDetailView: View {
                     isWorking: isDemoting,
                     onConfirm: { Task { await demoteToManagedClient() } },
                     onCancel: { showingDemoteSheet = false }
+                )
+            }
+            .sheet(isPresented: $showingSwitchSheet) {
+                ProfileSwitchConfirmSheet(
+                    personName: name.isEmpty ? (person.name ?? "") : name,
+                    isWorking: isSwitching,
+                    onConfirm: { Task { await switchToTargetView() } },
+                    onCancel: { showingSwitchSheet = false }
                 )
             }
             .toolbar {
@@ -380,6 +405,40 @@ struct PersonDetailView: View {
         .accessibilityLabel(Text("supervisor.promote.row"))
     }
 
+    private var switchToViewSection: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.sm) {
+            Button(action: { showingSwitchSheet = true }) {
+                HStack(spacing: DSSpacing.sm) {
+                    Image(systemName: "person.crop.circle.badge.questionmark")
+                        .foregroundColor(.white)
+                        .accessibilityHidden(true)
+                    Text(L("profileswitch.affordance.button.title",
+                           (name.isEmpty ? (person.name ?? "") : name) as NSString))
+                        .dsBodyLarge()
+                        .foregroundColor(.white)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.white.opacity(0.9))
+                        .accessibilityHidden(true)
+                }
+                .frame(maxWidth: .infinity, minHeight: DSSpacing.minTapTarget, alignment: .leading)
+                .padding(DSSpacing.md)
+                .background(Color.dsPrimary)
+                .cornerRadius(DSSpacing.rMd)
+            }
+            .accessibilityLabel(Text(L("profileswitch.affordance.button.title",
+                                       (name.isEmpty ? (person.name ?? "") : name) as NSString)))
+            Text(L("profileswitch.affordance.caption",
+                   (name.isEmpty ? (person.name ?? "") : name) as NSString))
+                .dsCaption()
+                .foregroundColor(.dsTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(DSSpacing.md)
+        .background(Color.dsSurface)
+        .cornerRadius(DSSpacing.rLg)
+    }
+
     private var demoteRoleSection: some View {
         VStack(alignment: .leading, spacing: DSSpacing.sm) {
             Text("people.demote.section.title")
@@ -601,6 +660,27 @@ struct PersonDetailView: View {
         }
     }
 
+    private func switchToTargetView() async {
+        guard let targetID = person.id else { return }
+        isSwitching = true
+        do {
+            try await authService.actAs(personID: targetID)
+            isSwitching = false
+            showingSwitchSheet = false
+            // AuthGate re-routes to the acting person's view the moment
+            // actingPersonID publishes; dismissing the detail sheet just
+            // keeps the transition clean (no sheet hanging over TodayView).
+            dismiss()
+        } catch {
+            isSwitching = false
+            showingSwitchSheet = false
+            // Distinct error codes per error-collapse convention — see
+            // CLAUDE.md "Error-collapse convention"; the shared mapper keeps
+            // one copy per ProfileSwitchError case, nothing collapsed.
+            errorMessage = ProfileSwitchConfirmSheet.errorMessage(error)
+        }
+    }
+
     private func removeFromCircle() async {
         guard let targetID = person.id,
               let actorID = authService.currentPerson?.id else { return }
@@ -718,5 +798,24 @@ struct PersonDetailView: View {
         if targetID == actorPersonID { return false }
         if targetID == primarySupervisorPersonID { return false }
         return true
+    }
+
+    /// Whether the "Switch to {name}'s view" affordance should be shown.
+    /// Pure and static so `PersonDetailViewTests` can pin every branch
+    /// without hosting the view. Visible only when the viewer is the primary
+    /// (D2 — secondaries can't switch yet; Phase 2 widens), the target is a
+    /// `managed_client` or `device_client` (D3 — never another supervisor),
+    /// and the target isn't the viewer. Shared by the People-list context
+    /// menu, so both entry points gate identically.
+    static func shouldShowSwitchToView(
+        targetRole: String?,
+        targetPersonID: UUID?,
+        actorPersonID: UUID?,
+        actorIsPrimary: Bool
+    ) -> Bool {
+        guard actorIsPrimary,
+              targetRole == Roles.managedClient || targetRole == Roles.deviceClient,
+              let targetID = targetPersonID else { return false }
+        return targetID != actorPersonID
     }
 }

@@ -71,4 +71,66 @@ final class PersonDetailViewTests: XCTestCase {
             actorIsPrimary: true
         ))
     }
+
+    // MARK: - "Switch to this person's view" gate (act-as, D2/D3)
+
+    func test_switchToView_visibleForManagedClientTarget() {
+        XCTAssertTrue(PersonDetailView.shouldShowSwitchToView(
+            targetRole: Roles.managedClient,
+            targetPersonID: target,
+            actorPersonID: actor,
+            actorIsPrimary: true
+        ))
+    }
+
+    func test_switchToView_visibleForDeviceClientTarget() {
+        XCTAssertTrue(PersonDetailView.shouldShowSwitchToView(
+            targetRole: Roles.deviceClient,
+            targetPersonID: target,
+            actorPersonID: actor,
+            actorIsPrimary: true
+        ))
+    }
+
+    func test_switchToView_hiddenWhenViewerIsNotPrimary() {
+        // D2: only the primary can initiate a switch (Phase 2 widens).
+        XCTAssertFalse(PersonDetailView.shouldShowSwitchToView(
+            targetRole: Roles.managedClient,
+            targetPersonID: target,
+            actorPersonID: actor,
+            actorIsPrimary: false
+        ))
+    }
+
+    func test_switchToView_hiddenForSupervisorTargets() {
+        // D3: never another supervisor — they'd see the same dashboard the
+        // primary already has. The legacy alias reads as primary, so it is
+        // excluded too.
+        for role in [Roles.primarySupervisor, Roles.secondarySupervisor, Roles.legacySupervisor] {
+            XCTAssertFalse(PersonDetailView.shouldShowSwitchToView(
+                targetRole: role,
+                targetPersonID: target,
+                actorPersonID: actor,
+                actorIsPrimary: true
+            ), "switch affordance must be hidden for target role \(role)")
+        }
+    }
+
+    func test_switchToView_hiddenWhenTargetIsActor() {
+        XCTAssertFalse(PersonDetailView.shouldShowSwitchToView(
+            targetRole: Roles.managedClient,
+            targetPersonID: actor,
+            actorPersonID: actor,
+            actorIsPrimary: true
+        ))
+    }
+
+    func test_switchToView_hiddenWhenTargetIDMissing() {
+        XCTAssertFalse(PersonDetailView.shouldShowSwitchToView(
+            targetRole: Roles.managedClient,
+            targetPersonID: nil,
+            actorPersonID: actor,
+            actorIsPrimary: true
+        ))
+    }
 }

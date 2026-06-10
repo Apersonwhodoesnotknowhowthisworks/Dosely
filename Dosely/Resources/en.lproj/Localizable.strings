@@ -581,3 +581,22 @@
 "accessibility.largertext.title" = "Larger text";
 "accessibility.largertext.subtitle" = "Use larger text throughout the app, even if iOS settings are set smaller.";
 "accessibility.systemnote" = "System settings may already provide these. This adds on top, never reduces.";
+
+// MARK: - Profile switching (act as a family member)
+"profileswitch.affordance.button.title" = "Switch to %@'s view";
+"profileswitch.affordance.caption" = "You'll see the app as %@ sees it.";
+"profileswitch.confirm.title" = "Switch to %@'s view?";
+"profileswitch.confirm.body.line1" = "You'll see the app the way %@ sees it. Their dose cards, their medical ID, their history.";
+"profileswitch.confirm.body.line2" = "When you log a dose for them while in this view, the family record shows you as the one who logged it — not them. This keeps the family's history honest about who did what.";
+"profileswitch.confirm.body.line3" = "You can switch back any time by tapping the banner at the top of the screen.";
+"profileswitch.confirm.button.confirm" = "Switch to %@'s view";
+"profileswitch.confirm.button.cancel" = "Cancel";
+"profileswitch.banner.actingas" = "Acting as %@";
+"profileswitch.banner.switchback" = "Tap to switch back to your own view";
+"profileswitch.banner.button" = "Switch back";
+"profileswitch.banner.button.a11y" = "Switch back to your own view";
+"profileswitch.error.notprimary" = "Only the primary supervisor can switch views.";
+"profileswitch.error.selftarget" = "You can't switch to your own view.";
+"profileswitch.error.notincircle" = "This person isn't in your family.";
+"profileswitch.error.ineligible" = "You can only switch to a family member's view, not another caregiver's.";
+"profileswitch.error.notfound" = "Couldn't find that person.";

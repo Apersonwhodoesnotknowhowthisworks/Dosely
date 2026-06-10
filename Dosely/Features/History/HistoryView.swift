@@ -6,9 +6,9 @@ struct HistoryView: View {
     @State private var selectedCell: GridCell?
     @State private var refreshErrorMessage: String?
 
-    /// When non-nil this overrides `authService.currentPerson?.id`. The
-    /// supervisor dashboard sets it to the active client so the History
-    /// tab is scoped to whoever the supervisor is viewing.
+    /// When non-nil this overrides the actor-derived id. The supervisor
+    /// dashboard sets it to the active client so the History tab is scoped
+    /// to whoever the supervisor is viewing.
     let personIDOverride: UUID?
 
     init(repository: MedicationRepository = MedicationRepository(),
@@ -17,8 +17,11 @@ struct HistoryView: View {
         self.personIDOverride = personIDOverride
     }
 
+    /// Falls back to `actorPerson` (not `currentPerson`) so the history tab
+    /// inside TodayView follows the act-as lens: while the supervisor views
+    /// as a family member, this is the member's dose history and adherence.
     private var effectivePersonID: UUID? {
-        personIDOverride ?? authService.currentPerson?.id
+        personIDOverride ?? authService.actorPerson?.id
     }
 
     var body: some View {

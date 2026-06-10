@@ -586,3 +586,22 @@
 "accessibility.largertext.title" = "ਵੱਡਾ ਟੈਕਸਟ"; // REVIEW NEEDED
 "accessibility.largertext.subtitle" = "ਪੂਰੀ ਐਪ ਵਿੱਚ ਵੱਡਾ ਟੈਕਸਟ ਵਰਤੋ, ਭਾਵੇਂ iOS ਸੈਟਿੰਗਾਂ ਛੋਟੀਆਂ ਰੱਖੀਆਂ ਹੋਣ।"; // REVIEW NEEDED
 "accessibility.systemnote" = "ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ ਇਹ ਪਹਿਲਾਂ ਹੀ ਦੇ ਸਕਦੀਆਂ ਹਨ। ਇਹ ਉਸ ਉੱਤੇ ਜੋੜਦਾ ਹੈ, ਕਦੇ ਘਟਾਉਂਦਾ ਨਹੀਂ।"; // REVIEW NEEDED
+
+// MARK: - Profile switching (act as a family member) — all REVIEW NEEDED
+"profileswitch.affordance.button.title" = "%@ ਦੇ ਨਜ਼ਰੀਏ ਵਿੱਚ ਜਾਓ"; // REVIEW NEEDED
+"profileswitch.affordance.caption" = "ਤੁਸੀਂ ਐਪ ਉਵੇਂ ਦੇਖੋਗੇ ਜਿਵੇਂ %@ ਦੇਖਦੇ ਹਨ।"; // REVIEW NEEDED
+"profileswitch.confirm.title" = "%@ ਦੇ ਨਜ਼ਰੀਏ ਵਿੱਚ ਜਾਣਾ ਹੈ?"; // REVIEW NEEDED
+"profileswitch.confirm.body.line1" = "ਤੁਸੀਂ ਐਪ ਉਵੇਂ ਦੇਖੋਗੇ ਜਿਵੇਂ %@ ਦੇਖਦੇ ਹਨ। ਉਹਨਾਂ ਦੀਆਂ ਖ਼ੁਰਾਕਾਂ, ਉਹਨਾਂ ਦੀ ਮੈਡੀਕਲ ID, ਉਹਨਾਂ ਦਾ ਇਤਿਹਾਸ।"; // REVIEW NEEDED
+"profileswitch.confirm.body.line2" = "ਜਦੋਂ ਤੁਸੀਂ ਇਸ ਨਜ਼ਰੀਏ ਵਿੱਚ ਉਹਨਾਂ ਲਈ ਖ਼ੁਰਾਕ ਦਰਜ ਕਰੋਗੇ, ਤਾਂ ਪਰਿਵਾਰ ਦੇ ਰਿਕਾਰਡ ਵਿੱਚ ਦਰਜ ਕਰਨ ਵਾਲੇ ਵਜੋਂ ਤੁਹਾਡਾ ਨਾਂ ਆਵੇਗਾ — ਉਹਨਾਂ ਦਾ ਨਹੀਂ। ਇਸ ਨਾਲ ਪਰਿਵਾਰ ਦਾ ਰਿਕਾਰਡ ਸੱਚਾ ਰਹਿੰਦਾ ਹੈ ਕਿ ਕਿਸ ਨੇ ਕੀ ਕੀਤਾ।"; // REVIEW NEEDED
+"profileswitch.confirm.body.line3" = "ਤੁਸੀਂ ਕਦੇ ਵੀ ਉੱਪਰ ਦਿੱਤੇ ਬੈਨਰ 'ਤੇ ਟੈਪ ਕਰਕੇ ਵਾਪਸ ਆ ਸਕਦੇ ਹੋ।"; // REVIEW NEEDED
+"profileswitch.confirm.button.confirm" = "%@ ਦੇ ਨਜ਼ਰੀਏ ਵਿੱਚ ਜਾਓ"; // REVIEW NEEDED
+"profileswitch.confirm.button.cancel" = "ਰੱਦ ਕਰੋ"; // REVIEW NEEDED
+"profileswitch.banner.actingas" = "%@ ਵਜੋਂ ਦੇਖ ਰਹੇ ਹੋ"; // REVIEW NEEDED
+"profileswitch.banner.switchback" = "ਆਪਣੇ ਨਜ਼ਰੀਏ ਵਿੱਚ ਵਾਪਸ ਜਾਣ ਲਈ ਟੈਪ ਕਰੋ"; // REVIEW NEEDED
+"profileswitch.banner.button" = "ਵਾਪਸ ਜਾਓ"; // REVIEW NEEDED
+"profileswitch.banner.button.a11y" = "ਆਪਣੇ ਨਜ਼ਰੀਏ ਵਿੱਚ ਵਾਪਸ ਜਾਓ"; // REVIEW NEEDED
+"profileswitch.error.notprimary" = "ਸਿਰਫ਼ ਮੁੱਖ ਸੁਪਰਵਾਈਜ਼ਰ ਹੀ ਨਜ਼ਰੀਆ ਬਦਲ ਸਕਦਾ ਹੈ।"; // REVIEW NEEDED
+"profileswitch.error.selftarget" = "ਤੁਸੀਂ ਆਪਣੇ ਹੀ ਨਜ਼ਰੀਏ ਵਿੱਚ ਨਹੀਂ ਜਾ ਸਕਦੇ।"; // REVIEW NEEDED
+"profileswitch.error.notincircle" = "ਇਹ ਵਿਅਕਤੀ ਤੁਹਾਡੇ ਪਰਿਵਾਰ ਵਿੱਚ ਨਹੀਂ ਹੈ।"; // REVIEW NEEDED
+"profileswitch.error.ineligible" = "ਤੁਸੀਂ ਸਿਰਫ਼ ਪਰਿਵਾਰ ਦੇ ਮੈਂਬਰ ਦੇ ਨਜ਼ਰੀਏ ਵਿੱਚ ਜਾ ਸਕਦੇ ਹੋ, ਕਿਸੇ ਹੋਰ ਦੇਖਭਾਲ ਕਰਨ ਵਾਲੇ ਦੇ ਨਹੀਂ।"; // REVIEW NEEDED
+"profileswitch.error.notfound" = "ਉਹ ਵਿਅਕਤੀ ਨਹੀਂ ਮਿਲਿਆ।"; // REVIEW NEEDED

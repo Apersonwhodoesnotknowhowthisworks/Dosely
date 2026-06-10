@@ -17,7 +17,9 @@ struct DebugToolbarModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         #if DEBUG
-        if Self.shouldShowDebugToolbar(role: authService.currentPerson?.role) {
+        // Gated on the ACTING person's role: a supervisor in act-as mode sees
+        // the client's view, developer affordances included-out (Part 8a).
+        if Self.shouldShowDebugToolbar(role: authService.actorPerson?.role) {
             content
                 .safeAreaInset(edge: .top) {
                     VStack(spacing: DSSpacing.xs) {

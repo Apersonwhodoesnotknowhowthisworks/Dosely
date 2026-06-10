@@ -89,8 +89,10 @@ struct TodayView: View {
                     .accessibilityLabel(Text("today.account"))
                 }
                 // Add-medication is a supervisor write affordance — hidden from
-                // device_client / managed_client signed in on their own device.
-                if Self.shouldShowAddMedication(role: authService.currentPerson?.role) {
+                // device_client / managed_client signed in on their own device,
+                // and from a supervisor in act-as mode (the actor's role is a
+                // client role, so the lens hides it for fidelity — Part 8a).
+                if Self.shouldShowAddMedication(role: authService.actorPerson?.role) {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button(action: { showingAdd = true }) {
                             Image(systemName: "plus")
@@ -103,10 +105,22 @@ struct TodayView: View {
             }
             .debugToolbar()
         }
-        .task(id: authService.currentPerson?.id) {
-            guard let personID = authService.currentPerson?.id else { return }
+        // Keyed on the ACTING person so toggling act-as cancels and restarts
+        // the load for the new lens — keying on currentPerson would leave the
+        // task running for the supervisor's own (empty) schedule, the same
+        // one-shot-snapshot class of bug as the June 7/8 carecircle fixes.
+        .task(id: authService.actorPerson?.id) {
+            guard let personID = authService.actorPerson?.id else { return }
             #if DEBUG
-            await SeedData.seedIfEmpty(using: repository, personID: personID, actorPersonID: personID)
+            // NEVER seed while acting-as: the signed-in actor is the
+            // primary, so saveMedication's guard would PASS and write demo
+            // medications into the family member's REAL record (shared
+            // Firestore, every device). Outside act-as this is the original
+            // behavior — actor == displayed person, and a client actor is
+            // rejected by the primary-only guard as before.
+            if authService.actingPersonID == nil {
+                await SeedData.seedIfEmpty(using: repository, personID: personID, actorPersonID: personID)
+            }
             #endif
             await MissedDoseChecker(repository: repository).run(for: personID)
             if let circleID = authService.currentPerson?.careCircle?.id {
@@ -124,17 +138,23 @@ struct TodayView: View {
         }
         .sheet(isPresented: $showingAdd) {
             AddMedicationFlow(repository: repository) {
-                if let personID = authService.currentPerson?.id {
+                if let personID = authService.actorPerson?.id {
                     Task { await viewModel.load(personID: personID) }
                 }
             }
             .environmentObject(authService)
         }
         .sheet(isPresented: $showingSettings) {
+            // Deliberately NOT lens-aware: settings (language, accessibility,
+            // sign-out, family management) belong to the device + Firebase
+            // identity, not to whoever's view the supervisor is looking
+            // through — see the Part 8e decision in the build_log entry.
             SettingsSheet()
         }
         .sheet(isPresented: $showingMedicalID) {
-            if let person = authService.currentPerson {
+            // The acting person's Medical ID — in act-as the supervisor sees
+            // the target's allergies/conditions, not their own (Part 8a).
+            if let person = authService.actorPerson {
                 EmergencyMedicalIDView(person: person)
             }
         }
@@ -170,7 +190,7 @@ struct TodayView: View {
         // Reload when the app returns from background so that doses logged from a
         // notification action (TOOK_IT) surface without waiting for the 5-min poll.
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            guard let personID = authService.currentPerson?.id else { return }
+            guard let personID = authService.actorPerson?.id else { return }
             Task {
                 await MissedDoseChecker(repository: repository).run(for: personID)
                 if let circleID = authService.currentPerson?.careCircle?.id {
@@ -183,7 +203,7 @@ struct TodayView: View {
 
     @ViewBuilder
     private var content: some View {
-        if authService.currentPerson == nil || !viewModel.isLoaded {
+        if authService.actorPerson == nil || !viewModel.isLoaded {
             ProgressView()
                 .frame(maxWidth: .infinity, minHeight: 200)
         } else if viewModel.doses.isEmpty {
@@ -210,22 +230,40 @@ struct TodayView: View {
     }
 
     private func markTaken(_ dose: TodayDose) async {
-        guard let personID = authService.currentPerson?.id else { return }
-        await viewModel.markTaken(dose, loggedByPersonID: personID, personID: personID)
+        guard let split = Self.doseLogAttribution(
+            currentPersonID: authService.currentPerson?.id,
+            actorPersonID: authService.actorPerson?.id
+        ) else { return }
+        await viewModel.markTaken(dose, loggedByPersonID: split.loggedBy, personID: split.scope)
+    }
+
+    /// The D5 attribution split, pure + static so the tests pin the decision
+    /// without hosting the view: `loggedBy` is ALWAYS the signed-in identity
+    /// (the audit trail records who actually tapped — the supervisor in
+    /// act-as mode), while the reload `scope` is the acting person, whose
+    /// dose cards are on screen. Outside act-as the two are the same person
+    /// and behavior is unchanged. Used by both markTaken and skip.
+    static func doseLogAttribution(
+        currentPersonID: UUID?,
+        actorPersonID: UUID?
+    ) -> (loggedBy: UUID, scope: UUID)? {
+        guard let loggedBy = currentPersonID, let scope = actorPersonID else { return nil }
+        return (loggedBy: loggedBy, scope: scope)
     }
 
     // MARK: - Emergency button
 
     private var isDeviceClient: Bool {
-        authService.currentPerson?.role == Roles.deviceClient
+        authService.actorPerson?.role == Roles.deviceClient
     }
 
     /// Any non-supervisor actor — a device client or a managed client.
     /// Delegates to the Medical ID eligibility rule so the client-tile
     /// gate and the viewer share one definition: supervisors manage
-    /// their own emergency info elsewhere.
+    /// their own emergency info elsewhere. Reads the ACTING person so the
+    /// act-as lens renders the client's true surface (Part 8a).
     private var isClientActor: Bool {
-        EmergencyMedicalIDViewModel.isEligibleForMedicalID(role: authService.currentPerson?.role)
+        EmergencyMedicalIDViewModel.isEligibleForMedicalID(role: authService.actorPerson?.role)
     }
 
     /// Whether the add-medication "+" toolbar affordance should be shown.
@@ -270,7 +308,10 @@ struct TodayView: View {
     }
 
     private func fireEmergencyAlert() async {
-        guard let person = authService.currentPerson,
+        // The alert is about the ACTING person — in act-as the supervisor is
+        // raising help on the target's behalf, so the alert carries the
+        // target's id and name, not the supervisor's (Part 8a).
+        guard let person = authService.actorPerson,
               let personID = person.id,
               let circleID = person.careCircle?.id else { return }
         let alertID = UUID().uuidString
@@ -305,8 +346,11 @@ struct TodayView: View {
     }
 
     private func skip(_ dose: TodayDose) async {
-        guard let personID = authService.currentPerson?.id else { return }
-        await viewModel.skip(dose, loggedByPersonID: personID, personID: personID)
+        guard let split = Self.doseLogAttribution(
+            currentPersonID: authService.currentPerson?.id,
+            actorPersonID: authService.actorPerson?.id
+        ) else { return }
+        await viewModel.skip(dose, loggedByPersonID: split.loggedBy, personID: split.scope)
     }
 
     // MARK: - History tab

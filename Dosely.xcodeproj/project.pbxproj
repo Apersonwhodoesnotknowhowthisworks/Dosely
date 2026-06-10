@@ -159,6 +159,13 @@
 		BFD0000000000000000000304 /* PeopleManagementViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000304 /* PeopleManagementViewTests.swift */; };
 		BFD0000000000000000000306 /* CircleSettingsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000306 /* CircleSettingsViewModelTests.swift */; };
 		BFD0000000000000000000308 /* PeopleManagementViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000308 /* PeopleManagementViewModelTests.swift */; };
+		BFD0000000000000000000309 /* ProfileSwitchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000309 /* ProfileSwitchCoordinator.swift */; };
+		BFD0000000000000000000310 /* ActAsBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000310 /* ActAsBanner.swift */; };
+		BFD0000000000000000000311 /* ProfileSwitchConfirmSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000311 /* ProfileSwitchConfirmSheet.swift */; };
+		BFD0000000000000000000312 /* AuthServiceProfileSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000312 /* AuthServiceProfileSwitchTests.swift */; };
+		BFD0000000000000000000313 /* ProfileSwitchEdgeCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000313 /* ProfileSwitchEdgeCaseTests.swift */; };
+		BFD0000000000000000000314 /* MedicationRepositoryDoseLogAttributionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000314 /* MedicationRepositoryDoseLogAttributionTests.swift */; };
+		BFD0000000000000000000315 /* ProfileSwitchLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD0000000000000000000315 /* ProfileSwitchLocalizationTests.swift */; };
 		BFD000000000000000000012C /* ErrorCollapseConventionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012C /* ErrorCollapseConventionTests.swift */; };
 		BFD000000000000000000012D /* EmergencyMedicalIDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012D /* EmergencyMedicalIDView.swift */; };
 		BFD000000000000000000012E /* EmergencyMedicalIDViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FRD000000000000000000012E /* EmergencyMedicalIDViewModel.swift */; };
@@ -286,6 +293,13 @@
 		FRD0000000000000000000307 /* PeopleManagementViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeopleManagementViewModel.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000F8 /* PersonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonDetailView.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000301 /* DemoteToManagedClientSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoteToManagedClientSheet.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000309 /* ProfileSwitchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSwitchCoordinator.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000310 /* ActAsBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ActAsBanner.swift; path = Common/ActAsBanner.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000311 /* ProfileSwitchConfirmSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSwitchConfirmSheet.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000312 /* AuthServiceProfileSwitchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceProfileSwitchTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000313 /* ProfileSwitchEdgeCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSwitchEdgeCaseTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000314 /* MedicationRepositoryDoseLogAttributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationRepositoryDoseLogAttributionTests.swift; sourceTree = "<group>"; };
+		FRD0000000000000000000315 /* ProfileSwitchLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSwitchLocalizationTests.swift; sourceTree = "<group>"; };
 		FRD00000000000000000000F9 /* AddPersonFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPersonFlow.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000100 /* CircleSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleSetupView.swift; sourceTree = "<group>"; };
 		FRD0000000000000000000101 /* CreateCircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateCircleView.swift; sourceTree = "<group>"; };
@@ -500,6 +514,10 @@
 				FRD0000000000000000000203 /* VoiceUtteranceBuildersTests.swift */,
 				FRD0000000000000000000202 /* VoiceReadoutServiceTests.swift */,
 				FRD0000000000000000000131 /* EmergencyMedicalIDLocalizationTests.swift */,
+				FRD0000000000000000000312 /* AuthServiceProfileSwitchTests.swift */,
+				FRD0000000000000000000313 /* ProfileSwitchEdgeCaseTests.swift */,
+				FRD0000000000000000000314 /* MedicationRepositoryDoseLogAttributionTests.swift */,
+				FRD0000000000000000000315 /* ProfileSwitchLocalizationTests.swift */,
 			);
 			path = DoselyTests;
 			sourceTree = "<group>";
@@ -516,6 +534,7 @@
 				GRP0000000000000000000020 /* Supervisor */,
 				FRD000000000000000000011D /* PullToRefresh.swift */,
 				FRD0000000000000000000222 /* DoselyBanner.swift */,
+				FRD0000000000000000000310 /* ActAsBanner.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -615,6 +634,7 @@
 				FRD0000000000000000000070 /* Keychain.swift */,
 				FRD0000000000000000000071 /* AuthService.swift */,
 				FRD0000000000000000000072 /* AuthGate.swift */,
+				FRD0000000000000000000309 /* ProfileSwitchCoordinator.swift */,
 				FRD0000000000000000000073 /* LoginView.swift */,
 				FRD0000000000000000000074 /* SignUpView.swift */,
 				FRD0000000000000000000075 /* PasswordResetView.swift */,
@@ -708,6 +728,7 @@
 				FRD0000000000000000000307 /* PeopleManagementViewModel.swift */,
 				FRD00000000000000000000F8 /* PersonDetailView.swift */,
 				FRD0000000000000000000301 /* DemoteToManagedClientSheet.swift */,
+				FRD0000000000000000000311 /* ProfileSwitchConfirmSheet.swift */,
 				FRD00000000000000000000F9 /* AddPersonFlow.swift */,
 			);
 			path = People;
@@ -906,6 +927,7 @@
 				BFD0000000000000000000307 /* PeopleManagementViewModel.swift in Sources */,
 				BFD00000000000000000000F8 /* PersonDetailView.swift in Sources */,
 				BFD0000000000000000000301 /* DemoteToManagedClientSheet.swift in Sources */,
+				BFD0000000000000000000311 /* ProfileSwitchConfirmSheet.swift in Sources */,
 				BFD00000000000000000000F9 /* AddPersonFlow.swift in Sources */,
 				BFD0000000000000000000100 /* CircleSetupView.swift in Sources */,
 				BFD0000000000000000000101 /* CreateCircleView.swift in Sources */,
@@ -921,6 +943,8 @@
 				BFD000000000000000000011A /* OrphanCircleCleanupMigration.swift in Sources */,
 				BFD000000000000000000011D /* PullToRefresh.swift in Sources */,
 				BFD0000000000000000000222 /* DoselyBanner.swift in Sources */,
+				BFD0000000000000000000310 /* ActAsBanner.swift in Sources */,
+				BFD0000000000000000000309 /* ProfileSwitchCoordinator.swift in Sources */,
 				BFD0000000000000000000121 /* AlertsRepository.swift in Sources */,
 				BFD0000000000000000000122 /* MissedDoseDetector.swift in Sources */,
 				BFD0000000000000000000205 /* RefillAlertDetector.swift in Sources */,
@@ -979,6 +1003,10 @@
 				BFD0000000000000000000203 /* VoiceUtteranceBuildersTests.swift in Sources */,
 				BFD0000000000000000000202 /* VoiceReadoutServiceTests.swift in Sources */,
 				BFD0000000000000000000131 /* EmergencyMedicalIDLocalizationTests.swift in Sources */,
+				BFD0000000000000000000312 /* AuthServiceProfileSwitchTests.swift in Sources */,
+				BFD0000000000000000000313 /* ProfileSwitchEdgeCaseTests.swift in Sources */,
+				BFD0000000000000000000314 /* MedicationRepositoryDoseLogAttributionTests.swift in Sources */,
+				BFD0000000000000000000315 /* ProfileSwitchLocalizationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
